@@ -441,6 +441,11 @@ contextBridge.exposeInMainWorld('hermesDesktop', {
     branchList: repoPath => ipcRenderer.invoke('hermes:git:branchList', repoPath),
     baseBranchList: repoPath => ipcRenderer.invoke('hermes:git:baseBranchList', repoPath),
     repoStatus: repoPath => ipcRenderer.invoke('hermes:git:repoStatus', repoPath),
+    sync: {
+      fetch: repoPath => ipcRenderer.invoke('hermes:git:sync:fetch', repoPath),
+      pull: repoPath => ipcRenderer.invoke('hermes:git:sync:pull', repoPath),
+      push: repoPath => ipcRenderer.invoke('hermes:git:sync:push', repoPath)
+    },
     fileDiff: (repoPath, filePath) => ipcRenderer.invoke('hermes:git:fileDiff', repoPath, filePath),
     scanRepos: (roots, options) => ipcRenderer.invoke('hermes:git:scanRepos', roots, options),
     review: {

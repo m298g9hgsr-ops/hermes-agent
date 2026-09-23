@@ -361,6 +361,49 @@ def review_push(cwd: str) -> dict:
     return {"ok": True}
 
 
+def _sync_branch(cwd: str) -> str:
+    branch = _git_line(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
+    if not branch or branch == "HEAD":
+        raise RuntimeError("Cannot synchronize a detached HEAD.")
+    return branch
+
+
+def _sync_status(cwd: str, action: str) -> dict:
+    status = repo_status(cwd)
+    if not status:
+        raise RuntimeError(f"Cannot {action}: path is not a Git repository.")
+    return status
+
+
+def sync_fetch(cwd: str) -> dict:
+    """Refresh origin refs without touching the working tree."""
+    _git_ok(cwd, ["fetch", "--prune", "origin"])
+    return _sync_status(cwd, "fetch")
+
+
+def sync_pull(cwd: str) -> dict:
+    """Fast-forward-only pull; never create a merge or hide a dirty tree."""
+    _sync_branch(cwd)
+    code, raw = _status_z(cwd)
+    if code != 0:
+        raise RuntimeError("Cannot pull: path is not a Git repository.")
+    if any(_walk_entries(raw)):
+        raise RuntimeError("Cannot pull with uncommitted changes. Commit or stash them first.")
+    _git_ok(cwd, ["pull", "--ff-only"])
+    return _sync_status(cwd, "pull")
+
+
+def sync_push(cwd: str) -> dict:
+    """Push without force, refusing a branch that is behind its upstream."""
+    branch = _sync_branch(cwd)
+    status = _sync_status(cwd, "push")
+    if status.get("behind", 0) > 0:
+        raise RuntimeError("Cannot push: this branch is behind its upstream. Pull first.")
+    upstream = _git_line(cwd, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])
+    _git_ok(cwd, ["push"] if upstream else ["push", "-u", "origin", branch])
+    return _sync_status(cwd, "push")
+
+
 def review_commit_context(cwd: str) -> dict:
     """Diff of what WILL commit + recent subjects, for drafting a commit message."""
     code, raw = _status_z(cwd) if _is_dir(cwd) else (1, "")

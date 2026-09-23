@@ -3089,6 +3089,12 @@ export interface Translations {
       switchTo: (branch: string) => string
       switchFailed: (branch: string) => string
       worktrees: string
+      sync: string
+      fetch: string
+      pull: string
+      push: string
+      syncing: string
+      upToDate: string
     }
   }
 

@@ -3687,7 +3687,13 @@ export const en: Translations = {
       branchOffFrom: base => `New branch from ${base}`,
       switchTo: branch => `Switch to ${branch}`,
       switchFailed: branch => `Could not switch to ${branch}`,
-      worktrees: 'Worktrees'
+      worktrees: 'Worktrees',
+      sync: 'Sync with GitHub',
+      fetch: 'Fetch from GitHub',
+      pull: 'Pull from GitHub',
+      push: 'Push to GitHub',
+      syncing: 'Syncing with GitHub…',
+      upToDate: 'No local divergence'
     }
   },
 

@@ -3546,7 +3546,13 @@ export const zh = defineLocale({
       branchOffFrom: base => `从 ${base} 新建分支`,
       switchTo: branch => `切换到 ${branch}`,
       switchFailed: branch => `无法切换到 ${branch}`,
-      worktrees: '工作树'
+      worktrees: '工作树',
+      sync: '与 GitHub 同步',
+      fetch: '从 GitHub 获取',
+      pull: '从 GitHub 拉取',
+      push: '推送到 GitHub',
+      syncing: '正在与 GitHub 同步…',
+      upToDate: '本机无分歧'
     }
   },
 

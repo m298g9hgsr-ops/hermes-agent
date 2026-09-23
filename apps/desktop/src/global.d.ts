@@ -470,6 +470,14 @@ declare global {
         // Compact working-tree status for the composer coding rail. Null on a
         // non-repo / remote backend (where the Electron probe can't run).
         repoStatus: (repoPath: string) => Promise<HermesRepoStatus | null>
+        // Safe repository synchronization. Fetch only updates remote refs;
+        // pull is fast-forward-only and refuses a dirty tree; push never
+        // force-writes and rejects a branch that is behind its upstream.
+        sync: {
+          fetch: (repoPath: string) => Promise<HermesRepoStatus | null>
+          pull: (repoPath: string) => Promise<HermesRepoStatus | null>
+          push: (repoPath: string) => Promise<HermesRepoStatus | null>
+        }
         // Working-tree-vs-HEAD unified diff for one file (the preview's diff
         // view). Empty string when the file is unchanged or not in a repo.
         fileDiff: (repoPath: string, filePath: string) => Promise<string>

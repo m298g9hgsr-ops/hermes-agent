@@ -143,6 +143,9 @@ export async function refreshReview(): Promise<void> {
 
   const { cwd, review } = ctx
 
+  // The sync bar shares the coding rail's status cache. A tile-scoped review
+  // pane may not have a primary status probe yet, so keep its own repo fresh.
+  void refreshRepoStatus(cwd)
   $reviewIsRepo.set(true)
   $reviewLoading.set(true)
 

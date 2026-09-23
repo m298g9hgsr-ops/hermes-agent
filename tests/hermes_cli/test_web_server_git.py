@@ -145,7 +145,47 @@ def test_stage_commit_roundtrip_clears_changes(client, repo):
 
 
 
+def test_sync_fetch_pull_and_push_roundtrip(client, repo_with_remote, tmp_path):
+    origin = subprocess.run(
+        ["git", "remote", "get-url", "origin"],
+        cwd=repo_with_remote,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    assert origin
 
+    other = tmp_path / "other"
+    subprocess.run(["git", "clone", "-q", origin, str(other)], check=True, capture_output=True)
+    subprocess.run(["git", "config", "user.email", "t@example.com"], cwd=other, check=True)
+    subprocess.run(["git", "config", "user.name", "Test"], cwd=other, check=True)
+    (other / "remote.txt").write_text("remote\n", encoding="utf-8")
+    _git(other, "add", "remote.txt")
+    _git(other, "commit", "-qm", "remote")
+    _git(other, "push", "-q", "origin", "HEAD")
+
+    fetched = client.post("/api/git/sync/fetch", json={"path": str(repo_with_remote)})
+    assert fetched.status_code == 200
+    assert fetched.json()["behind"] == 1
+
+    pulled = client.post("/api/git/sync/pull", json={"path": str(repo_with_remote)})
+    assert pulled.status_code == 200
+    assert (repo_with_remote / "remote.txt").read_text(encoding="utf-8") == "remote\n"
+
+    _git(repo_with_remote, "switch", "-qc", "sync-feature")
+    (repo_with_remote / "feature.txt").write_text("feature\n", encoding="utf-8")
+    _git(repo_with_remote, "add", "feature.txt")
+    _git(repo_with_remote, "commit", "-qm", "feature")
+    pushed = client.post("/api/git/sync/push", json={"path": str(repo_with_remote)})
+    assert pushed.status_code == 200
+    assert pushed.json()["branch"] == "sync-feature"
+
+
+def test_sync_pull_rejects_dirty_worktree(client, repo_with_remote):
+    (repo_with_remote / "draft.txt").write_text("draft\n", encoding="utf-8")
+    response = client.post("/api/git/sync/pull", json={"path": str(repo_with_remote)})
+    assert response.status_code == 400
+    assert "uncommitted changes" in response.json()["detail"]
 
 
 def test_worktree_add_initializes_plain_folder(client, tmp_path):
@@ -169,13 +209,14 @@ def test_worktree_add_initializes_plain_folder(client, tmp_path):
     assert any(file["path"] == "notes.txt" and file["untracked"] for file in status["files"])
 
 
-
-
 def test_git_endpoints_require_auth(repo):
     unauth = TestClient(web_server.app)
 
     assert unauth.get("/api/git/status", params={"path": str(repo)}).status_code == 401
     assert unauth.post("/api/git/review/stage", json={"path": str(repo)}).status_code == 401
+    assert unauth.post("/api/git/sync/fetch", json={"path": str(repo)}).status_code == 401
+    assert unauth.post("/api/git/sync/pull", json={"path": str(repo)}).status_code == 401
+    assert unauth.post("/api/git/sync/push", json={"path": str(repo)}).status_code == 401
 
 
 # ── remote-gateway worktree parity (#81724) ─────────────────────────────────
@@ -191,7 +232,7 @@ def repo_with_remote(tmp_path):
     branch that has NO local head (the teammate-branch case)."""
     origin = tmp_path / "origin.git"
     origin.mkdir()
-    subprocess.run(["git", "init", "-q", "--bare", str(origin)], check=True, capture_output=True)
+    subprocess.run(["git", "init", "-q", "--bare", "-b", "main", str(origin)], check=True, capture_output=True)
 
     root = tmp_path / "clone"
     root.mkdir()
@@ -202,7 +243,7 @@ def repo_with_remote(tmp_path):
     _git(root, "add", "-A")
     _git(root, "commit", "-qm", "init")
     _git(root, "remote", "add", "origin", str(origin))
-    _git(root, "push", "-q", "origin", "main")
+    _git(root, "push", "-q", "-u", "origin", "main")
     _git(root, "branch", "feature")
     _git(root, "push", "-q", "origin", "feature")
     _git(root, "branch", "-D", "feature")

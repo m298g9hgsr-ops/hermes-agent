@@ -550,6 +550,75 @@ async function reviewPush(repoPath, gitBin) {
   return { ok: true }
 }
 
+function syncCwd(repoPath, purpose) {
+  return resolveRequestedPathForIpc(repoPath, { purpose })
+}
+
+async function syncStatus(cwd, gitBin, action) {
+  const status = await repoStatus(cwd, gitBin)
+
+  if (!status) {
+    throw new Error(`Cannot ${action}: path is not a Git repository.`)
+  }
+
+  return status
+}
+
+// Fetch updates remote-tracking refs only; it never touches the working tree.
+async function syncFetch(repoPath, gitBin) {
+  const cwd = syncCwd(repoPath, 'Git fetch')
+  const git = gitFor(cwd, gitBin)
+
+  await git.raw(['fetch', '--prune', 'origin'])
+
+  return syncStatus(cwd, gitBin, 'fetch')
+}
+
+// Pull is deliberately fast-forward-only and refuses dirty worktrees. A normal
+// `git pull` can create a merge commit or leave a half-applied conflict state;
+// the Desktop sync affordance must never do either behind the user's back.
+async function syncPull(repoPath, gitBin) {
+  const cwd = syncCwd(repoPath, 'Git pull')
+  const git = gitFor(cwd, gitBin)
+  const status = await git.status(['--untracked-files=normal'])
+
+  if (status.detached || !status.current) {
+    throw new Error('Cannot pull: check out a branch with an upstream first.')
+  }
+
+  if (status.files.length > 0) {
+    throw new Error('Cannot pull with uncommitted changes. Commit or stash them first.')
+  }
+
+  await git.raw(['pull', '--ff-only'])
+
+  return syncStatus(cwd, gitBin, 'pull')
+}
+
+// Push never uses force. A branch that is behind its upstream is rejected so
+// the UI can offer Pull first instead of producing a confusing remote reject.
+async function syncPush(repoPath, gitBin) {
+  const cwd = syncCwd(repoPath, 'Git push')
+  const git = gitFor(cwd, gitBin)
+  const status = await git.status(['--untracked-files=normal'])
+
+  if (status.detached || !status.current) {
+    throw new Error('Cannot push from a detached HEAD.')
+  }
+
+  if (status.behind > 0) {
+    throw new Error('Cannot push: this branch is behind its upstream. Pull first.')
+  }
+
+  if (status.tracking) {
+    await git.push()
+  } else {
+    await git.raw(['push', '-u', 'origin', status.current])
+  }
+
+  return syncStatus(cwd, gitBin, 'push')
+}
+
 // gh availability + auth + whether this branch already has a PR. Reads only;
 // drives the PR button's enabled/label state. `ghReady` is false when gh is
 // missing OR not authenticated — either way the PR action can't run.
@@ -827,5 +896,8 @@ export {
   reviewRevParse,
   reviewShipInfo,
   reviewStage,
-  reviewUnstage
+  reviewUnstage,
+  syncFetch,
+  syncPull,
+  syncPush
 }

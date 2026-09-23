@@ -6,7 +6,16 @@ import path from 'node:path'
 
 import { afterEach, test } from 'vitest'
 
-import { gitFor, repoStatus, resolveRenamePath, REVIEW_FILE_CAP, reviewList } from './git-review-ops'
+import {
+  gitFor,
+  repoStatus,
+  resolveRenamePath,
+  REVIEW_FILE_CAP,
+  reviewList,
+  syncFetch,
+  syncPull,
+  syncPush
+} from './git-review-ops'
 
 const tempDirs: string[] = []
 
@@ -84,6 +93,76 @@ test('reviewList reports an untracked directory without recursively listing its 
     result.files.map(file => file.path),
     ['browser-profile/']
   )
+})
+
+function addOriginRemote(repo: string): string {
+  const remote = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-git-remote-'))
+
+  tempDirs.push(remote)
+  execFileSync('git', ['init', '-q', '--bare', remote], { cwd: repo })
+  execFileSync('git', ['remote', 'add', 'origin', remote], { cwd: repo })
+  execFileSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { cwd: repo })
+
+  return remote
+}
+
+function cloneRemote(remote: string): string {
+  const clone = fs.mkdtempSync(path.join(os.tmpdir(), 'hermes-desktop-git-clone-'))
+
+  tempDirs.push(clone)
+  execFileSync('git', ['clone', '-q', remote, clone], { cwd: path.dirname(clone) })
+  execFileSync('git', ['config', 'user.email', 'hermes-test@example.com'], { cwd: clone })
+  execFileSync('git', ['config', 'user.name', 'Hermes Test'], { cwd: clone })
+
+  return clone
+}
+
+test('syncFetch and syncPull fast-forward without touching a dirty tree', async () => {
+  const repo = makeRepo()
+  const remote = addOriginRemote(repo)
+  const other = cloneRemote(remote)
+
+  fs.writeFileSync(path.join(other, 'tracked.txt'), 'remote update\n')
+  execFileSync('git', ['add', 'tracked.txt'], { cwd: other })
+  execFileSync('git', ['commit', '-qm', 'remote update'], { cwd: other })
+  execFileSync('git', ['push', '-q', 'origin', 'HEAD'], { cwd: other })
+
+  const fetched = await syncFetch(repo, 'git')
+  assert.equal(fetched?.behind, 1)
+
+  const pulled = await syncPull(repo, 'git')
+  assert.equal(pulled?.behind, 0)
+  assert.equal(fs.readFileSync(path.join(repo, 'tracked.txt'), 'utf8'), 'remote update\n')
+})
+
+test('syncPull refuses uncommitted changes and syncPush refuses a behind branch', async () => {
+  const repo = makeRepo()
+  const remote = addOriginRemote(repo)
+  const other = cloneRemote(remote)
+
+  fs.writeFileSync(path.join(repo, 'tracked.txt'), 'local draft\n')
+  await assert.rejects(() => syncPull(repo, 'git'), /uncommitted changes/)
+
+  fs.writeFileSync(path.join(repo, 'tracked.txt'), 'tracked\n')
+  fs.writeFileSync(path.join(other, 'tracked.txt'), 'remote update\n')
+  execFileSync('git', ['add', 'tracked.txt'], { cwd: other })
+  execFileSync('git', ['commit', '-qm', 'remote update'], { cwd: other })
+  execFileSync('git', ['push', '-q', 'origin', 'HEAD'], { cwd: other })
+  await syncFetch(repo, 'git')
+
+  await assert.rejects(() => syncPush(repo, 'git'), /behind its upstream/)
+})
+
+test('syncPush sets an upstream on a new branch without force', async () => {
+  const repo = makeRepo()
+  addOriginRemote(repo)
+  execFileSync('git', ['switch', '-qc', 'feature/sync'], { cwd: repo })
+  fs.writeFileSync(path.join(repo, 'feature.txt'), 'feature\n')
+  execFileSync('git', ['add', 'feature.txt'], { cwd: repo })
+  execFileSync('git', ['commit', '-qm', 'feature'], { cwd: repo })
+
+  const result = await syncPush(repo, 'git')
+  assert.equal(result?.branch, 'feature/sync')
 })
 
 test('reviewList caps the file payload returned to the renderer', async () => {

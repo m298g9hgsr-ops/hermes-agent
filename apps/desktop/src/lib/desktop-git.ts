@@ -66,6 +66,12 @@ const remoteGit: GitBridge = {
 
   repoStatus: repoPath => gitGet<HermesRepoStatus | null>('status', { path: repoPath }),
 
+  sync: {
+    fetch: repoPath => gitPost<HermesRepoStatus | null>('sync/fetch', { path: repoPath }),
+    pull: repoPath => gitPost<HermesRepoStatus | null>('sync/pull', { path: repoPath }),
+    push: repoPath => gitPost<HermesRepoStatus | null>('sync/push', { path: repoPath })
+  },
+
   fileDiff: async (repoPath, filePath) =>
     (await gitGet<{ diff: string }>('file-diff', { file: filePath, path: repoPath })).diff,
 

@@ -20,7 +20,10 @@ import {
   reviewRevParse,
   reviewShipInfo,
   reviewStage,
-  reviewUnstage
+  reviewUnstage,
+  syncFetch,
+  syncPull,
+  syncPush
 } from './git-review-ops'
 import {
   addWorktree,
@@ -63,6 +66,12 @@ export function registerGitIpc({ resolveGitBinary, resolveGhBinary }: GitIpcDeps
   // composer coding rail. Returns null on a non-repo / remote backend so the rail
   // hides cleanly rather than erroring.
   ipcMain.handle('hermes:git:repoStatus', async (_event, repoPath) => repoStatus(repoPath, resolveGitBinary()))
+
+  // Safe GitHub synchronization controls. These are separate from the review
+  // mutation surface so the UI can offer them even when the worktree is clean.
+  ipcMain.handle('hermes:git:sync:fetch', async (_event, repoPath) => syncFetch(repoPath, resolveGitBinary()))
+  ipcMain.handle('hermes:git:sync:pull', async (_event, repoPath) => syncPull(repoPath, resolveGitBinary()))
+  ipcMain.handle('hermes:git:sync:push', async (_event, repoPath) => syncPush(repoPath, resolveGitBinary()))
 
   // Codex-style review pane: list changed files for a scope, fetch one file's
   // unified diff, and stage / unstage / revert. Reads return empty on failure;

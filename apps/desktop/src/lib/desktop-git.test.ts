@@ -7,7 +7,13 @@ import { desktopGit } from './desktop-git'
 
 const repoStatus = vi.fn(async () => ({ branch: 'main' }))
 const worktreeList = vi.fn(async () => [{ branch: 'main', detached: false, isMain: true, locked: false, path: '/r' }])
-const localGit = { repoStatus, review: { stage: vi.fn() }, worktreeList }
+
+const localGit = {
+  repoStatus,
+  review: { stage: vi.fn() },
+  sync: { fetch: vi.fn(), pull: vi.fn(), push: vi.fn() },
+  worktreeList
+}
 
 const api = vi.fn(async ({ path }: { path: string }) => {
   if (path.startsWith('/api/git/status')) {
@@ -75,6 +81,31 @@ describe('desktop git facade', () => {
     )
 
     expect(repoStatus).not.toHaveBeenCalled()
+  })
+
+  it('routes safe sync mutations through the remote backend', async () => {
+    $connection.set({ mode: 'remote' } as never)
+
+    await desktopGit()?.sync.fetch('/srv/work')
+    await desktopGit()?.sync.pull('/srv/work')
+    await desktopGit()?.sync.push('/srv/work')
+
+    expect(api).toHaveBeenNthCalledWith(1, {
+      body: { path: '/srv/work' },
+      method: 'POST',
+      path: '/api/git/sync/fetch'
+    })
+    expect(api).toHaveBeenNthCalledWith(2, {
+      body: { path: '/srv/work' },
+      method: 'POST',
+      path: '/api/git/sync/pull'
+    })
+    expect(api).toHaveBeenNthCalledWith(3, {
+      body: { path: '/srv/work' },
+      method: 'POST',
+      path: '/api/git/sync/push'
+    })
+    expect(localGit.sync.fetch).not.toHaveBeenCalled()
   })
 
   it('targets the active profile backend so a remote profile never touches the local repo', async () => {

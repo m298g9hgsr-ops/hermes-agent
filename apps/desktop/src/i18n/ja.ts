@@ -2841,7 +2841,13 @@ export const ja = defineLocale({
       branchOffFrom: base => `${base} から新しいブランチ`,
       switchTo: branch => `${branch} に切り替え`,
       switchFailed: branch => `${branch} に切り替えできませんでした`,
-      worktrees: 'ワークツリー'
+      worktrees: 'ワークツリー',
+      sync: 'GitHub と同期',
+      fetch: 'GitHub から取得',
+      pull: 'GitHub からプル',
+      push: 'GitHub へプッシュ',
+      syncing: 'GitHub と同期中…',
+      upToDate: 'ローカル差分なし'
     }
   },
 

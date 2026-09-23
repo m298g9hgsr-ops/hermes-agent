@@ -38,6 +38,7 @@ import { PaneEmptyState, RightSidebarSectionHeader } from '../index'
 
 import { ReviewFileTree } from './file-tree'
 import { ReviewShipBar } from './ship-bar'
+import { ReviewSyncBar } from './sync-bar'
 
 // Compact header/diff action buttons — micro hit targets packed tight, matching
 // the rest of the app's icon-action rows.
@@ -200,6 +201,7 @@ export function ReviewPane() {
         </div>
       )}
 
+      <ReviewSyncBar />
       <ReviewShipBar />
 
       <ConfirmDialog

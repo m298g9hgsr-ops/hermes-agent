@@ -187,6 +187,21 @@ async def git_create_pr_route(body: GitPathBody):
     return await _git_op(_web_git.review_create_pr, _git_path(body.path))
 
 
+@router.post("/api/git/sync/fetch")
+async def git_sync_fetch_route(body: GitPathBody):
+    return await _git_op(_web_git.sync_fetch, _git_path(body.path))
+
+
+@router.post("/api/git/sync/pull")
+async def git_sync_pull_route(body: GitPathBody):
+    return await _git_op(_web_git.sync_pull, _git_path(body.path))
+
+
+@router.post("/api/git/sync/push")
+async def git_sync_push_route(body: GitPathBody):
+    return await _git_op(_web_git.sync_push, _git_path(body.path))
+
+
 @router.post("/api/git/worktree/add")
 async def git_worktree_add_route(body: GitWorktreeAddBody):
     options = {

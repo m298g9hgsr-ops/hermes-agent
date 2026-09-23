@@ -2843,7 +2843,13 @@ export const zhHant = defineLocale({
       branchOffFrom: base => `從 ${base} 建立新分支`,
       switchTo: branch => `切換到 ${branch}`,
       switchFailed: branch => `無法切換到 ${branch}`,
-      worktrees: '工作樹'
+      worktrees: '工作樹',
+      sync: '與 GitHub 同步',
+      fetch: '從 GitHub 擷取',
+      pull: '從 GitHub 拉取',
+      push: '推送至 GitHub',
+      syncing: '正在與 GitHub 同步…',
+      upToDate: '本機無分歧'
     }
   },
 
