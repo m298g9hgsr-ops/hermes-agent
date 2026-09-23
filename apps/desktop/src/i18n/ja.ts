@@ -2842,11 +2842,11 @@ export const ja = defineLocale({
       switchTo: branch => `${branch} に切り替え`,
       switchFailed: branch => `${branch} に切り替えできませんでした`,
       worktrees: 'ワークツリー',
-      sync: 'GitHub と同期',
-      fetch: 'GitHub から取得',
-      pull: 'GitHub からプル',
-      push: 'GitHub へプッシュ',
-      syncing: 'GitHub と同期中…',
+      sync: 'リモートと同期',
+      fetch: 'リモートから取得',
+      pull: 'リモートからプル',
+      push: 'リモートへプッシュ',
+      syncing: 'リモートと同期中…',
       upToDate: 'ローカル差分なし'
     }
   },

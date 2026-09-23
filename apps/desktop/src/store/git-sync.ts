@@ -1,61 +1,75 @@
-import { atom } from 'nanostores'
-
 import { desktopGit } from '@/lib/desktop-git'
+import { currentGitSyncOwner, gitSyncScopeKey, isCurrentGitSyncOwner } from '@/lib/git-owner'
+import type { GitSyncOwner } from '@/lib/git-owner'
 
 import { refreshRepoStatus } from './coding-status'
+import { $gitMutationBusyByCwd, _resetGitMutationForTests, type GitMutationAction, runGitMutation } from './git-mutation'
 import { refreshReview } from './review'
 
-export type GitSyncAction = 'fetch' | 'pull' | 'push'
-
-/** One in-flight operation per repository path, never one global spinner. */
-export const $gitSyncBusyByCwd = atom<Record<string, GitSyncAction | null>>({})
-
-function setBusy(cwd: string, action: GitSyncAction | null): void {
-  const busy = $gitSyncBusyByCwd.get()
-
-  if (busy[cwd] === action) {
-    return
-  }
-
-  $gitSyncBusyByCwd.set({ ...busy, [cwd]: action })
-}
+export type GitSyncAction = Extract<GitMutationAction, 'fetch' | 'pull' | 'push'>
+export const $gitSyncBusyByCwd = $gitMutationBusyByCwd
 
 /**
  * Run one safe repository synchronization operation and reconcile the cached
  * status afterwards. The backend owns the safety checks (fast-forward-only pull,
- * dirty-tree refusal, non-force push); this layer only serializes the UI action
- * and keeps a tile/worktree's status scoped to its own cwd.
+ * dirty-tree refusal, non-force push); this layer serializes the UI action and
+ * pins every request to the owner captured at click time.
  */
-export async function runGitSync(action: GitSyncAction, cwd: null | string | undefined): Promise<void> {
+export async function runGitSync(
+  action: GitSyncAction,
+  cwd: null | string | undefined,
+  owner: GitSyncOwner = currentGitSyncOwner()
+): Promise<void> {
   const target = cwd?.trim()
+  const scope = target ? gitSyncScopeKey(owner, target) : ''
 
-  if (!target || $gitSyncBusyByCwd.get()[target]) {
+  if (!target || $gitSyncBusyByCwd.get()[scope] || !isCurrentGitSyncOwner(owner)) {
     return
   }
 
-  const bridge = desktopGit()?.sync
+  const sync = desktopGit(owner)?.sync
 
-  if (!bridge) {
+  if (!sync) {
     return
   }
 
-  setBusy(target, action)
+  let started = false
+  let operationFailed = false
+  let operationError: unknown
 
   try {
-    await bridge[action](target)
-    await refreshRepoStatus(target)
+    await runGitMutation(owner, target, action, async () => {
+      started = true
+      await sync[action](target)
+    })
+  } catch (error) {
+    operationFailed = true
+    operationError = error
+  }
 
-    // Pull can replace files underneath an open diff. Do not make a successful
-    // network/git operation look failed just because the follow-up read raced.
-    if (action === 'pull') {
-      void refreshReview()
+  if (started && isCurrentGitSyncOwner(owner)) {
+    try {
+      // A failed fetch can still have updated refs, and a pull can fail after
+      // changing the index. Reconcile on both paths.
+      await refreshRepoStatus(target)
+
+      if (action === 'pull') {
+        void refreshReview()
+      }
+    } catch (refreshError) {
+      if (!operationFailed) {
+        operationFailed = true
+        operationError = refreshError
+      }
     }
-  } finally {
-    setBusy(target, null)
+  }
+
+  if (operationFailed) {
+    throw operationError
   }
 }
 
 /** Test-only reset for store tests. */
 export function _resetGitSyncForTests(): void {
-  $gitSyncBusyByCwd.set({})
+  _resetGitMutationForTests()
 }

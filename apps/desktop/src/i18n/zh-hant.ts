@@ -2844,11 +2844,11 @@ export const zhHant = defineLocale({
       switchTo: branch => `切換到 ${branch}`,
       switchFailed: branch => `無法切換到 ${branch}`,
       worktrees: '工作樹',
-      sync: '與 GitHub 同步',
-      fetch: '從 GitHub 擷取',
-      pull: '從 GitHub 拉取',
-      push: '推送至 GitHub',
-      syncing: '正在與 GitHub 同步…',
+      sync: '與遠端同步',
+      fetch: '從遠端擷取',
+      pull: '從遠端拉取',
+      push: '推送至遠端',
+      syncing: '正在與遠端同步…',
       upToDate: '本機無分歧'
     }
   },

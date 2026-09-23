@@ -13,7 +13,7 @@ import {
   repoChangeKindForPath,
   repoStatusForCwd
 } from './coding-status'
-import { $currentCwd, $selectedStoredSessionId } from './session'
+import { $connection, $currentCwd, $selectedStoredSessionId } from './session'
 
 const sampleStatus: HermesRepoStatus = {
   branch: 'feature/login',
@@ -49,6 +49,7 @@ describe('refreshRepoStatus', () => {
   beforeEach(() => {
     vi.useFakeTimers()
     _resetCodingStatusForTests()
+    $connection.set(null)
     $currentCwd.set('')
     $selectedStoredSessionId.set(null)
     // Drain the cwd/session subscribe side-effects the sets above kick off.
@@ -70,6 +71,46 @@ describe('refreshRepoStatus', () => {
     await refreshRepoStatus('/repo')
     expect(repoStatusForCwd('/repo').get()).toEqual(sampleStatus)
     expect($repoStatus.get()).toEqual(sampleStatus)
+  })
+
+  it('clears path-keyed status when the connection owner changes', async () => {
+    stubProbe(async () => sampleStatus)
+    $currentCwd.set('/repo')
+    await refreshRepoStatus('/repo')
+    expect($repoStatusByCwd.get()['/repo']).toEqual(sampleStatus)
+
+    $connection.set({ mode: 'remote', connectionId: 'connection-b', profile: 'work' } as never)
+    expect($repoStatusByCwd.get()).toEqual({})
+  })
+
+  it('ignores an old-owner status that resolves after an A→B→A rehome', async () => {
+    let releaseOld: (() => void) | undefined
+    const oldStatus = { ...sampleStatus, branch: 'old-owner' }
+    const newStatus = { ...sampleStatus, branch: 'new-owner' }
+
+    const impl = vi
+      .fn<() => Promise<HermesRepoStatus>>()
+      .mockImplementationOnce(
+        () =>
+          new Promise(resolve => {
+            releaseOld = () => resolve(oldStatus)
+          })
+      )
+      .mockResolvedValue(newStatus)
+
+    stubProbe(impl)
+    $currentCwd.set('/repo')
+    const first = refreshRepoStatus('/repo')
+
+    $connection.set({ connectionId: 'connection-b', mode: 'local', profile: 'work' } as never)
+    void refreshRepoStatus('/repo')
+    $connection.set(null)
+    const final = refreshRepoStatus('/repo')
+
+    releaseOld?.()
+    await Promise.all([first, final])
+
+    expect($repoStatusByCwd.get()['/repo']?.branch).toBe('new-owner')
   })
 
   it('falls back to the active session cwd when none is passed', async () => {

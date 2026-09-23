@@ -12,6 +12,7 @@ import {
   resolveRenamePath,
   REVIEW_FILE_CAP,
   reviewList,
+  reviewPush,
   syncFetch,
   syncPull,
   syncPush
@@ -102,6 +103,8 @@ function addOriginRemote(repo: string): string {
   execFileSync('git', ['init', '-q', '--bare', remote], { cwd: repo })
   execFileSync('git', ['remote', 'add', 'origin', remote], { cwd: repo })
   execFileSync('git', ['push', '-q', '-u', 'origin', 'HEAD'], { cwd: repo })
+  const branch = execFileSync('git', ['branch', '--show-current'], { cwd: repo, encoding: 'utf8' }).trim()
+  execFileSync('git', ['symbolic-ref', 'HEAD', `refs/heads/${branch}`], { cwd: remote })
 
   return remote
 }
@@ -135,6 +138,21 @@ test('syncFetch and syncPull fast-forward without touching a dirty tree', async 
   assert.equal(fs.readFileSync(path.join(repo, 'tracked.txt'), 'utf8'), 'remote update\n')
 })
 
+test('syncFetch follows the configured upstream remote', async () => {
+  const repo = makeRepo()
+  const remote = addOriginRemote(repo)
+  const other = cloneRemote(remote)
+  execFileSync('git', ['remote', 'rename', 'origin', 'upstream'], { cwd: repo })
+
+  fs.writeFileSync(path.join(other, 'upstream.txt'), 'upstream update\n')
+  execFileSync('git', ['add', 'upstream.txt'], { cwd: other })
+  execFileSync('git', ['commit', '-qm', 'upstream update'], { cwd: other })
+  execFileSync('git', ['push', '-q', 'origin', 'HEAD'], { cwd: other })
+
+  const fetched = await syncFetch(repo, 'git')
+  assert.equal(fetched?.behind, 1)
+})
+
 test('syncPull refuses uncommitted changes and syncPush refuses a behind branch', async () => {
   const repo = makeRepo()
   const remote = addOriginRemote(repo)
@@ -151,6 +169,47 @@ test('syncPull refuses uncommitted changes and syncPush refuses a behind branch'
   await syncFetch(repo, 'git')
 
   await assert.rejects(() => syncPush(repo, 'git'), /behind its upstream/)
+})
+
+test('syncPull preserves an ignored local file when the incoming commit tracks it', async () => {
+  const repo = makeRepo()
+  const remote = addOriginRemote(repo)
+
+  fs.writeFileSync(path.join(repo, '.gitignore'), 'secret.txt\n')
+  execFileSync('git', ['add', '.gitignore'], { cwd: repo })
+  execFileSync('git', ['commit', '-qm', 'ignore secret'], { cwd: repo })
+  execFileSync('git', ['push', '-q', 'origin', 'HEAD'], { cwd: repo })
+  fs.writeFileSync(path.join(repo, 'secret.txt'), 'local ignored content\n')
+  const other = cloneRemote(remote)
+
+  fs.writeFileSync(path.join(other, 'secret.txt'), 'remote content\n')
+  execFileSync('git', ['add', '-f', 'secret.txt'], { cwd: other })
+  execFileSync('git', ['commit', '-qm', 'track secret'], { cwd: other })
+  execFileSync('git', ['push', '-q', 'origin', 'HEAD'], { cwd: other })
+
+  await assert.rejects(() => syncPull(repo, 'git'), /overwritten|untracked working tree/)
+  assert.equal(fs.readFileSync(path.join(repo, 'secret.txt'), 'utf8'), 'local ignored content\n')
+})
+
+test('syncPush ignores configured force refspecs and preserves a diverged remote', async () => {
+  const repo = makeRepo()
+  const remote = addOriginRemote(repo)
+  const other = cloneRemote(remote)
+
+  fs.writeFileSync(path.join(repo, 'local.txt'), 'local\n')
+  execFileSync('git', ['add', 'local.txt'], { cwd: repo })
+  execFileSync('git', ['commit', '-qm', 'local'], { cwd: repo })
+  fs.writeFileSync(path.join(other, 'remote.txt'), 'remote\n')
+  execFileSync('git', ['add', 'remote.txt'], { cwd: other })
+  execFileSync('git', ['commit', '-qm', 'remote'], { cwd: other })
+  execFileSync('git', ['push', '-q', 'origin', 'HEAD'], { cwd: other })
+  execFileSync('git', ['config', 'remote.origin.push', '+refs/heads/*:refs/heads/*'], { cwd: repo })
+
+  const remoteBefore = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: remote, encoding: 'utf8' }).trim()
+  await assert.rejects(() => syncPush(repo, 'git'), /rejected|non-fast-forward/)
+  await assert.rejects(() => reviewPush(repo, 'git'), /rejected|non-fast-forward/)
+  const remoteAfter = execFileSync('git', ['rev-parse', 'HEAD'], { cwd: remote, encoding: 'utf8' }).trim()
+  assert.equal(remoteAfter, remoteBefore)
 })
 
 test('syncPush sets an upstream on a new branch without force', async () => {

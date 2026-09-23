@@ -1,7 +1,10 @@
 import { atom, computed, type ReadableAtom } from 'nanostores'
 
 import type { HermesGitWorktree, HermesRepoStatus } from '@/global'
+import { desktopFsCacheKey } from '@/lib/desktop-fs'
 import { desktopGit } from '@/lib/desktop-git'
+import { currentGitSyncOwner, isCurrentGitSyncOwner } from '@/lib/git-owner'
+import type { GitSyncOwner } from '@/lib/git-owner'
 
 import {
   $projectScope,
@@ -13,6 +16,7 @@ import {
 } from './projects'
 import {
   $busy,
+  $connection,
   $currentCwd,
   $selectedStoredSessionId,
   $workspaceCwdOwner,
@@ -225,6 +229,7 @@ function setRepoWorktreesEntry(target: string, worktrees: HermesGitWorktree[]): 
 }
 
 interface RepoStatusRefreshRequest {
+  owner: GitSyncOwner
   probe: (cwd: string) => Promise<HermesRepoStatus | null>
   seq: number
   target: string
@@ -248,11 +253,21 @@ let scheduledAllTargets = false
 // it is on a stale branch.
 const isCurrentSeq = (target: string, seq: number): boolean => seqByCwd.get(target) === seq
 
-async function loadWorktrees(target: string, seq: number): Promise<void> {
-  const list = desktopGit()?.worktreeList
+function invalidateRepoStatusRequests(): void {
+  for (const [target, seq] of seqByCwd) {
+    seqByCwd.set(target, seq + 1)
+  }
+
+  pendingByCwd.clear()
+}
+
+async function loadWorktrees(owner: GitSyncOwner, target: string, seq: number): Promise<void> {
+  const list = desktopGit(owner)?.worktreeList
 
   if (!list) {
-    setRepoWorktreesEntry(target, EMPTY_WORKTREES)
+    if (isCurrentGitSyncOwner(owner) && isCurrentSeq(target, seq)) {
+      setRepoWorktreesEntry(target, EMPTY_WORKTREES)
+    }
 
     return
   }
@@ -260,11 +275,11 @@ async function loadWorktrees(target: string, seq: number): Promise<void> {
   try {
     const worktrees = await list(target)
 
-    if (isCurrentSeq(target, seq)) {
+    if (isCurrentGitSyncOwner(owner) && isCurrentSeq(target, seq)) {
       setRepoWorktreesEntry(target, worktrees)
     }
   } catch {
-    if (isCurrentSeq(target, seq)) {
+    if (isCurrentGitSyncOwner(owner) && isCurrentSeq(target, seq)) {
       setRepoWorktreesEntry(target, EMPTY_WORKTREES)
     }
   }
@@ -275,13 +290,14 @@ async function loadWorktrees(target: string, seq: number): Promise<void> {
  * backend, or a missing probe clears that cwd's entry so its rail hides
  * rather than showing stale data.
  */
-async function runRepoStatusRefresh({ probe, seq, target }: RepoStatusRefreshRequest): Promise<void> {
+async function runRepoStatusRefresh({ owner, probe, seq, target }: RepoStatusRefreshRequest): Promise<void> {
   try {
     const status = await probe(target)
 
     // Drop the result if a newer refresh for this cwd started while we were
-    // probing — the newer probe owns the entry.
-    if (!isCurrentSeq(target, seq)) {
+    // probing — the newer probe owns the entry. The owner check also covers an
+    // A→B→A rehome where the numeric sequence alone could be reused.
+    if (!isCurrentGitSyncOwner(owner) || !isCurrentSeq(target, seq)) {
       return
     }
 
@@ -289,12 +305,12 @@ async function runRepoStatusRefresh({ probe, seq, target }: RepoStatusRefreshReq
 
     // Worktrees only matter inside a repo; clear them otherwise.
     if (status) {
-      void loadWorktrees(target, seq)
+      void loadWorktrees(owner, target, seq)
     } else {
       setRepoWorktreesEntry(target, EMPTY_WORKTREES)
     }
   } catch {
-    if (isCurrentSeq(target, seq)) {
+    if (isCurrentGitSyncOwner(owner) && isCurrentSeq(target, seq)) {
       setRepoStatusEntry(target, null)
       setRepoWorktreesEntry(target, EMPTY_WORKTREES)
     }
@@ -318,14 +334,14 @@ async function drainRepoStatusRefreshes(): Promise<void> {
 
 export function refreshRepoStatus(cwd?: null | string): Promise<void> {
   const target = normalizeCwd(cwd ?? $currentCwd.get())
-  const probe = desktopGit()?.repoStatus
+  const owner = currentGitSyncOwner()
+  const probe = desktopGit(owner)?.repoStatus
 
   if (!probe) {
     // Remote backend / no bridge: there is no local git truth at all — wipe
     // every entry so no rail shows stale local status, and invalidate any
-    // in-flight probe results.
-    pendingByCwd.clear()
-    seqByCwd.clear()
+    // in-flight probe results without reusing a sequence after A→B→A.
+    invalidateRepoStatusRequests()
     $repoStatusByCwd.set({})
     $repoWorktreesByCwd.set({})
     $repoStatusLoading.set(false)
@@ -342,7 +358,7 @@ export function refreshRepoStatus(cwd?: null | string): Promise<void> {
   const seq = (seqByCwd.get(target) ?? 0) + 1
 
   seqByCwd.set(target, seq)
-  pendingByCwd.set(target, { probe, seq, target })
+  pendingByCwd.set(target, { owner, probe, seq, target })
   $repoStatusLoading.set(true)
 
   if (!repoStatusRefreshInFlight) {
@@ -418,6 +434,25 @@ function scheduleRepoStatusRefresh(cwd?: null | string): void {
     }
   }, REPO_STATUS_REFRESH_DEBOUNCE_MS)
 }
+
+// A gateway/profile rehome invalidates every path-keyed status row. Keep the
+// registered cwd set (the surfaces still mounted), but never let a same-path repo
+// on the previous owner paint into the new owner's rail.
+let previousRepoOwnerKey = desktopFsCacheKey($connection.get())
+
+$connection.subscribe(connection => {
+  const nextOwnerKey = desktopFsCacheKey(connection)
+
+  if (nextOwnerKey === previousRepoOwnerKey) {
+    return
+  }
+
+  previousRepoOwnerKey = nextOwnerKey
+  invalidateRepoStatusRequests()
+  $repoStatusByCwd.set({})
+  $repoWorktreesByCwd.set({})
+  scheduleRepoStatusRefresh()
+})
 
 // ── Triggers ─────────────────────────────────────────────────────────────────
 // Wired once at module load (mirrors projects.ts's module-scope subscriptions).

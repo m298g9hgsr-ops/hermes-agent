@@ -4,10 +4,12 @@ import { Button } from '@/components/ui/button'
 import { Codicon } from '@/components/ui/codicon'
 import { Tip } from '@/components/ui/tooltip'
 import { useI18n } from '@/i18n'
+import { currentGitSyncOwner, gitSyncScopeKey } from '@/lib/git-owner'
 import { repoStatusForCwd } from '@/store/coding-status'
 import { $gitSyncBusyByCwd, type GitSyncAction, runGitSync } from '@/store/git-sync'
 import { notifyError } from '@/store/notifications'
 import { reviewRepoCwd } from '@/store/review'
+import { $connection } from '@/store/session'
 
 const ICON = '0.8rem'
 
@@ -19,21 +21,26 @@ const ICON = '0.8rem'
 export function ReviewSyncBar() {
   const { t } = useI18n()
   const c = t.statusStack.coding
+  const connection = useStore($connection)
+  const owner = currentGitSyncOwner(connection)
   const cwd = reviewRepoCwd()
   const status = useStore(repoStatusForCwd(cwd))
   const busyByCwd = useStore($gitSyncBusyByCwd)
-  const busy = cwd ? busyByCwd[cwd] : null
+  const busy = cwd ? busyByCwd[gitSyncScopeKey(owner, cwd)] : null
 
-  if (!cwd || !status) {
+  if (!cwd || !status || status.syncAvailable !== true) {
     return null
   }
 
   const branch = status.detached ? c.detached : status.branch || c.noBranch
-  const canPull = !busy && !status.detached && status.behind > 0 && status.changed === 0 && status.conflicted === 0
+
+  const canPull =
+    !busy && !status.detached && status.ahead === 0 && status.behind > 0 && status.changed === 0 && status.conflicted === 0
+
   const canPush = !busy && !status.detached && status.behind === 0
 
   const run = (action: GitSyncAction) => {
-    void runGitSync(action, cwd).catch(error => notifyError(error, c[action]))
+    void runGitSync(action, cwd, owner).catch(error => notifyError(error, c[action]))
   }
 
   return (

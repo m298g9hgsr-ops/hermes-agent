@@ -3688,11 +3688,11 @@ export const en: Translations = {
       switchTo: branch => `Switch to ${branch}`,
       switchFailed: branch => `Could not switch to ${branch}`,
       worktrees: 'Worktrees',
-      sync: 'Sync with GitHub',
-      fetch: 'Fetch from GitHub',
-      pull: 'Pull from GitHub',
-      push: 'Push to GitHub',
-      syncing: 'Syncing with GitHub…',
+      sync: 'Sync with remote',
+      fetch: 'Fetch from remote',
+      pull: 'Pull from remote',
+      push: 'Push to remote',
+      syncing: 'Syncing with remote…',
       upToDate: 'No local divergence'
     }
   },

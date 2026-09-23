@@ -1443,6 +1443,9 @@ export interface HermesRepoStatus {
   removed: number
   // Capped changed-file list (REPO_STATUS_FILE_CAP) for the diff/open actions.
   files: HermesRepoStatusFile[]
+  // Present only when the connected backend exposes the safe sync routes.
+  // Older remote backends omit it so the UI can hide unsupported controls.
+  syncAvailable?: boolean
 }
 
 // Diff scope for the review pane, mirroring Codex: uncommitted working-tree

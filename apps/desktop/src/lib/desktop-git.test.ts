@@ -1,6 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { setApiRequestConnection } from '@/hermes'
+import { currentGitSyncOwner } from '@/lib/git-owner'
 import { $connection } from '@/store/session'
 
 import { desktopGit } from './desktop-git'
@@ -106,6 +107,21 @@ describe('desktop git facade', () => {
       path: '/api/git/sync/push'
     })
     expect(localGit.sync.fetch).not.toHaveBeenCalled()
+  })
+
+  it('pins a captured connection/profile owner onto sync requests', async () => {
+    $connection.set({ mode: 'remote', connectionId: 'remote-b', profile: 'work' } as never)
+    const owner = currentGitSyncOwner($connection.get())
+
+    await desktopGit(owner)?.sync.fetch('/srv/work')
+
+    expect(api).toHaveBeenCalledWith({
+      body: { path: '/srv/work' },
+      connectionId: 'remote-b',
+      method: 'POST',
+      path: '/api/git/sync/fetch',
+      profile: 'work'
+    })
   })
 
   it('targets the active profile backend so a remote profile never touches the local repo', async () => {

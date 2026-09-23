@@ -31,7 +31,7 @@ import {
   stageReviewFile,
   toggleReview
 } from './review'
-import { $currentCwd } from './session'
+import { $connection, $currentCwd } from './session'
 
 // requestOneShot is the only cross-module dependency that must be faked (it
 // reaches the gateway); everything else routes through window.hermesDesktop.git,
@@ -92,6 +92,7 @@ beforeEach(() => {
   $reviewRevertTarget.set(undefined)
   $reviewScopeCwd.set(null)
   $reviewScopeTarget.set('main')
+  $connection.set(null)
   $currentCwd.set('/repo')
 })
 
@@ -216,6 +217,18 @@ describe('view state', () => {
     await Promise.resolve()
     await Promise.resolve()
     expect(review.list).toHaveBeenCalledWith('/repo', 'uncommitted', null)
+  })
+
+  it('re-homes a pinned review when the connection owner changes', () => {
+    const review = stubReview()
+    openReview('/tile-worktree')
+
+    $connection.set({ mode: 'remote', connectionId: 'connection-b', profile: 'work' } as never)
+
+    expect($reviewScopeCwd.get()).toBeNull()
+    expect($reviewScopeTarget.get()).toBe('main')
+    expect($reviewFiles.get()).toEqual([])
+    expect(review.list).toHaveBeenCalled()
   })
 
   it('openReview pins the pane to a tile worktree when scoped', async () => {

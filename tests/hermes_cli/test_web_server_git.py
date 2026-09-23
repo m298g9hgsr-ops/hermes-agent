@@ -181,11 +181,100 @@ def test_sync_fetch_pull_and_push_roundtrip(client, repo_with_remote, tmp_path):
     assert pushed.json()["branch"] == "sync-feature"
 
 
+def test_sync_fetch_follows_configured_upstream(client, repo_with_remote, tmp_path):
+    origin = subprocess.run(
+        ["git", "remote", "get-url", "origin"],
+        cwd=repo_with_remote,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    _git(repo_with_remote, "remote", "rename", "origin", "upstream")
+    other = tmp_path / "other"
+    subprocess.run(["git", "clone", "-q", origin, str(other)], check=True, capture_output=True)
+    _git(other, "config", "user.email", "t@example.com")
+    _git(other, "config", "user.name", "Test")
+    (other / "upstream.txt").write_text("upstream\\n", encoding="utf-8")
+    _git(other, "add", "upstream.txt")
+    _git(other, "commit", "-qm", "upstream")
+    _git(other, "push", "-q", "origin", "HEAD")
+
+    response = client.post("/api/git/sync/fetch", json={"path": str(repo_with_remote)})
+    assert response.status_code == 200
+    assert response.json()["behind"] == 1
+
+
 def test_sync_pull_rejects_dirty_worktree(client, repo_with_remote):
     (repo_with_remote / "draft.txt").write_text("draft\n", encoding="utf-8")
     response = client.post("/api/git/sync/pull", json={"path": str(repo_with_remote)})
     assert response.status_code == 400
     assert "uncommitted changes" in response.json()["detail"]
+
+
+def test_sync_pull_preserves_ignored_collision(client, repo_with_remote, tmp_path):
+    origin = subprocess.run(
+        ["git", "remote", "get-url", "origin"],
+        cwd=repo_with_remote,
+        check=True,
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+    (repo_with_remote / ".gitignore").write_text("secret.txt\n", encoding="utf-8")
+    _git(repo_with_remote, "add", ".gitignore")
+    _git(repo_with_remote, "commit", "-qm", "ignore secret")
+    _git(repo_with_remote, "push", "-q", "origin", "main")
+    (repo_with_remote / "secret.txt").write_text("local ignored content\n", encoding="utf-8")
+
+    other = tmp_path / "other"
+    subprocess.run(["git", "clone", "-q", origin, str(other)], check=True, capture_output=True)
+    _git(other, "config", "user.email", "t@example.com")
+    _git(other, "config", "user.name", "Test")
+    (other / "secret.txt").write_text("remote content\n", encoding="utf-8")
+    _git(other, "add", "-f", "secret.txt")
+    _git(other, "commit", "-qm", "track secret")
+    _git(other, "push", "-q", "origin", "HEAD")
+
+    response = client.post("/api/git/sync/pull", json={"path": str(repo_with_remote)})
+    assert response.status_code == 400
+    assert (repo_with_remote / "secret.txt").read_text(encoding="utf-8") == "local ignored content\n"
+
+
+def test_sync_push_ignores_force_refspec(client, repo_with_remote, tmp_path):
+    origin = Path(
+        subprocess.run(
+            ["git", "remote", "get-url", "origin"],
+            cwd=repo_with_remote,
+            check=True,
+            capture_output=True,
+            text=True,
+        ).stdout.strip()
+    )
+    local_file = repo_with_remote / "local.txt"
+    local_file.write_text("local\n", encoding="utf-8")
+    _git(repo_with_remote, "add", "local.txt")
+    _git(repo_with_remote, "commit", "-qm", "local")
+
+    other = tmp_path / "other"
+    subprocess.run(["git", "clone", "-q", str(origin), str(other)], check=True, capture_output=True)
+    _git(other, "config", "user.email", "t@example.com")
+    _git(other, "config", "user.name", "Test")
+    (other / "remote.txt").write_text("remote\n", encoding="utf-8")
+    _git(other, "add", "remote.txt")
+    _git(other, "commit", "-qm", "remote")
+    _git(other, "push", "-q", "origin", "HEAD")
+    _git(repo_with_remote, "config", "remote.origin.push", "+refs/heads/*:refs/heads/*")
+
+    before = subprocess.run(
+        ["git", "rev-parse", "refs/heads/main"], cwd=origin, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    response = client.post("/api/git/sync/push", json={"path": str(repo_with_remote)})
+    review_response = client.post("/api/git/review/push", json={"path": str(repo_with_remote)})
+    after = subprocess.run(
+        ["git", "rev-parse", "refs/heads/main"], cwd=origin, check=True, capture_output=True, text=True
+    ).stdout.strip()
+    assert response.status_code == 400
+    assert review_response.status_code == 400
+    assert after == before
 
 
 def test_worktree_add_initializes_plain_folder(client, tmp_path):

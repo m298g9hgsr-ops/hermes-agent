@@ -229,6 +229,7 @@ def repo_status(cwd: str) -> dict | None:
         "ahead": ahead, "behind": behind,
         **{flag: sum(f[flag] for f in files) for flag in ("staged", "unstaged", "untracked", "conflicted")},
         "changed": len(files), "added": added, "removed": sum(r for _, r in counts), "files": files[:200],
+        "syncAvailable": True,
     }
 
 
@@ -348,12 +349,14 @@ def review_commit(cwd: str, message: str, push: bool) -> dict:
 
 
 def _review_push(cwd: str) -> None:
-    if _git_line(cwd, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"]):
-        _git_ok(cwd, ["push"])
+    upstream = _sync_upstream(cwd)
+    if upstream:
+        remote, _, destination = upstream
+        _git_ok(cwd, ["push", remote, f"HEAD:{destination}"])
         return
     branch = _git_line(cwd, ["rev-parse", "--abbrev-ref", "HEAD"])
     if branch and branch != "HEAD":
-        _git_ok(cwd, ["push", "-u", "origin", branch])
+        _git_ok(cwd, ["push", "-u", _default_sync_remote(cwd), f"HEAD:{branch}"])
 
 
 def review_push(cwd: str) -> dict:
@@ -368,6 +371,25 @@ def _sync_branch(cwd: str) -> str:
     return branch
 
 
+def _remote_names(cwd: str) -> list[str]:
+    return [line.strip() for line in _git_out(cwd, ["remote"]).splitlines() if line.strip()]
+
+
+def _sync_upstream(cwd: str) -> tuple[str, str, str] | None:
+    upstream = _git_line(cwd, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])
+    if not upstream or upstream == "@{u}":
+        return None
+    for remote in sorted(_remote_names(cwd), key=len, reverse=True):
+        if upstream == remote or upstream.startswith(f"{remote}/"):
+            return remote, upstream, upstream[len(remote) + 1:]
+    raise RuntimeError("Cannot resolve the branch upstream remote.")
+
+
+def _default_sync_remote(cwd: str) -> str:
+    remotes = _remote_names(cwd)
+    return "origin" if "origin" in remotes else (remotes[0] if remotes else "origin")
+
+
 def _sync_status(cwd: str, action: str) -> dict:
     status = repo_status(cwd)
     if not status:
@@ -376,31 +398,43 @@ def _sync_status(cwd: str, action: str) -> dict:
 
 
 def sync_fetch(cwd: str) -> dict:
-    """Refresh origin refs without touching the working tree."""
-    _git_ok(cwd, ["fetch", "--prune", "origin"])
+    """Refresh the branch's upstream remote without touching the working tree."""
+    upstream = _sync_upstream(cwd)
+    remote = upstream[0] if upstream else _default_sync_remote(cwd)
+    _git_ok(cwd, ["fetch", "--prune", remote])
     return _sync_status(cwd, "fetch")
 
 
 def sync_pull(cwd: str) -> dict:
-    """Fast-forward-only pull; never create a merge or hide a dirty tree."""
+    """Fast-forward-only pull; never create a merge or overwrite ignored files."""
     _sync_branch(cwd)
+    upstream = _sync_upstream(cwd)
+    if not upstream:
+        raise RuntimeError("Cannot pull: configure an upstream branch first.")
+    remote, upstream_ref, _ = upstream
     code, raw = _status_z(cwd)
     if code != 0:
         raise RuntimeError("Cannot pull: path is not a Git repository.")
     if any(_walk_entries(raw)):
         raise RuntimeError("Cannot pull with uncommitted changes. Commit or stash them first.")
-    _git_ok(cwd, ["pull", "--ff-only"])
+    _git_ok(cwd, ["fetch", "--prune", remote])
+    _git_ok(cwd, ["merge", "--ff-only", "--no-overwrite-ignore", upstream_ref])
     return _sync_status(cwd, "pull")
 
 
 def sync_push(cwd: str) -> dict:
-    """Push without force, refusing a branch that is behind its upstream."""
+    """Push with an explicit non-force refspec, refusing behind branches."""
     branch = _sync_branch(cwd)
     status = _sync_status(cwd, "push")
     if status.get("behind", 0) > 0:
         raise RuntimeError("Cannot push: this branch is behind its upstream. Pull first.")
-    upstream = _git_line(cwd, ["rev-parse", "--abbrev-ref", "--symbolic-full-name", "@{u}"])
-    _git_ok(cwd, ["push"] if upstream else ["push", "-u", "origin", branch])
+    upstream = _sync_upstream(cwd)
+    remote = upstream[0] if upstream else _default_sync_remote(cwd)
+    destination = upstream[2] if upstream else branch
+    if not destination:
+        raise RuntimeError("Cannot push: the branch has no destination.")
+    refspec = f"HEAD:{destination}"
+    _git_ok(cwd, ["push", remote, refspec] if upstream else ["push", "-u", remote, refspec])
     return _sync_status(cwd, "push")
 
 

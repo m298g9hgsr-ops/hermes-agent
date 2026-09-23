@@ -43,6 +43,21 @@ function runGh(args, cwd, ghBin): Promise<{ ok: boolean; stdout: string }> {
   })
 }
 
+function noninteractiveGitEnv() {
+  const blocked = /^(editor|visual|pager|ssh_askpass|git_(askpass|config.*|editor|exec_path|external_diff|pager|proxy_command|sequence_editor|ssh|ssh_command|template_dir))$/i
+  const configuredSsh = process.env.GIT_SSH_COMMAND || process.env.GIT_SSH
+
+  const env = Object.fromEntries(
+    Object.entries(process.env).filter(([key, value]) => value !== undefined && !blocked.test(key))
+  ) as Record<string, string>
+
+  env.GIT_TERMINAL_PROMPT = '0'
+  env.GCM_INTERACTIVE = 'Never'
+  env.GIT_SSH_COMMAND = configuredSsh || 'ssh -o BatchMode=yes'
+
+  return env
+}
+
 function gitFor(cwd, gitBin) {
   // `gitBin` is resolved inside the Electron main process from known install
   // locations or PATH — never renderer/user input. simple-git's custom-binary
@@ -55,9 +70,13 @@ function gitFor(cwd, gitBin) {
     baseDir: cwd,
     binary: gitBin || 'git',
     maxConcurrentProcesses: 4,
+    timeout: { block: 30_000 },
     trimmed: false,
-    ...(gitBin && /\s/.test(gitBin) ? { unsafe: { allowUnsafeCustomBinary: true } } : {})
-  })
+    unsafe: {
+      allowUnsafeCustomBinary: Boolean(gitBin && /\s/.test(gitBin)),
+      allowUnsafeSshCommand: true
+    }
+  }).env(noninteractiveGitEnv())
 }
 
 // simple-git reports renames as `old => new` (and `dir/{old => new}/f`); resolve
@@ -540,11 +559,12 @@ async function reviewPush(repoPath, gitBin) {
   const cwd = resolveRequestedPathForIpc(repoPath, { purpose: 'Review push' })
   const git = gitFor(cwd, gitBin)
   const status = await git.status()
+  const upstream = await resolveSyncUpstream(git)
 
-  if (status.tracking) {
-    await git.push()
+  if (upstream) {
+    await git.raw(['push', upstream.remote, `HEAD:${upstream.branch}`])
   } else if (status.current) {
-    await git.raw(['push', '-u', 'origin', status.current])
+    await git.raw(['push', '-u', await defaultSyncRemote(git), `HEAD:${status.current}`])
   }
 
   return { ok: true }
@@ -564,22 +584,76 @@ async function syncStatus(cwd, gitBin, action) {
   return status
 }
 
+async function syncRemoteNames(git) {
+  try {
+    return String(await git.raw(['remote']))
+      .split(/\r?\n/)
+      .map(remote => remote.trim())
+      .filter(Boolean)
+  } catch {
+    return []
+  }
+}
+
+async function resolveSyncUpstream(git) {
+  let upstream
+
+  try {
+    upstream = String(
+      await git.raw(['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}'])
+    ).trim()
+  } catch {
+    return null
+  }
+
+  if (!upstream || upstream === '@{u}') {
+    return null
+  }
+
+  const remotes = (await syncRemoteNames(git)).sort((left, right) => right.length - left.length)
+  const remote = remotes.find(name => upstream === name || upstream.startsWith(`${name}/`))
+
+  if (!remote) {
+    throw new Error('Cannot resolve the branch upstream remote.')
+  }
+
+  return {
+    branch: upstream.slice(remote.length + 1),
+    name: upstream,
+    remote
+  }
+}
+
+async function defaultSyncRemote(git) {
+  const remotes = await syncRemoteNames(git)
+
+  return remotes.includes('origin') ? 'origin' : remotes[0] || 'origin'
+}
+
 // Fetch updates remote-tracking refs only; it never touches the working tree.
 async function syncFetch(repoPath, gitBin) {
   const cwd = syncCwd(repoPath, 'Git fetch')
   const git = gitFor(cwd, gitBin)
+  const upstream = await resolveSyncUpstream(git)
+  const remote = upstream?.remote || (await defaultSyncRemote(git))
 
-  await git.raw(['fetch', '--prune', 'origin'])
+  await git.raw(['fetch', '--prune', remote])
 
   return syncStatus(cwd, gitBin, 'fetch')
 }
 
-// Pull is deliberately fast-forward-only and refuses dirty worktrees. A normal
-// `git pull` can create a merge commit or leave a half-applied conflict state;
-// the Desktop sync affordance must never do either behind the user's back.
+// Pull is deliberately fast-forward-only and refuses dirty worktrees. Fetch and
+// merge are explicit so `--no-overwrite-ignore` protects ignored local files;
+// `git pull` cannot carry that merge option.
 async function syncPull(repoPath, gitBin) {
   const cwd = syncCwd(repoPath, 'Git pull')
   const git = gitFor(cwd, gitBin)
+  const upstream = await resolveSyncUpstream(git)
+
+  if (!upstream) {
+    throw new Error('Cannot pull: configure an upstream branch first.')
+  }
+
   const status = await git.status(['--untracked-files=normal'])
 
   if (status.detached || !status.current) {
@@ -590,13 +664,14 @@ async function syncPull(repoPath, gitBin) {
     throw new Error('Cannot pull with uncommitted changes. Commit or stash them first.')
   }
 
-  await git.raw(['pull', '--ff-only'])
+  await git.raw(['fetch', '--prune', upstream.remote])
+  await git.raw(['merge', '--ff-only', '--no-overwrite-ignore', upstream.name])
 
   return syncStatus(cwd, gitBin, 'pull')
 }
 
-// Push never uses force. A branch that is behind its upstream is rejected so
-// the UI can offer Pull first instead of producing a confusing remote reject.
+// Push never uses force. An explicit refspec overrides configured `+` refspecs;
+// a branch that is behind its upstream is rejected before the network call.
 async function syncPush(repoPath, gitBin) {
   const cwd = syncCwd(repoPath, 'Git push')
   const git = gitFor(cwd, gitBin)
@@ -610,11 +685,16 @@ async function syncPush(repoPath, gitBin) {
     throw new Error('Cannot push: this branch is behind its upstream. Pull first.')
   }
 
-  if (status.tracking) {
-    await git.push()
-  } else {
-    await git.raw(['push', '-u', 'origin', status.current])
+  const upstream = await resolveSyncUpstream(git)
+  const remote = upstream?.remote || (await defaultSyncRemote(git))
+  const destination = upstream?.branch || status.current
+
+  if (!destination) {
+    throw new Error('Cannot push: the branch has no destination.')
   }
+
+  const refspec = `HEAD:${destination}`
+  await git.raw(upstream ? ['push', remote, refspec] : ['push', '-u', remote, refspec])
 
   return syncStatus(cwd, gitBin, 'push')
 }
@@ -844,7 +924,8 @@ async function repoStatus(repoPath, gitBin) {
     changed: files.length,
     added: 0,
     removed: 0,
-    files: files.slice(0, 200)
+    files: files.slice(0, 200),
+    syncAvailable: true
   }
 
   // +/- vs HEAD (staged + unstaged tracked changes). No HEAD yet → leave 0.
