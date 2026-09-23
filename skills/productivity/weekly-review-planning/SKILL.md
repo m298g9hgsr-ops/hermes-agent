@@ -1,6 +1,6 @@
 ---
 name: weekly-review-planning
-description: "Weekly reset: commitments, stalled work, next-week plan."
+description: 每週檢視：承諾、停滯工作與下週計畫.
 version: 0.1.0
 author: Ben Barclay (benbarclay), Hermes Agent
 license: MIT
@@ -11,71 +11,90 @@ metadata:
     related_skills: [obsidian, notion, airtable, google-workspace, email-inbox-triage]
 ---
 
-# Weekly Review and Planning
+# 每週檢視與規劃
 
-Run a bounded weekly reset across the user's chosen systems. This is a concrete recurring task, not a generic productivity methodology — the `weekly-review` Automation Blueprint schedules it as a cron job.
+在有界的範圍內，跨使用者選定的系統執行每週重置。這是具體的重複性任務，
+不是一通則的生產力方法論——`weekly-review` 自動化藍圖會以 cron 作業
+排程它。
 
-## When to Use
+## 使用時機
 
-- "Run my weekly review."
-- "What did I commit to and what is slipping?"
-- "Plan next week from my calendar, tasks, and notes."
-- "Find stale projects and waiting items."
-- A cron tick fires for a scheduled weekly review.
+- 「執行我的每週檢視。」
+- 「我承諾了什麼、哪些在落後？」
+- 「依我的行事曆、任務與筆記規劃下週。」
+- 「找出停滯的專案與等待中的項目。」
+- 排定每週檢視的 cron tick 觸發。
 
-Don't use for: daily briefs (see the `google-workspace` daily-brief reference) or single-inbox triage (`email-inbox-triage`).
+不適用於：每日簡報（見 `google-workspace` 的 daily-brief 參考）或
+單一收件匣分類（`email-inbox-triage`）。
 
-## Procedure
+## 操作步驟
 
-### 1. Set systems and window
+### 1. 設定系統與時間窗
 
-Confirm timezone, review period, planning horizon, authoritative task/project store, calendars, inboxes, and allowed writes. Default to recommendations/drafts, not mutations. Done when source-of-truth conflicts have a declared winner.
+確認時區、檢視期間、規劃視野、具權威性的任務／專案存放處、行事曆、
+收件匣與允許的寫入。預設提出建議／草稿，而非直接變更。當來源衝突已
+宣明勝方時即完成。
 
-### 2. Review calendar evidence
+### 2. 檢視行事曆證據
 
-Load `google-workspace` or the relevant calendar connector. Inspect the completed week for meetings and commitments, then the next 1-2 weeks for deadlines, travel, preparation, and capacity. Capture follow-ups implied by past events and conflicts ahead. Done when both retrospective and horizon are covered.
+載入 `google-workspace` 或相關行事曆連接器。檢視已結束週的會議與
+承諾，再檢視接下來 1-2 週的期限、旅行、準備工作與容量。捕捉過去事件
+隱含的後續事項與前方的衝突。當回顧與視野兩者皆涵蓋時即完成。
 
-### 3. Clear capture inboxes
+### 3. 清空捕捉收件匣
 
-Review the task inbox, notes (`obsidian`, `notion`), flagged email (`email-inbox-triage` owns thread-level triage), and other declared capture points. Convert each item to next action, project, waiting, scheduled, someday, reference, archive, or delete proposal. Do not mutate until scope is approved. Done when remaining unprocessed items are counted and stated.
+檢視任務收件匣、筆記（`obsidian`、`notion`）、已標記郵件
+（`email-inbox-triage` 負責執行緒層級的分類）與其他宣告的捕捉點。
+將每個項目轉為下一步行動、專案、等待中、已排程、某日、參考、封存
+或刪除提案。範圍核准前不執行變更。當剩餘未處理項目已計數並說明時
+即完成。
 
-### 4. Reconcile active projects
+### 4. 調和進行中專案
 
-For each project identify desired outcome, next action, owner, deadline, blocker, last meaningful activity, and source link. Flag projects with no next action, missed dates, duplicate records, or contradictory status. Done when every active project is actionable or explicitly paused.
+對每個專案標記期望成果、下一步行動、負責人、期限、阻礙、最後一次
+實質活動與來源連結。標記沒有下一步行動、已錯過日期、重複記錄或狀態
+矛盾的專案。當每個進行中專案都可執行或已明確暫停時即完成。
 
-### 5. Review waiting and commitments
+### 5. 檢視等待中與承諾
 
-Find promises made by the user and items owed by others. Propose follow-ups with dates and channels. Do not infer that silence means completion. Done when each waiting item has an owner and next review/follow-up date.
+找出使用者做出的承諾與他人欠下的項目。提出附日期與管道的後續事項。
+不要推論沉默等於完成。當每個等待項目都有負責人與下次檢視／後續日期時
+即完成。
 
-### 6. Build a capacity-aware plan
+### 6. 建立容量感知的計畫
 
-Estimate fixed calendar load and select a small set of weekly outcomes plus near-term next actions. Rank by consequence, deadline, dependency, and effort; do not fill every free hour. Done when the plan fits actual capacity and names deferred work.
+估算固定行事曆負載，選出少量每週成果與近期下一步行動。依後果、期限、
+依賴與努力排序；不填滿每個空閒時段。當計畫符合實際容量並點名延後
+工作時即完成。
 
-### 7. Apply approved updates
+### 7. 套用已核准更新
 
-Update tasks/projects, create calendar holds, archive processed items, and draft follow-ups only as approved. Read every changed record back from the provider. Done when verified writes match the review summary.
+只在核准範圍內更新任務／專案、建立行事曆保留、封存已處理項目與草擬
+後續事項。從提供者讀回每個已變更記錄。當已驗證的寫入符合檢視摘要時
+即完成。
 
-## Output Shape
+## 輸出形式
 
-1. Wins and completed commitments
-2. Overdue or at risk
-3. Waiting/follow-ups
-4. Stalled or ambiguous projects
-5. Next week's outcomes and calendar constraints
-6. Proposed updates awaiting approval
-7. Coverage gaps
+1. 成果與已完成的承諾
+2. 逾期或高風險
+3. 等待中／後續事項
+4. 停滯或含糊的專案
+5. 下週成果與行事曆限制
+6. 等待核准的建議更新
+7. 涵蓋缺口
 
-## Pitfalls
+## 常見陷阱
 
-- Planning from tasks without calendar capacity.
-- Carrying every unfinished item forward as high priority.
-- Marking projects active with no next action.
-- Silently deleting or rescheduling personal commitments.
-- Treating silence from others as completion.
+- 不考量行事曆容量就從任務規劃。
+- 把每件未完成項目都往後帶成高優先。
+- 沒有下一步行動卻標記專案為進行中。
+- 默默刪除或重排個人承諾。
+- 把來自他人的沉默當成完成。
 
-## Verification
+## 驗證
 
-- [ ] Both the completed week and the planning horizon were covered, or gaps are stated.
-- [ ] Every stalled/waiting flag traces to a specific record, event, or thread.
-- [ ] No task, event, or note was mutated without approval; approved writes were read back.
-- [ ] The plan names what was deferred, not just what was chosen.
+- [ ] 已結束週與規劃視野皆有涵蓋，或缺口已說明。
+- [ ] 每個停滯／等待旗標都可追溯到特定記錄、事件或執行緒。
+- [ ] 未經核准沒有任何任務、事件或筆記被變更；核准的寫入已讀回。
+- [ ] 計畫點名被延後的項目，而不只是被選中的項目。

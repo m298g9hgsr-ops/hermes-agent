@@ -1,6 +1,6 @@
 ---
 name: findmy
-description: "Track Apple devices/AirTags via FindMy.app on macOS."
+description: "在 macOS 上透過 FindMy.app 追蹤 Apple 裝置與 AirTag."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -10,30 +10,28 @@ metadata:
     tags: [FindMy, AirTag, location, tracking, macOS, Apple]
 ---
 
-# Find My (Apple)
+# Find My (Apple) 技能
 
-Track Apple devices and AirTags via the FindMy.app on macOS. Since Apple doesn't
-provide a CLI for FindMy, this skill uses AppleScript to open the app and
-screen capture to read device locations.
+透過 macOS 上的 FindMy.app 追蹤 Apple 裝置與 AirTag。由於 Apple 並未為 FindMy 提供 CLI，本技能使用 AppleScript 開啟應用程式，並用螢幕截圖來讀取裝置位置。
 
-## Prerequisites
+## 前置需求
 
-- **macOS** with Find My app and iCloud signed in
-- Devices/AirTags already registered in Find My
-- Screen Recording permission for terminal (System Settings → Privacy → Screen Recording)
-- **Optional but recommended**: Install `peekaboo` for better UI automation:
+- **macOS** 且已安裝 Find My 應用程式並登入 iCloud
+- 裝置/AirTag 已註冊在 Find My 中
+- 終端具備螢幕錄製權限（系統設定 → 隱私權與安全性 → 螢幕錄製）
+- **選用但仍建議**：安裝 `peekaboo` 以獲得更可靠的 UI 自動化：
   `brew install steipete/tap/peekaboo`
 
-## When to Use
+## 使用時機
 
-- User asks "where is my [device/cat/keys/bag]?"
-- Tracking AirTag locations
-- Checking device locations (iPhone, iPad, Mac, AirPods)
-- Monitoring pet or item movement over time (AirTag patrol routes)
+- 使用者詢問「我的[裝置/貓/鑰匙/包包]在哪裡？」
+- 追蹤 AirTag 的位置
+- 檢查裝置位置（iPhone、iPad、Mac、AirPods）
+- 長期監控寵物或物品的移動（AirTag 巡邏路線）
 
-## Method 1: AppleScript + Screenshot (Basic)
+## 方法 1：AppleScript + 螢幕截圖（基礎）
 
-### Open FindMy and Navigate
+### 開啟 FindMy 並導覽
 
 ```bash
 # Open Find My app
@@ -46,12 +44,13 @@ sleep 3
 screencapture -w -o ~/.hermes/cache/scratch/findmy.png
 ```
 
-Then use `vision_analyze` to read the screenshot:
+接著使用 `vision_analyze` 讀取螢幕截圖：
+
 ```
 vision_analyze(image_url="~/.hermes/cache/scratch/findmy.png", question="What devices/items are shown and what are their locations?")
 ```
 
-### Switch Between Tabs
+### 切換分頁
 
 ```bash
 # Switch to Devices tab
@@ -71,9 +70,9 @@ tell application "System Events"
 end tell'
 ```
 
-## Method 2: Peekaboo UI Automation (Recommended)
+## 方法 2：Peekaboo UI 自動化（建議）
 
-If `peekaboo` is installed, use it for more reliable UI interaction:
+若已安裝 `peekaboo`，請用它進行更可靠的 UI 互動：
 
 ```bash
 # Open Find My
@@ -90,14 +89,15 @@ peekaboo click --on B3 --app "FindMy"
 peekaboo image --app "FindMy" --path ~/.hermes/cache/scratch/findmy-detail.png
 ```
 
-Then analyze with vision:
+接著使用 vision 分析：
+
 ```
 vision_analyze(image_url="~/.hermes/cache/scratch/findmy-detail.png", question="What is the location shown for this device/item? Include address and coordinates if visible.")
 ```
 
-## Workflow: Track AirTag Location Over Time
+## 操作流程：長時間追蹤 AirTag 位置
 
-For monitoring an AirTag (e.g., tracking a cat's patrol route):
+例如監控 AirTag（如追蹤貓的巡邏路線）：
 
 ```bash
 # 1. Open FindMy to Items tab
@@ -113,19 +113,19 @@ while true; do
 done
 ```
 
-Analyze each screenshot with vision to extract coordinates, then compile a route.
+用 vision 分析每張螢幕截圖以取得座標，再彙整成一條路線。
 
-## Limitations
+## 限制
 
-- FindMy has **no CLI or API** — must use UI automation
-- AirTags only update location while the FindMy page is actively displayed
-- Location accuracy depends on nearby Apple devices in the FindMy network
-- Screen Recording permission required for screenshots
-- AppleScript UI automation may break across macOS versions
+- FindMy **沒有 CLI 或 API**——必須使用 UI 自動化
+- AirTag 只有在 FindMy 頁面持續顯示時才會更新位置
+- 位置準確度取決於 FindMy 網路中附近的 Apple 裝置
+- 進行螢幕截圖需要螢幕錄製權限
+- AppleScript UI 自動化在不同 macOS 版本間可能失效
 
-## Rules
+## 規則
 
-1. Keep FindMy app in the foreground when tracking AirTags (updates stop when minimized)
-2. Use `vision_analyze` to read screenshot content — don't try to parse pixels
-3. For ongoing tracking, use a cronjob to periodically capture and log locations
-4. Respect privacy — only track devices/items the user owns
+1. 追蹤 AirTag 時應讓 FindMy 應用程式維持在前景（最小化後更新會停止）
+2. 使用 `vision_analyze` 讀取螢幕截圖內容——不要試圖解析像素
+3. 若要持續追蹤，請用 cronjob 定期擷取並記錄位置
+4. 尊重隱私——只追蹤使用者擁有的裝置/物品

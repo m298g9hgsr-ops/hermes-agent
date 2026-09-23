@@ -1,6 +1,6 @@
 ---
 name: apple-notes
-description: "Manage Apple Notes via memo CLI: create, search, edit."
+description: "透過 memo CLI 管理 Apple Notes：建立、搜尋、編輯."
 version: 1.0.1
 author: Hermes Agent
 license: MIT
@@ -13,32 +13,32 @@ prerequisites:
   commands: [memo]
 ---
 
-# Apple Notes
+# Apple Notes 技能
 
-Use `memo` to manage Apple Notes directly from the terminal. Notes sync across all Apple devices via iCloud.
+使用 `memo` 直接從終端管理 Apple Notes。筆記會透過 iCloud 同步到所有 Apple 裝置。
 
-## Prerequisites
+## 前置需求
 
-- **macOS** with Notes.app
-- Install: `brew tap antoniorodr/memo && brew install antoniorodr/memo/memo`
-- Grant Automation access to Notes.app when prompted (System Settings → Privacy → Automation)
+- **macOS** 且已安裝 Notes.app
+- 安裝：`brew tap antoniorodr/memo && brew install antoniorodr/memo/memo`
+- 出現提示時，授予 Notes.app 自動化（Automation）存取權限（系統設定 → 隱私權與安全性 → 自動化）
 
-## When to Use
+## 使用時機
 
-- User asks to create, view, or search Apple Notes
-- Saving information to Notes.app for cross-device access
-- Organizing notes into folders
-- Exporting notes to Markdown/HTML
+- 使用者要求建立、檢視或搜尋 Apple Notes
+- 將資訊儲存到 Notes.app，以供跨裝置存取
+- 將筆記整理到資料夾中
+- 將筆記匯出為 Markdown/HTML
 
-## When NOT to Use
+## 不適用時機
 
-- Obsidian vault management → use the `obsidian` skill
-- Bear Notes → separate app (not supported here)
-- Quick agent-only notes → use the `memory` tool instead
+- Obsidian 保管庫管理 → 請使用 `obsidian` 技能
+- Bear Notes → 獨立的應用程式（此處不支援）
+- 僅供代理內部使用的快速筆記 → 請改用 `memory` 工具
 
-## Quick Reference
+## 快速參考
 
-### View Notes
+### 檢視筆記
 
 ```bash
 memo notes                        # List all notes
@@ -46,49 +46,47 @@ memo notes -f "Folder Name"       # Filter by folder
 memo notes -s "query"             # Search notes (fuzzy)
 ```
 
-### Create Notes
+### 建立筆記
 
 ```bash
 memo notes -a                     # Add a note (opens your $EDITOR)
 memo notes -a -f "Folder Name"    # Add a note into a specific folder
 ```
 
-`-a`/`--add` is a bare flag — it opens your `$EDITOR` to compose the note; it does
-not take a title argument. Use `-f/--folder` to target a folder. Set `$EDITOR`
-first (e.g. `export EDITOR=vim`).
+`-a`/`--add` 是無參數旗標——它會開啟你的 `$EDITOR` 來撰寫筆記，不接受標題參數。使用 `-f/--folder` 指定目標資料夾。請先設定 `$EDITOR`（例如 `export EDITOR=vim`）。
 
-### Edit Notes
+### 編輯筆記
 
 ```bash
 memo notes -e                     # Interactive selection to edit
 ```
 
-### Delete Notes
+### 刪除筆記
 
 ```bash
 memo notes -d                     # Interactive selection to delete
 ```
 
-### Move Notes
+### 移動筆記
 
 ```bash
 memo notes -m                     # Move note to folder (interactive)
 ```
 
-### Export Notes
+### 匯出筆記
 
 ```bash
 memo notes -ex                    # Export to HTML/Markdown
 ```
 
-## Limitations
+## 限制
 
-- Cannot edit notes containing images or attachments
-- Interactive prompts require terminal access (use pty=true if needed)
-- macOS only — requires Apple Notes.app
+- 無法編輯包含圖片或附件的筆記
+- 互動式提示需要終端存取（如有需要請使用 pty=true）
+- 僅限 macOS——需要 Apple Notes.app
 
-## Rules
+## 規則
 
-1. Prefer Apple Notes when user wants cross-device sync (iPhone/iPad/Mac)
-2. Use the `memory` tool for agent-internal notes that don't need to sync
-3. Use the `obsidian` skill for Markdown-native knowledge management
+1. 當使用者需要跨裝置同步（iPhone/iPad/Mac）時，優先使用 Apple Notes
+2. 不需要同步的代理內部筆記，請使用 `memory` 工具
+3. 以 Markdown 為主的知識管理，請使用 `obsidian` 技能

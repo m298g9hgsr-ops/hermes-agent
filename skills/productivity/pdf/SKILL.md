@@ -1,6 +1,6 @@
 ---
 name: pdf
-description: "PDF files: create, read, merge, fill, OCR, edit text."
+description: PDF 檔案：建立、讀取、合併、填表、OCR 與文字編輯.
 version: 1.1.0
 author: Nous Research
 license: MIT
@@ -12,33 +12,46 @@ metadata:
     related_skills: [docx, xlsx, powerpoint]
 ---
 
-# PDF Skill
+# PDF 技能
 
-Create PDFs from structured specs, build and fill AcroForm forms (with layout linting and visual overlays), extract text/tables/metadata, merge/split/rotate/watermark/stamp pages, export page images, manage metadata and attachments, and encrypt/decrypt — using pypdf, reportlab, and pdfplumber. Two absorbed capabilities live in references/ (read the matching file before those tasks):
+依結構化 spec 建立 PDF、建立與填寫 AcroForm 表單（含版面 lint 與視覺疊圖）、
+擷取文字／表格／中繼資料、合併／分割／旋轉／浮水印／蓋章頁面、匯出頁面圖片、
+管理中繼資料與附件，以及加密／解密——使用 pypdf、reportlab 與 pdfplumber。
+兩個已納入的延伸能力放在 references/（執行該類任務前請先閱讀對應檔案）：
 
-- **Scanned/image-only PDFs and OCR** (pymupdf fast path, marker-pdf quality path, scripts/extract_pymupdf.py + scripts/extract_marker.py): `references/ocr-extraction.md`
-- **Editing text inside an existing PDF via natural-language prompts** (nano-pdf CLI): `references/nano-pdf-editing.md`
+- **掃描／純圖片 PDF 與 OCR**（pymupdf 快速路徑、marker-pdf 品質路徑、
+  scripts/extract_pymupdf.py ＋ scripts/extract_marker.py）：`references/ocr-extraction.md`
+- **以自然語言提示編輯既有 PDF 內的文字**（nano-pdf CLI）：`references/nano-pdf-editing.md`
 
-## When to Use
+## 使用時機
 
-- Generate a report, invoice, or multi-page document as PDF.
-- Build a fillable AcroForm (text/checkbox/radio/dropdown) from a JSON spec, linting the layout first.
-- Pull text, tables (JSON/CSV), metadata, or form-field values out of a PDF.
-- Merge, split, rotate, extract page subsets, watermark, stamp text/images at coordinates, bookmark, or compress PDFs.
-- Export pages as PNGs for visual review or for OCR hand-off; set/clear document metadata; add/extract file attachments.
-- Fill or flatten AcroForm forms; encrypt or decrypt with passwords.
-- NOT for scanned/image-only PDFs (use `references/ocr-extraction.md`) and NOT for pixel-perfect HTML-to-PDF rendering (use a headless browser).
+- 產生報告、發票或多頁文件為 PDF。
+- 依 JSON spec 建立可填寫的 AcroForm（文字／核取方塊／單選／下拉選單），
+  並先進行版面 lint。
+- 從 PDF 取出文字、表格（JSON/CSV）、中繼資料或表單欄位值。
+- 合併、分割、旋轉、擷取頁面子集、加浮水印、在座標處蓋上文字／圖片、
+  書籤，或壓縮 PDF。
+- 將頁面匯出為 PNG 供視覺檢查或交給 OCR；設定／清除文件中繼資料；
+  新增／擷取檔案附件。
+- 填寫或壓平 AcroForm 表單；以密碼加密或解密。
+- 不適用於掃描／純圖片 PDF（請用 `references/ocr-extraction.md`），
+  也不適用於需要像素級精確的 HTML 轉 PDF（請用無頭瀏覽器）。
 
-## Prerequisites
+## 前置需求
 
-- Python 3.10+ with `pypdf`, `reportlab`, `pdfplumber`:
+- Python 3.10+ 與 `pypdf`、`reportlab`、`pdfplumber`：
   `python -m pip install pypdf reportlab pdfplumber`
-- Optional, for page rasterization (`pdf_page_image.py`, overlay rendering): `python -m pip install pypdfium2`, or poppler's `pdftoppm` on PATH. Scripts fall back pypdfium2 → pdftoppm and report `{"rendered": false, "missing": [...]}` (exit 0) when neither exists.
-- Each helper script checks imports lazily and prints an install hint if a dependency is missing.
+- 選擇性：頁面點陣化（`pdf_page_image.py`、疊圖渲染）需要
+  `python -m pip install pypdfium2`，或 PATH 上的 poppler `pdftoppm`。
+  腳本依序退回 pypdfium2 → pdftoppm，兩者皆不存在時回傳
+  `{"rendered": false, "missing": [...]}`（結束碼 0）。
+- 每個輔助腳本皆延遲檢查 import，缺少相依套件時會印出安裝提示。
 
-## How to Run
+## 執行方式
 
-All helpers live in `scripts/` and are argparse CLIs — run them with the `terminal` tool; every one supports `--help`. They read/write JSON strictly as UTF-8, print JSON results to stdout, and exit non-zero on failure.
+所有輔助腳本都在 `scripts/` 且為 argparse CLI——用 `terminal` 工具執行；
+每個都支援 `--help`。它們嚴格以 UTF-8 讀寫 JSON、將 JSON 結果印到
+stdout，並以非零結束碼表示失敗。
 
 ```bash
 python scripts/pdf_create.py spec.json -o out.pdf         # build PDF from JSON spec
@@ -64,62 +77,122 @@ python scripts/pdf_meta.py doc.pdf --attach data.csv -o out.pdf
 python scripts/pdf_meta.py doc.pdf --list-attachments | --extract-attachments dir/
 ```
 
-## Quick Reference
+## 快速參考
 
-| Task | Tool | Command / API |
+| 任務 | 工具 | 指令 / API |
 |---|---|---|
-| Create doc (headings, tables, images) | reportlab platypus | `pdf_create.py spec.json -o out.pdf` |
-| Build fillable form | reportlab acroForm | `pdf_make_form.py formspec.json -o form.pdf` |
-| Lint form layout / overlay image | pure python + PIL | `pdf_form_layout.py formspec.json [--render-overlay o.png]` |
-| Per-page text | pdfplumber | `pdf_read.py f.pdf --text` |
-| Tables → JSON/CSV | pdfplumber | `pdf_read.py f.pdf --tables` |
-| Metadata / sizes / encrypted / scanned | pypdf + pdfplumber | `pdf_read.py f.pdf --meta` |
-| Merge (+ outline) | pypdf | `pdf_merge.py a.pdf b.pdf -o m.pdf` |
-| Split / extract / rotate | pypdf | `pdf_split.py f.pdf --pages 2-5 --rotate 90` |
-| List / fill / flatten form | pypdf | `pdf_read.py --fields`, `pdf_fill_form.py` |
-| Encrypt / decrypt (AES-256) | pypdf | `pdf_secure.py --encrypt/--decrypt` |
-| Watermark / stamp PDF page | pypdf | `pdf_watermark.py f.pdf --stamp w.pdf` |
-| Stamp text/image at coordinates | reportlab + pypdf | `pdf_stamp.py f.pdf --text "Sign here" --x 400 --y 60` |
-| Pages → PNG (review / OCR hand-off) | pypdfium2 or pdftoppm | `pdf_page_image.py f.pdf --pages 1-3 --out-dir imgs/` |
-| Set/clear metadata, attachments | pypdf | `pdf_meta.py --set-meta / --attach / --extract-attachments` |
-| Compress content streams | pypdf | `pdf_split.py f.pdf --pages 1-N --compress` |
+| 建立文件（標題、表格、圖片） | reportlab platypus | `pdf_create.py spec.json -o out.pdf` |
+| 建立可填寫表單 | reportlab acroForm | `pdf_make_form.py formspec.json -o form.pdf` |
+| 表單版面 lint／疊圖 | 純 Python + PIL | `pdf_form_layout.py formspec.json [--render-overlay o.png]` |
+| 逐頁文字 | pdfplumber | `pdf_read.py f.pdf --text` |
+| 表格 → JSON/CSV | pdfplumber | `pdf_read.py f.pdf --tables` |
+| 中繼資料／尺寸／加密／掃描 | pypdf + pdfplumber | `pdf_read.py f.pdf --meta` |
+| 合併（＋大綱） | pypdf | `pdf_merge.py a.pdf b.pdf -o m.pdf` |
+| 分割／擷取／旋轉 | pypdf | `pdf_split.py f.pdf --pages 2-5 --rotate 90` |
+| 列出／填寫／壓平表單 | pypdf | `pdf_read.py --fields`, `pdf_fill_form.py` |
+| 加密／解密（AES-256） | pypdf | `pdf_secure.py --encrypt/--decrypt` |
+| 浮水印／蓋章 PDF 頁面 | pypdf | `pdf_watermark.py f.pdf --stamp w.pdf` |
+| 在座標處蓋文字／圖片 | reportlab + pypdf | `pdf_stamp.py f.pdf --text "Sign here" --x 400 --y 60` |
+| 頁面 → PNG（檢查／交給 OCR） | pypdfium2 或 pdftoppm | `pdf_page_image.py f.pdf --pages 1-3 --out-dir imgs/` |
+| 設定／清除中繼資料、附件 | pypdf | `pdf_meta.py --set-meta / --attach / --extract-attachments` |
+| 壓縮內容串流 | pypdf | `pdf_split.py f.pdf --pages 1-N --compress` |
 
-## Procedure
+## 操作步驟
 
-1. **Inspect first.** Run `pdf_read.py file.pdf --meta`. Check `encrypted` (if true, decrypt first with `pdf_secure.py --decrypt`) and `likely_scanned_pages`. If pages are image-only, export them with `pdf_page_image.py --pages <scanned> --dpi 300 --out-dir imgs/` and hand the PNGs to the `references/ocr-extraction.md` skill — do not report empty text as "no content".
-2. **Create.** Write a JSON spec with `write_file` (elements: `heading`, `paragraph`, `table`, `image`, `pagebreak`; optional `title`/`author` metadata; page numbers are added automatically), then run `pdf_create.py`. Verify visually with `vision_analyze` on a rendered page image if layout matters.
-3. **Extract.** `--text` gives a JSON list of per-page strings; `--tables` gives row arrays per page and can also emit CSV files. Read results with `read_file`; never eyeball a binary PDF directly.
-4. **Manipulate.** `pdf_merge.py` concatenates and can add one bookmark per source file; `pdf_split.py` handles page ranges (1-based, e.g. `1-3,5,9-`), rotation in 90° steps, and `--compress`. Watermark by preparing a single-page stamp PDF (e.g. via `pdf_create.py`) and overlaying it with `pdf_watermark.py`; for one-liner stamps ("sign here", diagonal DRAFT, corner labels) use `pdf_stamp.py` with text or an image at explicit coordinates.
-5. **Build forms.** Write one form-spec JSON (fields with `label_box`/`entry_box` in PDF points — see `references/forms.md`), lint it with `pdf_form_layout.py` and fix every reported problem, optionally review the `--render-overlay` PNG with `vision_analyze`, then build with `pdf_make_form.py` and confirm with `pdf_read.py --fields`.
-6. **Fill forms.** List fields (`--fields`) to learn exact names and types, write a UTF-8 JSON of `{"FieldName": "value"}` with `write_file` (checkboxes accept `true`/`false`; radio/choice values must match the field's export options), then `pdf_fill_form.py`. Re-read with `--fields` to confirm values landed.
-7. **Metadata & attachments.** `pdf_meta.py --set-meta` writes Title/Author/Subject/Keywords (DocInfo); `--clear-meta` drops them; `--attach`/`--list-attachments`/`--extract-attachments` round-trip embedded files.
-8. **Secure.** Encrypt with distinct user/owner passwords and AES-256. To remove a password you know, `--decrypt` writes an unencrypted copy.
-9. **Verify** (see below) before reporting success.
+1. **先檢查。** 執行 `pdf_read.py file.pdf --meta`。檢查 `encrypted`
+   （若為 true，先用 `pdf_secure.py --decrypt` 解密）與
+   `likely_scanned_pages`。若頁面為純圖片，用
+   `pdf_page_image.py --pages <scanned> --dpi 300 --out-dir imgs/`
+   匯出後，把 PNG 交給 `references/ocr-extraction.md` 技能——不要把
+   空白文字回報成「沒有內容」。
+2. **建立。** 用 `write_file` 撰寫 JSON spec（元素：`heading`、
+   `paragraph`、`table`、`image`、`pagebreak`；選填 `title`／`author`
+   中繼資料；頁碼會自動加入），然後執行 `pdf_create.py`。
+   版面很重要時，用 `vision_analyze` 檢視渲染出的頁面圖片。
+3. **擷取。** `--text` 回傳逐頁字串的 JSON 陣列；`--tables` 回傳逐頁
+   列陣列，也可輸出 CSV 檔。用 `read_file` 讀取結果；絕不直接目視
+   二進位 PDF。
+4. **操作。** `pdf_merge.py` 串接並可為每個來源檔加一個書籤；
+   `pdf_split.py` 處理頁面範圍（從 1 開始，例如 `1-3,5,9-`）、
+   以 90° 為單位的旋轉，以及 `--compress`。浮水印作法是先準備單頁
+   蓋章 PDF（例如用 `pdf_create.py`），再用 `pdf_watermark.py` 疊上；
+   需要一行完成的蓋章（「在此簽名」、斜向 DRAFT、角落標籤）時，
+   用 `pdf_stamp.py` 在明確座標蓋上文字或圖片。
+5. **建立表單。** 寫一份表單 spec JSON（欄位的 `label_box`／`entry_box`
+   以 PDF 點為單位——見 `references/forms.md`），用
+   `pdf_form_layout.py` lint 並修正所有回報問題，選擇性用
+   `vision_analyze` 檢視 `--render-overlay` PNG，然後用
+   `pdf_make_form.py` 建立，並以 `pdf_read.py --fields` 確認。
+6. **填寫表單。** 先列出欄位（`--fields`）確認精確名稱與型別，用
+   `write_file` 寫入 UTF-8 JSON `{"FieldName": "value"}`
+   （核取方塊接受 `true`／`false`；單選／選擇值必須符合欄位的匯出選項），
+   再執行 `pdf_fill_form.py`。之後以 `--fields` 重新讀取確認值已寫入。
+7. **中繼資料與附件。** `pdf_meta.py --set-meta` 寫入
+   Title/Author/Subject/Keywords（DocInfo）；`--clear-meta` 清除；
+   `--attach`／`--list-attachments`／`--extract-attachments` 處理內嵌
+   檔案的往返。
+8. **保護。** 以不同的使用者／擁有者密碼與 AES-256 加密。要移除你
+   知道的密碼時，`--decrypt` 會寫出未加密的副本。
+9. **驗證**（見下方）後再回報成功。
 
-## Pitfalls
+## 常見陷阱
 
-- **Scanned PDFs**: empty `extract_text()` plus page images means there is no text layer. Route to `references/ocr-extraction.md`; do not fabricate text.
-- **Flattening limits**: `pdf_fill_form.py --flatten` uses pypdf's flatten support, which converts widget appearances into page content. It is reliable for plain text fields and checkboxes but can drop or misrender exotic widgets (rich text, custom appearance streams, some radio groups). Verify the flattened output visually with `vision_analyze`; for bulletproof flattening use an external renderer (e.g. Ghostscript or `pdftoppm`+reassembly) as a fallback.
-- **NeedAppearances**: after filling, viewers only render values if appearance streams exist. The fill script sets the AcroForm `NeedAppearances` flag so conforming viewers regenerate them; some minimal viewers ignore it — flatten if display fidelity matters.
-- **Non-Latin form values**: values are stored correctly (UTF-16), but the field's default font may lack glyphs, so a viewer can show blanks even though the data round-trips. Verify with `--fields`, not just visually.
-- **Compression expectations**: `--compress` only deflates content streams. Typical savings are 0–20%; it does nothing for PDFs dominated by images or already-compressed streams. It is not a substitute for image downsampling (Ghostscript territory).
-- **Permission flags don't enforce**: owner-password permission bits (no-print, no-copy) are polite requests that viewers may honor; any library (including pypdf) can read and strip them. Only the user password actually gates content via encryption. Never present permission flags as security.
-- **Table extraction is heuristic**: pdfplumber detects tables from ruling lines/word alignment; borderless or merged-cell tables may need `table_settings` tuning or manual cleanup.
-- **Page indexing**: helper CLIs take 1-based pages; pypdf APIs are 0-based. The scripts convert — don't double-convert.
-- **Rotated stamp text extraction**: pdfplumber's line grouping scrambles rotated glyphs (a 45° "DRAFT" extracts as stray letters); verify rotated stamps with `pypdf`'s `extract_text()` or a rendered image instead.
-- **Radio groups**: reportlab needs ≥2 `radio()` widgets per group, fills need the slashed export value (`"/red"`), and flatten fidelity is worst for radios — see `references/forms.md`.
-- **Metadata scope**: `pdf_meta.py` writes the classic DocInfo dictionary only; embedded XMP metadata (if any) is left untouched and may show different values in some viewers.
-- **PDF/A is out of scope**: pypdf/reportlab cannot produce or validate conformant PDF/A. If archival conformance is required, run Ghostscript via the `terminal` tool (e.g. `gs -dPDFA=2 -dPDFACompatibilityPolicy=1 -sColorConversionStrategy=UseDeviceIndependentColor -sDEVICE=pdfwrite -o out.pdf in.pdf` with a suitable ICC profile) and validate with veraPDF — both are external installs, and the result still needs validation, not assumption.
-- Rotation must be a multiple of 90; encrypted inputs must be decrypted before any other operation.
+- **掃描 PDF**：`extract_text()` 為空且頁面皆為圖片，代表沒有文字層。
+  請轉往 `references/ocr-extraction.md`；不要捏造文字。
+- **壓平限制**：`pdf_fill_form.py --flatten` 使用 pypdf 的壓平支援，
+  會把 widget 外觀轉成頁面內容。對純文字欄位與核取方塊可靠，但可能
+  遺失或錯誤渲染特殊 widget（rich text、自訂外觀串流、某些單選群組）。
+  請用 `vision_analyze` 視覺檢查壓平結果；需要萬無一失的壓平時，
+  備援方案是外部渲染器（例如 Ghostscript 或 `pdftoppm`＋重組）。
+- **NeedAppearances**：填寫後，檢視器只有在外觀串流存在時才會渲染值。
+  填寫腳本會設定 AcroForm 的 `NeedAppearances` 旗標，讓合規檢視器
+  重新產生；某些精簡檢視器會忽略它——需要顯示保真度時請壓平。
+- **非拉丁文表單值**：值本身正確儲存（UTF-16），但欄位的預設字型可能
+  缺少字形，即使資料往返正常，檢視器仍可能顯示空白。請用 `--fields`
+  驗證，不要只靠目視。
+- **壓縮預期**：`--compress` 只壓縮內容串流。典型節省 0–20%；對以圖片
+  為主或已壓縮串流的 PDF 毫無幫助。它無法取代圖片降採樣
+  （那屬於 Ghostscript 的領域）。
+- **權限旗標不具強制力**：擁有者密碼的權限位元（禁止列印、禁止複製）
+  是檢視器「可能」尊重的禮貌性請求；任何函式庫（含 pypdf）都能讀取
+  並剝除它們。只有使用者密碼才真正以加密守住內容。絕不要把權限旗標
+  當成安全機制。
+- **表格擷取是啟發式的**：pdfplumber 由框線／字詞對齊偵測表格；
+  無框線或含合併儲存格的表格可能需要調整 `table_settings` 或人工清理。
+- **頁碼索引**：輔助 CLI 採用從 1 開始的頁碼；pypdf API 從 0 開始。
+  腳本會轉換——不要重複轉換。
+- **旋轉蓋章文字擷取**：pdfplumber 的行分組會打亂旋轉字形
+  （45° 的「DRAFT」會擷取成散落字母）；旋轉蓋章請改用 pypdf 的
+  `extract_text()` 或渲染圖片驗證。
+- **單選群組**：reportlab 每群組需要 ≥2 個 `radio()` widget，填寫需要
+  帶斜線的匯出值（`"/red"`），且單選的壓平保真度最差——見
+  `references/forms.md`。
+- **中繼資料範圍**：`pdf_meta.py` 只寫入經典的 DictInfo 字典；
+  內嵌的 XMP 中繼資料（若有）不受影響，可能在某些檢視器顯示不同值。
+- **PDF/A 不在範圍內**：pypdf/reportlab 無法產製或驗證符合標準的
+  PDF/A。若需要歸檔一致性，請透過 `terminal` 工具執行 Ghostscript
+  （例如 `gs -dPDFA=2 -dPDFACompatibilityPolicy=1 -sColorConversionStrategy=UseDeviceIndependentColor -sDEVICE=pdfwrite -o out.pdf in.pdf`
+  並搭配合適的 ICC 設定檔），再用 veraPDF 驗證——兩者皆為外部安裝，
+  且結果仍需驗證而非假設。
+- 旋轉角度必須是 90 的倍數；加密輸入必須先解密才能進行其他操作。
 
-## Verification
+## 驗證
 
-- After create/merge/split: `pdf_read.py out.pdf --meta` — confirm `page_count`, and per-page `rotation` when you rotated.
-- After extraction: check the JSON is non-empty and spot-check a known string or cell.
-- Form design loop: `pdf_form_layout.py spec.json` must exit 0; then `--render-overlay boxes.png --pdf form.pdf` and review the PNG with `vision_analyze` (red = entry boxes with field names, blue = label boxes) asking about overlaps, misalignment, and labels detached from their fields. Iterate spec → lint → overlay until clean.
-- After building a form: `pdf_read.py form.pdf --fields` lists every spec field with the right type and options.
-- After form fill: `pdf_read.py filled.pdf --fields` and compare values (exact match, including non-ASCII).
-- After stamping: re-extract text (pypdf for rotated stamps) or render the page with `pdf_page_image.py` and inspect with `vision_analyze`.
-- After metadata/attachment edits: `pdf_read.py --meta` / `pdf_meta.py --list-attachments`, and re-extract an attachment to byte-compare.
-- After encrypt: `--meta` shows `"encrypted": true` and opening without a password fails; after decrypt, text extraction matches the original.
-- For anything visual (watermarks, flattened forms), render and inspect with `vision_analyze`.
+- 建立／合併／分割後：`pdf_read.py out.pdf --meta` ——確認
+  `page_count`，若有旋轉則確認逐頁 `rotation`。
+- 擷取後：檢查 JSON 非空，並抽核一個已知字串或儲存格。
+- 表單設計迴圈：`pdf_form_layout.py spec.json` 必須以 0 結束；接著
+  `--render-overlay boxes.png --pdf form.pdf`，用 `vision_analyze`
+  檢視 PNG（紅色＝帶欄位名稱的輸入框，藍色＝標籤框），詢問是否有重疊、
+  錯位、標籤脫離欄位。反覆 spec → lint → 疊圖直到乾淨。
+- 建立表單後：`pdf_read.py form.pdf --fields` 應列出每個 spec 欄位，
+  型別與選項正確。
+- 填表後：`pdf_read.py filled.pdf --fields` 並比對值
+  （完全相符，含非 ASCII）。
+- 蓋章後：重新擷取文字（旋轉蓋章用 pypdf），或用 `pdf_page_image.py`
+  渲染頁面並以 `vision_analyze` 檢查。
+- 中繼資料／附件變更後：`pdf_read.py --meta` ／
+  `pdf_meta.py --list-attachments`，並重新擷取附件做位元組比對。
+- 加密後：`--meta` 顯示 `"encrypted": true` 且無密碼開啟失敗；
+  解密後，文字擷取結果應與原始檔一致。
+- 任何視覺項目（浮水印、壓平表單）：渲染後用 `vision_analyze` 檢查。

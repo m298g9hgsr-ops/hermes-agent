@@ -1,6 +1,6 @@
 ---
 name: teams-meeting-pipeline
-description: Teams meeting summaries, job replay, Graph subscriptions.
+description: Teams 會議摘要、作業重放與 Graph 訂閱管理.
 version: 1.1.0
 author: Hermes Agent + Teknium
 license: MIT
@@ -21,30 +21,30 @@ metadata:
       - /docs/guides/operate-teams-meeting-pipeline
 ---
 
-# Teams Meeting Pipeline
+# Teams 會議管線
 
-Use this skill whenever the user asks about Microsoft Teams meeting summaries, transcripts, recordings, action items, Graph subscriptions, or any operational question about the Teams meeting pipeline. Works in any language — the triggers below are examples, not an exhaustive list.
+只要使用者詢問 Microsoft Teams 會議摘要、逐字稿、錄影、行動項目、Graph 訂閱，或任何關於 Teams 會議管線的營運問題，就使用本技能。任何語言皆可——下方觸發詞只是範例，並非完整清單。
 
-Everything operator-facing is a `hermes teams-pipeline` subcommand run via the terminal tool. There are no new model tools for this pipeline — the CLI is the surface.
+所有面向操作員的功能都是透過 terminal 工具執行的 `hermes teams-pipeline` 子指令。此管線沒有新的模型工具——CLI 就是介面。
 
-## When to use this skill
+## 何時使用本技能
 
-The user is asking to:
-- summarize a Teams meeting / extract action items / pull meeting notes
-- check pipeline status, inspect a stored meeting job, or see recent meetings
-- replay / re-run a stored job that failed or needs a fresh summary
-- validate Microsoft Graph setup after changing env or config
-- troubleshoot "meeting summary never arrived" or "no new meetings are ingesting"
-- manage Graph webhook subscriptions (create, renew, delete, inspect)
-- set up automated subscription renewal (see pitfall below)
+使用者想要：
+- 摘要 Teams 會議／萃取行動項目／取得會議紀錄
+- 檢查管線狀態、檢視已儲存的會議作業，或查看近期會議
+- 重放／重新執行失敗或需要重新摘要的已儲存作業
+- 在變更環境變數或設定後驗證 Microsoft Graph 設定
+- 排解「會議摘要從未送達」或「沒有新會議被匯入」的問題
+- 管理 Graph webhook 訂閱（建立、續約、刪除、檢視）
+- 設定自動訂閱續約（見下方陷阱）
 
-Multilingual trigger examples (not exhaustive):
-- English: "summarize the Teams meeting", "pipeline status", "replay job X"
-- Turkish: "Teams meeting özetle", "action item çıkar", "toplantı notu", "pipeline durumu", "replay job"
+多語觸發詞範例（並非完整清單）：
+- 英文："summarize the Teams meeting"、"pipeline status"、"replay job X"
+- 土耳其文："Teams meeting özetle"、"action item çıkar"、"toplantı notu"、"pipeline durumu"、"replay job"
 
-## Prerequisites
+## 前置需求
 
-Before using the pipeline, verify these are set in `${HERMES_HOME:-~/.hermes}/.env`:
+使用管線前，先確認以下項目已設在 `${HERMES_HOME:-~/.hermes}/.env`：
 
 ```bash
 MSGRAPH_TENANT_ID=...
@@ -52,11 +52,11 @@ MSGRAPH_CLIENT_ID=...
 MSGRAPH_CLIENT_SECRET=...
 ```
 
-If any are missing, direct the user to the Azure app registration guide at `/docs/guides/microsoft-graph-app-registration` — they need an Azure AD app registration with admin-consented Graph application permissions before the pipeline will work.
+若有遺漏，請引導使用者參閱位於 `/docs/guides/microsoft-graph-app-registration` 的 Azure 應用程式註冊指南——管線運作前，他們需要完成 Azure AD 應用程式註冊並取得管理員同意的 Graph 應用程式權限。
 
-## Command reference
+## 指令參考
 
-### Status and inspection (start here)
+### 狀態與檢視（從這裡開始）
 
 ```bash
 hermes teams-pipeline validate              # config snapshot — run first after any change
@@ -68,7 +68,7 @@ hermes teams-pipeline show <job-id>         # full detail of one job
 hermes teams-pipeline subscriptions         # current Graph webhook subscriptions
 ```
 
-### Re-running / debugging
+### 重新執行／除錯
 
 ```bash
 hermes teams-pipeline run <job-id>          # replay a stored job (re-summarize, re-deliver)
@@ -77,7 +77,7 @@ hermes teams-pipeline fetch --join-web-url "<url>"   # dry-run by join URL
 hermes teams-pipeline fetch --join-web-url "<url>" --organizer-user-id <id>   # organizer-scoped lookup (required for /meet/ short URLs)
 ```
 
-### Subscription management
+### 訂閱管理
 
 ```bash
 hermes teams-pipeline subscribe \
@@ -91,32 +91,32 @@ hermes teams-pipeline maintain-subscriptions            # renew near-expiry ones
 hermes teams-pipeline maintain-subscriptions --dry-run  # show what would be renewed
 ```
 
-## Decision tree for common asks
+## 常見請求的決策樹
 
-- User asks "why didn't I get a summary for today's meeting?" → start with `list --status failed`, then `show <job-id>` on the relevant row. If the job doesn't exist at all, check `subscriptions` — the webhook may have expired (see pitfall below).
-- User asks "is setup working?" → `validate`, then `token-health`, then `subscriptions`. If all three pass, request a test meeting and check `list` for a fresh row.
-- User asks "re-run summary for meeting X" → `list` to find the job ID, `run <job-id>` to replay. If it fails again, `show <job-id>` to inspect the error and `fetch --meeting-id` to dry-run the artifact resolution.
-- User asks "add meeting X to the pipeline" → usually you don't — the pipeline is subscription-driven, not per-meeting. If they want a specific past meeting summarized, use `fetch` to pull transcript + `run` after a job is created.
+- 使用者問「為什麼我今天會議的摘要沒送來？」→ 先 `list --status failed`，再對相關列執行 `show <job-id>`。若該作業根本不存在，檢查 `subscriptions`——webhook 可能已過期（見下方陷阱）。
+- 使用者問「設定正常嗎？」→ `validate`，然後 `token-health`，然後 `subscriptions`。三者都通過的話，請對方開一個測試會議，再檢查 `list` 是否出現新列。
+- 使用者說「重新執行會議 X 的摘要」→ 用 `list` 找出作業 ID，再 `run <job-id>` 重放。若再次失敗，用 `show <job-id>` 檢視錯誤，並用 `fetch --meeting-id` 乾跑驗證產物解析。
+- 使用者說「把會議 X 加入管線」→ 通常不需要——管線由訂閱驅動，不逐會議處理。若他們想摘要某場過去的會議，用 `fetch` 取得逐字稿，待作業建立後再 `run`。
 
-## Critical pitfall: Graph subscriptions expire in 72 hours
+## 關鍵陷阱：Graph 訂閱 72 小時後過期
 
-Microsoft Graph caps webhook subscriptions at 72 hours and **will not auto-renew them**. If `maintain-subscriptions` is not scheduled, meeting notifications silently stop arriving 3 days after any manual subscription creation.
+Microsoft Graph 將 webhook 訂閱上限設為 72 小時，且**不會自動續約**。若未排程 `maintain-subscriptions`，任何手動建立的訂閱在 3 天後，會議通知就會默默停止送達。
 
-When the user reports "the pipeline worked yesterday but nothing is arriving today":
-1. Run `hermes teams-pipeline subscriptions` — if it's empty or all entries show `expirationDateTime` in the past, that's the cause.
-2. Recreate with `subscribe` as shown above.
-3. **Set up automated renewal immediately** via `hermes cron add`, a systemd timer, or plain crontab. The operator runbook at `/docs/guides/operate-teams-meeting-pipeline#automating-subscription-renewal-required-for-production` has all three options. 12-hour interval is safe (6x headroom against the 72h limit).
+當使用者回報「管線昨天還好好的，今天卻什麼都沒來」：
+1. 執行 `hermes teams-pipeline subscriptions` ——若為空，或所有條目的 `expirationDateTime` 都已過期，那就是原因。
+2. 依上所示用 `subscribe` 重建。
+3. **立即透過** `hermes cron add`、systemd timer 或一般 crontab **設定自動續約**。操作手冊 `/docs/guides/operate-teams-meeting-pipeline#automating-subscription-renewal-required-for-production` 有完整三種選項。12 小時間隔是安全的（對 72 小時上限有 6 倍餘裕）。
 
-## Other pitfalls
+## 其他陷阱
 
-- **Transcript not available yet.** Teams takes some time after a meeting ends to generate the transcript artifact. `fetch --meeting-id` on a just-ended meeting may return empty. Wait 2-5 minutes and retry, or let the Graph webhook drive ingestion naturally.
-- **Delivery mode mismatch.** If summaries are produced (`list` shows success) but nothing lands in Teams, check `platforms.teams.extra.delivery_mode` and the matching target config (`incoming_webhook_url` OR `chat_id` OR `team_id`+`channel_id`). The writer reads these from config.yaml or `TEAMS_*` env vars.
-- **Graph app permissions.** A token acquires cleanly (`token-health` passes) but Graph API calls return 401/403 when permissions were added but admin consent wasn't re-granted. Have the user revisit the app registration in the Azure portal and click "Grant admin consent" again.
+- **逐字稿尚未就緒。** 會議結束後 Teams 需要一些時間產生逐字稿產物。對剛結束的會議執行 `fetch --meeting-id` 可能回傳空結果。等待 2-5 分鐘後重試，或讓 Graph webhook 自然驅動匯入。
+- **傳送模式不符。** 若摘要已產出（`list` 顯示 success）卻沒有進入 Teams，檢查 `platforms.teams.extra.delivery_mode` 與對應的目標設定（`incoming_webhook_url` 或 `chat_id` 或 `team_id`＋`channel_id`）。寫入器會從 config.yaml 或 `TEAMS_*` 環境變數讀取這些設定。
+- **Graph 應用程式權限。** 權杖取得正常（`token-health` 通過），但 Graph API 呼叫回傳 401/403，通常是新增權限後未重新取得管理員同意。請使用者回到 Azure 入口網站的應用程式註冊，再次點選「Grant admin consent」。
 
-## Related docs
+## 相關文件
 
-Point the user to these when they need more depth than this skill covers:
-- Azure app registration walkthrough: `/docs/guides/microsoft-graph-app-registration`
-- Full pipeline setup: `/docs/user-guide/messaging/teams-meetings`
-- Operator runbook (renewal automation, troubleshooting, go-live checklist): `/docs/guides/operate-teams-meeting-pipeline`
-- Webhook listener setup: `/docs/user-guide/messaging/msgraph-webhook`
+當本技能涵蓋的深度不足時，請指引使用者參閱：
+- Azure 應用程式註冊步驟：`/docs/guides/microsoft-graph-app-registration`
+- 完整管線設定：`/docs/user-guide/messaging/teams-meetings`
+- 操作手冊（續約自動化、排錯、上線檢查清單）：`/docs/guides/operate-teams-meeting-pipeline`
+- Webhook 監聽器設定：`/docs/user-guide/messaging/msgraph-webhook`

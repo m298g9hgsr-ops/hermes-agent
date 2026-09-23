@@ -1,6 +1,6 @@
 ---
 name: himalaya
-description: "Himalaya CLI: IMAP/SMTP email from terminal."
+description: "Himalaya CLI：從終端執行 IMAP/SMTP 電子郵件."
 version: 1.1.0
 author: community
 license: MIT
@@ -13,27 +13,24 @@ prerequisites:
   commands: [himalaya]
 ---
 
-# Himalaya Email CLI
+# Himalaya Email CLI 技能
 
-Himalaya is a CLI email client that lets you manage emails from the terminal using IMAP, SMTP, Notmuch, or Sendmail backends.
+Himalaya 是一個 CLI 郵件客戶端，可讓你在終端中透過 IMAP、SMTP、Notmuch 或 Sendmail 後端管理電子郵件。
 
-This skill is separate from the Hermes Email gateway adapter. The gateway
-adapter lets people email the agent and uses Hermes' built-in IMAP/SMTP
-adapter; this skill lets the agent operate a mailbox from terminal tools and
-requires the external `himalaya` CLI.
+本技能與 Hermes 的 Email gateway 介接器（adapter）是不同的。gateway 介接器讓其他人可以寄信給代理，並使用 Hermes 內建的 IMAP/SMTP 介接器；本技能則是讓代理從終端工具操作信箱，且需要外部的 `himalaya` CLI。
 
-## References
+## 參考資料
 
-- `references/configuration.md` (config file setup + IMAP/SMTP authentication)
-- `references/message-composition.md` (MML syntax for composing emails)
+- `references/configuration.md`（設定檔配置 + IMAP/SMTP 驗證）
+- `references/message-composition.md`（撰寫電子郵件的 MML 語法）
 
-## Prerequisites
+## 前置需求
 
-1. Himalaya CLI installed (`himalaya --version` to verify)
-2. A configuration file at `~/.config/himalaya/config.toml`
-3. IMAP/SMTP credentials configured (password stored securely)
+1. 已安裝 Himalaya CLI（以 `himalaya --version` 驗證）
+2. 在 `~/.config/himalaya/config.toml` 有設定檔
+3. 已設定 IMAP/SMTP 憑證（密碼安全儲存）
 
-### Installation
+### 安裝
 
 ```bash
 # Pre-built binary (Linux/macOS — recommended)
@@ -46,15 +43,15 @@ brew install himalaya
 cargo install himalaya --locked
 ```
 
-## Configuration Setup
+## 設定組態
 
-Run the interactive wizard to set up an account:
+執行互動式精靈以設定帳號：
 
 ```bash
 himalaya account configure
 ```
 
-Or create `~/.config/himalaya/config.toml` manually:
+或手動建立 `~/.config/himalaya/config.toml`：
 
 ```toml
 [accounts.personal]
@@ -88,82 +85,73 @@ folder.aliases.drafts = "Drafts"
 folder.aliases.trash = "Trash"
 ```
 
-> **Heads up on the alias syntax.** Pre-v1.2.0 docs used a
-> `[accounts.NAME.folder.alias]` sub-section (singular `alias`).
-> v1.2.0 silently ignores that form — TOML parses fine, but the
-> alias resolver never reads it, so every lookup falls through to
-> the canonical name. On Gmail this means save-to-Sent fails *after*
-> SMTP delivery succeeds, and `himalaya message send` exits non-zero.
-> Any caller (agent, script, user) that retries on that exit code
-> will re-run the entire send — including SMTP — producing duplicate
-> emails to recipients. Always use `folder.aliases.X` (plural, dotted
-> keys, directly under `[accounts.NAME]`).
+> **關於別名語法的提醒。** v1.2.0 之前的文件使用 `[accounts.NAME.folder.alias]` 子區段（單數 `alias`）。v1.2.0 會默默忽略這種寫法——TOML 可以正常解析，但別名解析器永遠不會讀取它，因此每次查詢都會退回使用標準名稱。在 Gmail 上，這表示 *SMTP 投遞成功之後*，儲存到「已寄出」會失敗，而 `himalaya message send` 會以非零狀態結束。任何依據該結束碼重試的呼叫端（代理、指令碼、使用者）都會重新執行整個傳送流程——包括 SMTP——導致收件人收到重複的郵件。請一律使用 `folder.aliases.X`（複數、點分隔的鍵，直接放在 `[accounts.NAME]` 之下）。
 
-## Hermes Integration Notes
+## Hermes 整合備註
 
-- **Reading, listing, searching, moving, deleting** all work directly through the terminal tool
-- **Composing/replying/forwarding** — piped input (`cat << EOF | himalaya template send`) is recommended for reliability. Interactive `$EDITOR` mode works with `pty=true` + background + process tool, but requires knowing the editor and its commands
-- Use `--output json` for structured output that's easier to parse programmatically
-- The `himalaya account configure` wizard requires interactive input — use PTY mode: `terminal(command="himalaya account configure", pty=true)`
+- **讀取、列出、搜尋、移動、刪除**都可直接透過 `terminal` 工具完成
+- **撰寫/回覆/轉寄**——建議使用管線輸入（`cat << EOF | himalaya template send`）以確保可靠性。互動式 `$EDITOR` 模式可搭配 `pty=true` + 背景 + `process` 工具運作，但你需要知道編輯器及其指令
+- 使用 `--output json` 取得結構化輸出，方便程式化解析
+- `himalaya account configure` 精靈需要互動式輸入——請使用 PTY 模式：`terminal(command="himalaya account configure", pty=true)`
 
-## Common Operations
+## 常見操作
 
-### List Folders
+### 列出資料夾
 
 ```bash
 himalaya folder list
 ```
 
-### List Emails
+### 列出郵件
 
-List emails in INBOX (default):
+列出 INBOX 中的郵件（預設）：
 
 ```bash
 himalaya envelope list
 ```
 
-List emails in a specific folder:
+列出特定資料夾中的郵件：
 
 ```bash
 himalaya envelope list --folder "Sent"
 ```
 
-List with pagination:
+使用分頁列出：
 
 ```bash
 himalaya envelope list --page 1 --page-size 20
 ```
 
-### Search Emails
+### 搜尋郵件
 
 ```bash
 himalaya envelope list from john@example.com subject meeting
 ```
 
-### Read an Email
+### 讀取郵件
 
-Read email by ID (shows plain text):
+依 ID 讀取郵件（顯示純文字）：
 
 ```bash
 himalaya message read 42
 ```
 
-Export raw MIME:
+匯出原始 MIME：
 
 ```bash
 himalaya message export 42 --full
 ```
 
-### Reply to an Email
+### 回覆郵件
 
-To reply non-interactively from Hermes, read the original message, compose a reply, and pipe it:
+若要從 Hermes 以非互動方式回覆，請讀取原始郵件、撰寫回覆內容，然後透過管線送出：
 
 ```bash
 # Get the reply template, edit it, and send
 himalaya template reply 42 | sed 's/^$/\nYour reply text here\n/' | himalaya template send
 ```
 
-Or build the reply manually:
+或手動組建回覆內容：
 
 ```bash
 cat << 'EOF' | himalaya template send
@@ -176,22 +164,22 @@ Your reply here.
 EOF
 ```
 
-Reply-all (interactive — needs $EDITOR, use template approach above instead):
+回覆所有人（互動式——需要 $EDITOR，請改用上述的 template 方式）：
 
 ```bash
 himalaya message reply 42 --all
 ```
 
-### Forward an Email
+### 轉寄郵件
 
 ```bash
 # Get forward template and pipe with modifications
 himalaya template forward 42 | sed 's/^To:.*/To: newrecipient@example.com/' | himalaya template send
 ```
 
-### Write a New Email
+### 撰寫新郵件
 
-**Non-interactive (use this from Hermes)** — pipe the message via stdin:
+**非互動式（從 Hermes 使用這種方式）**——透過 stdin 以管線傳入郵件內容：
 
 ```bash
 cat << 'EOF' | himalaya template send
@@ -203,102 +191,102 @@ Hello from Himalaya!
 EOF
 ```
 
-Or with headers flag:
+或搭配 headers 旗標：
 
 ```bash
 himalaya message write -H "To:recipient@example.com" -H "Subject:Test" "Message body here"
 ```
 
-Note: `himalaya message write` without piped input opens `$EDITOR`. This works with `pty=true` + background mode, but piping is simpler and more reliable.
+備註：`himalaya message write` 沒有管線輸入時會開啟 `$EDITOR`。這可搭配 `pty=true` + 背景模式運作，但使用管線更簡單也更可靠。
 
-### Move/Copy Emails
+### 移動/複製郵件
 
-Move to folder (target folder comes first, then the message ID):
+移動到資料夾（先指定目標資料夾，再接訊息 ID）：
 
 ```bash
 himalaya message move "Archive" 42
 ```
 
-Copy to folder (target folder comes first, then the message ID):
+複製到資料夾（先指定目標資料夾，再接訊息 ID）：
 
 ```bash
 himalaya message copy "Important" 42
 ```
 
-### Delete an Email
+### 刪除郵件
 
 ```bash
 himalaya message delete 42
 ```
 
-### Manage Flags
+### 管理旗標
 
-Add flag:
+新增旗標：
 
 ```bash
 himalaya flag add 42 --flag seen
 ```
 
-Remove flag:
+移除旗標：
 
 ```bash
 himalaya flag remove 42 --flag seen
 ```
 
-## Multiple Accounts
+## 多個帳號
 
-List accounts:
+列出帳號：
 
 ```bash
 himalaya account list
 ```
 
-Use a specific account:
+使用特定帳號：
 
 ```bash
 himalaya --account work envelope list
 ```
 
-## Attachments
+## 附件
 
-Save attachments from a message:
+從郵件儲存附件：
 
 ```bash
 himalaya attachment download 42
 ```
 
-Save to specific directory:
+儲存到特定目錄：
 
 ```bash
 himalaya attachment download 42 --downloads-dir ~/Downloads
 ```
 
-## Output Formats
+## 輸出格式
 
-Most commands support `--output` for structured output:
+大部分指令都支援 `--output` 以輸出結構化資料：
 
 ```bash
 himalaya envelope list --output json
 himalaya envelope list --output plain
 ```
 
-## Debugging
+## 除錯
 
-Enable debug logging:
+啟用除錯紀錄：
 
 ```bash
 RUST_LOG=debug himalaya envelope list
 ```
 
-Full trace with backtrace:
+含回溯（backtrace）的完整追蹤：
 
 ```bash
 RUST_LOG=trace RUST_BACKTRACE=1 himalaya envelope list
 ```
 
-## Tips
+## 小技巧
 
-- Use `himalaya --help` or `himalaya <command> --help` for detailed usage.
-- Message IDs are relative to the current folder; re-list after folder changes.
-- For composing rich emails with attachments, use MML syntax (see `references/message-composition.md`).
-- Store passwords securely using `pass`, system keyring, or a command that outputs the password.
+- 使用 `himalaya --help` 或 `himalaya <command> --help` 取得詳細用法。
+- 訊息 ID 是相對於目前資料夾的；更換資料夾後請重新列出。
+- 若要撰寫含附件的豐富郵件，請使用 MML 語法（參見 `references/message-composition.md`）。
+- 使用 `pass`、系統金鑰環（keyring）或會輸出密碼的指令來安全儲存密碼。

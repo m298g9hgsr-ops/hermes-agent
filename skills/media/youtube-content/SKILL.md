@@ -1,6 +1,6 @@
 ---
 name: youtube-content
-description: "YouTube transcripts to summaries, threads, blogs."
+description: "將 YouTube 轉錄稿轉為摘要、論壇串與部落格."
 version: 1.0.0
 author: Teknium (teknium1), Hermes Agent
 license: MIT
@@ -11,26 +11,25 @@ metadata:
     related_skills: []
 ---
 
-# YouTube Content Tool
+# YouTube 內容工具
 
-## When to use
+## 使用時機
 
-Use when the user shares a YouTube URL or video link, asks to summarize a video, requests a transcript, or wants to extract and reformat content from any YouTube video. Transforms transcripts into structured content (chapters, summaries, threads, blog posts).
+當使用者分享 YouTube URL 或影片連結、要求總結影片、要求轉錄稿，或想從任何 YouTube 影片擷取並重整內容時使用。將轉錄稿轉換為結構化內容（章節、摘要、論壇串、部落格文章）。
 
-Extract transcripts from YouTube videos and convert them into useful formats.
+從 YouTube 影片擷取轉錄稿並轉換為有用的格式。
 
-## Setup
+## 設定
 
-Use `uv` so the dependency is installed into the same Hermes-managed environment
-that runs the helper script:
+使用 `uv`，讓相依套件安裝到與執行輔助腳本相同的 Hermes 管理環境中：
 
 ```bash
 uv pip install youtube-transcript-api
 ```
 
-## Helper Script
+## 輔助腳本
 
-`SKILL_DIR` is the directory containing this SKILL.md file. The script accepts any standard YouTube URL format, short links (youtu.be), shorts, embeds, live links, or a raw 11-character video ID.
+`SKILL_DIR` 是包含本 SKILL.md 的目錄。腳本接受任何標準 YouTube URL 格式、短連結（youtu.be）、shorts、embed、直播連結，或原始的 11 字元影片 ID。
 
 ```bash
 # JSON output with metadata
@@ -46,18 +45,18 @@ uv run python SKILL_DIR/scripts/fetch_transcript.py "URL" --timestamps
 uv run python SKILL_DIR/scripts/fetch_transcript.py "URL" --language tr,en
 ```
 
-## Output Formats
+## 輸出格式
 
-After fetching the transcript, format it based on what the user asks for:
+取得轉錄稿後，依使用者要求格式化：
 
-- **Chapters**: Group by topic shifts, output timestamped chapter list
-- **Summary**: Concise 5-10 sentence overview of the entire video
-- **Chapter summaries**: Chapters with a short paragraph summary for each
-- **Thread**: Twitter/X thread format — numbered posts, each under 280 chars
-- **Blog post**: Full article with title, sections, and key takeaways
-- **Quotes**: Notable quotes with timestamps
+- **章節**：依主題轉折分組，輸出帶時間碼的章節清單
+- **摘要**：整部影片精簡的 5-10 句總覽
+- **章節摘要**：各章節附一段簡短說明
+- **論壇串**：Twitter/X 串文格式 — 編號貼文，每則 280 字元以內
+- **部落格文章**：含標題、段落與重點的完整文章
+- **引言**：附時間碼的名言
 
-### Example — Chapters Output
+### 範例 — 章節輸出
 
 ```
 00:00 Introduction — host opens with the problem statement
@@ -67,17 +66,17 @@ After fetching the transcript, format it based on what the user asks for:
 31:55 Q&A — audience questions on scalability and next steps
 ```
 
-## Workflow
+## 工作流程
 
-1. **Fetch** the transcript using the helper script with `--text-only --timestamps` via `uv run python`.
-2. **Validate**: confirm the output is non-empty and in the expected language. If empty, retry without `--language` to get any available transcript. If still empty, tell the user the video likely has transcripts disabled.
-3. **Chunk if needed**: if the transcript exceeds ~50K characters, split into overlapping chunks (~40K with 2K overlap) and summarize each chunk before merging.
-4. **Transform** into the requested output format. If the user did not specify a format, default to a summary.
-5. **Verify**: re-read the transformed output to check for coherence, correct timestamps, and completeness before presenting.
+1. **取得**轉錄稿：用輔助腳本搭配 `--text-only --timestamps`，透過 `uv run python` 執行。
+2. **驗證**：確認輸出非空且為預期語言。若為空，不帶 `--language` 重試以取得任何可用的轉錄稿。若仍為空，告知使用者該影片可能已停用字幕。
+3. **必要時分塊**：若轉錄稿超過約 50K 字元，切成重疊區塊（約 40K、2K 重疊），各自總結後再合併。
+4. **轉換**為要求的輸出格式。若使用者未指定格式，預設為摘要。
+5. **驗證**：呈現前重新讀取轉換後的輸出，檢查連貫性、正確的時間碼與完整性。
 
-## Error Handling
+## 錯誤處理
 
-- **Transcript disabled**: tell the user; suggest they check if subtitles are available on the video page.
-- **Private/unavailable video**: relay the error and ask the user to verify the URL.
-- **No matching language**: retry without `--language` to fetch any available transcript, then note the actual language to the user.
-- **Dependency missing**: run `uv pip install youtube-transcript-api` and retry.
+- **字幕已停用**：告知使用者；建議他們檢查影片頁面上是否有可用字幕。
+- **私人／不可用影片**：轉達錯誤並請使用者確認 URL。
+- **無符合語言**：不帶 `--language` 重試以取得任何可用轉錄稿，然後向使用者說明實際語言。
+- **缺少相依套件**：執行 `uv pip install youtube-transcript-api` 後重試。

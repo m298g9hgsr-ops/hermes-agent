@@ -1,6 +1,6 @@
 ---
 name: simplify-code
-description: "Parallel 4-agent cleanup of recent code changes."
+description: "以四個代理平行清理近期程式碼變更."
 version: 1.1.0
 author: Hermes Agent (inspired by Claude Code /simplify)
 license: MIT
@@ -11,49 +11,35 @@ metadata:
     related_skills: [requesting-code-review, test-driven-development]
 ---
 
-# Simplify Code — Parallel Review & Cleanup
+# 簡化程式碼 — 平行檢視與清理
 
-Review your recent code changes with four focused reviewers running in
-parallel, aggregate their findings, and apply the fixes worth applying.
+以四位各自專注的審查者平行檢視你近期的程式碼變更，彙整他們的發現，並套用值得採用的修復。
 
-**This is a cleanup pass, not a bug hunt.** You are improving the quality of
-code that already works — removing duplication, flattening needless
-complexity, cutting waste, and deepening band-aid fixes. Do not go hunting
-for correctness bugs here; that's what `requesting-code-review` is for.
+**這是一輪清理，不是漏洞狩獵。** 你要提升的是已經能運作的程式碼品質 — 移除重複、化簡多餘的複雜度、削減浪費，並把權宜式修補做得更深入。不要在這裡追尋正確性漏洞；那是 `requesting-code-review` 的用途。
 
-**Core principle:** Four narrow reviewers beat one broad reviewer. Each one
-deeply searches the codebase for a single class of problem — reuse, quality,
-efficiency, altitude — without diluting its attention across all four. They
-run concurrently, so you pay the latency of one review, not four.
+**核心原則：** 四位窄焦點的審查者勝過一位廣泛的審查者。每一者只深入搜尋程式碼中單一類別的問題 — 重用、品質、效率、層級 — 而不會把注意力分散到四類上。他們同時執行，所以你只付出一次審查的延遲，而不是四次。
 
-## When to Use
+## 使用時機
 
-Trigger this skill when the user says any of:
+當使用者說出以下任一說法時觸發本技能：
 
 - "simplify" / "simplify my changes" / "simplify these changes"
 - "review my code" / "review my recent changes" / "clean up my changes"
-- "/simplify" (if they're carrying the Claude Code habit over)
+- "/simplify"（若他們沿用 Claude Code 的習慣）
 
-Optional modifiers the user may add — honor them:
+使用者可能附加的選用修飾 — 請遵循：
 
-- **Focus:** "simplify focus on efficiency" → run only the efficiency reviewer
-  (or weight the aggregation toward it). Recognized focuses: `reuse`,
-  `quality` (also accepts `simplification`), `efficiency`, `altitude`.
-- **Dry run:** "simplify but don't change anything" / "just report" → run the
-  four reviewers, present findings, apply NOTHING. Ask before applying.
-- **Scope:** "simplify the last commit" / "simplify staged" / "simplify
-  src/foo.py" → narrow the diff source accordingly (see Phase 1).
+- **聚焦：** "simplify focus on efficiency" → 只執行效率審查者（或在彙整時加重其權重）。可接受的聚焦：`reuse`、`quality`（也接受 `simplification`）、`efficiency`、`altitude`。
+- **乾跑：** "simplify but don't change anything" / "just report" → 執行四位審查者、呈現發現，不套用任何修改。套用前先詢問。
+- **範圍：** "simplify the last commit" / "simplify staged" / "simplify src/foo.py" → 相應縮小 diff 來源（見第一階段）。
 
-Do NOT auto-run this after every edit or tack it onto the end of unrelated
-tasks. It costs four subagents' worth of tokens — invoke it only when the
-user explicitly asks.
+不要在每次編輯後自動執行本技能，也不要把它掛在無關任務的結尾。它要花費四個子代理的 token — 只在使用者明確要求時呼叫。
 
-## The Process
+## 流程
 
-### Phase 1 — Identify the changes
+### 第一階段 — 確認變更內容
 
-Capture the diff to review. Pick the source by what the user asked for, in
-this default order:
+擷取要審查的 diff。依使用者的要求選擇來源，預設順序如下：
 
 ```bash
 # 1. Default: uncommitted working-tree changes (tracked files)
@@ -69,202 +55,74 @@ git diff main...HEAD              # "this branch" / "my PR"
 git diff -- src/foo.py            # specific file(s)
 ```
 
-If `git diff` and `git diff HEAD` are both empty and there's no git repo or no
-changes, fall back to the files the user explicitly named or that were
-recently created/edited in this session. If you genuinely can't find any
-changed code, say so and stop — there's nothing to simplify.
+若 `git diff` 和 `git diff HEAD` 都是空的，而且沒有 git 倉庫或沒有變更，就改用使用者明確點名的檔案，或本 session 中最近建立/編輯的檔案。若你真的找不到任何變更的程式碼，就明說並停止 — 沒有東西可簡化。
 
-Capture the full diff text. Note its size: if it's very large (say >2000
-changed lines), warn the user that four subagents each carrying the full diff
-will be token-heavy, and offer to scope it down (per-directory, per-commit)
-before proceeding.
+擷取完整的 diff 文字。留意它的大小：若非常大（例如變更行數 >2000），警告使用者四個子代理各自攜帶完整 diff 會很吃 token，並提議先縮小範圍（依目錄、依 commit）再繼續。
 
-### Phase 2 — Launch four reviewers in parallel
+### 第二階段 — 平行啟動四位審查者
 
-Use `delegate_task` **batch mode** — pass all four tasks in one `tasks`
-array so they run concurrently. Four is the right fan-out for this pattern;
-it's within the `delegation.max_concurrent_children` budget on any default
-install.
+使用 `delegate_task` **批次模式** — 把四個任務一次放進 `tasks` 陣列，讓它們同時執行。四是這個模式正確的分散數；在任何預設安裝上都在 `delegation.max_concurrent_children` 預算之內。
 
-**No delegation available?** If you can't call `delegate_task` in this
-context (you're a leaf subagent, delegation is disabled, or the budget is
-exhausted), do NOT skip the review or drop angles. Work through all four
-reviewer angles yourself, sequentially, in this context — same search
-standards, same finding format. Then say clearly in your final summary that
-this was a single-pass inline review, not the parallel fan-out, so the user
-knows what actually ran.
+**無法委派？** 若你在這個情境無法呼叫 `delegate_task`（你是葉子子代理、委派被停用，或預算已耗盡），不要略過審查或丟掉任何角度。在這個情境中依序自行完成四個審查角度 — 相同的搜尋標準、相同的發現格式。然後在最終摘要中清楚說明這是一次單趟的內嵌審查，而非平行分散，讓使用者知道實際執行了什麼。
 
-Give **every** reviewer the **complete diff** (not fragments — cross-file
-issues hide in the gaps) plus the absolute repo path so they can search the
-wider codebase. Each reviewer gets `terminal`, `file`, and `search`
-toolsets (so they can `git`, `read_file`, and `search_files`/grep).
+給**每一位**審查者**完整的 diff**（不要片段 — 跨檔案的問題藏在縫隙裡），以及倉庫的絕對路徑，讓他們能搜尋更廣的程式碼。每位審查者配備 `terminal`、`file` 和 `search` 工具組（讓他們能 `git`、`read_file` 和 `search_files`/grep）。
 
-Tell each reviewer to:
-- Search the existing codebase for evidence (don't reason from the diff alone).
-- **Apply Chesterton's Fence:** before flagging anything for removal, run
-  `git blame` on the line to understand why it exists. If you can't determine
-  the original purpose, mark it `confidence: low` — don't guess.
-- Report findings as structured output with the concrete cost, confidence,
-  and risk:
+告訴每位審查者：
+- 在既有程式碼中搜尋證據（不要只憑 diff 推理）。
+- **套用 Chesterton's Fence：** 在標記任何東西可移除之前，對該行執行 `git blame` 了解它為何存在。若無法確定原始用途，標記 `confidence: low` — 不要猜。
+- 以結構化輸出回報發現，附上具體成本、信心與風險：
   ```
   file:line → problem → cost (what's duplicated/wasted/harder to maintain) → suggested fix | confidence: high/medium/low | risk: SAFE/CAREFUL/RISKY
   ```
-  The **cost** field forces each finding to justify itself — a finding that
-  can't articulate what the problem actually costs is probably a nit.
-  - **SAFE** = proven not to affect behavior (unused imports, commented-out
-    code, pass-through wrappers). Auto-apply these.
-  - **CAREFUL** = improves without changing semantics (rename local variable,
-    flatten nested ternary, extract helper). Apply with test verification.
-  - **RISKY** = may change behavior or breaks public contracts (N+1
-    restructuring, public API rename, memory lifecycle change). Flag for
-    human review — do NOT auto-apply.
-- Skip nits and style-only churn. Only flag things that materially improve
-  the code.
+  **cost** 欄位強制每則發現為自己辯護 — 說不出問題實際代價的發現，大概只是吹毛求疵。
+  - **SAFE** = 已證明不影響行為（未使用的 import、被註解掉的程式碼、直通的 wrapper）。自動套用。
+  - **CAREFUL** = 有改善且不改變語意（重新命名區域變數、攤平巢狀三元運算、抽出輔助函式）。套用並驗證測試。
+  - **RISKY** = 可能改變行為或破壞公開契約（N+1 重構、公開 API 重新命名、記憶體生命週期變更）。標記供人工審查 — 不要自動套用。
+- 跳過吹毛求疵與純風格的擾動。只標記實質改善程式碼的項目。
 
-Pass these four goals (drop any the user's focus excludes):
+傳入以下四個目標（依使用者的聚焦刪去不適用者）：
 
-**Reviewer 1 — Code Reuse**
-> Review this diff for code that duplicates functionality already in the
-> codebase. Search utility modules, shared helpers, and adjacent files
-> (use search_files / grep) for existing functions, constants, or patterns
-> the new code could call instead of reimplementing. Flag: new functions
-> that duplicate existing ones; hand-rolled logic that an existing utility
-> already does (manual string/path manipulation, custom env checks, ad-hoc
-> type guards, re-implemented parsing). For each, name the existing thing to
-> use and where it lives.
+**審查者 1 — 程式碼重用**
+> 審查此 diff 中與程式碼庫既有功能重複的部分。搜尋工具模組、共享輔助函式與相鄰檔案（用 search_files / grep），找出新程式碼可以改為呼叫、而不必重新實作的既有函式、常數或模式。標記：與既有函式重複的新函式；既有工具已能處理卻手刻的邏輯（手動字串/路徑處理、自訂環境檢查、臨時型別守衛、重新實作的剖析）。每一項都要指出應使用的既有事物及其所在位置。
 
-**Reviewer 2 — Code Quality**
-> Review this diff for quality problems. Look for: redundant state (values
-> that duplicate or could be derived from existing state; caches that don't
-> need to exist); parameter sprawl (new params bolted on where the function
-> should have been restructured); copy-paste-with-variation (near-duplicate
-> blocks that should share an abstraction); leaky abstractions (exposing
-> internals, breaking an existing encapsulation boundary); stringly-typed
-> code (raw strings where a constant/enum/registry already exists — check the
-> canonical registries before flagging); deeply nested conditionals (ternary
-> chains, 3+-level if/else pyramids — flatten with guard clauses, early
-> returns, or a lookup table); AI-generated slop patterns (extra
-> comments restating obvious code like `// increment counter` above `count++`;
-> unnecessary defensive null-checks on already-validated inputs; `as any`
-> casts that bypass the type system; patterns inconsistent with the rest of
-> the file). For each, give the concrete refactor.
+**審查者 2 — 程式碼品質**
+> 審查此 diff 中的品質問題。尋找：多餘的狀態（與既有狀態重複、或可由既有狀態導出的值；不必存在的快取）；參數蔓延（函式本該重構卻硬接上去的新參數）；帶變化的複製貼上（應共享抽象的近似重複區塊）；漏洞抽象（暴露內部、破壞既有的封裝邊界）；字串硬編碼型別（常數/列舉/註冊表已存在卻仍用裸字串 — 標記前先查過正規註冊表）；深層巢狀條件式（三元鏈、3 層以上的 if/else 金字塔 — 用守衛子句、提早 return 或查表攤平）；AI 生成的垃圾模式（重述顯而易見程式碼的多餘註解，例如 `count++` 上方的 `// increment counter`；對已驗證輸入的多餘防禦性 null 檢查；繞過型別系統的 `as any` 轉型；與檔案其他部分不一致的模式）。每一項都要給出具體的重構作法。
 
-**Reviewer 3 — Efficiency**
-> Review this diff for efficiency problems. Look for: unnecessary work
-> (redundant computation, repeated file reads, duplicate API calls, N+1
-> access patterns); missed concurrency (independent ops run sequentially);
-> hot-path bloat (heavy/blocking work on startup or per-request paths);
-> TOCTOU anti-patterns (existence pre-checks before an op instead of doing
-> the op and handling the error); memory issues (unbounded growth, missing
-> cleanup, listener/handle leaks; long-lived callbacks or objects built as
-> closures that capture the whole enclosing scope — everything captured
-> stays alive as long as the object does, so prefer a small class or
-> explicit-fields struct that copies only what it needs); overly broad reads
-> (loading whole files when a slice would do); silent failures (empty catch
-> blocks, ignored error returns, `except: pass`, `.catch(() => {})` with no
-> handling, error propagation gaps — these hide bugs and should at minimum
-> log before swallowing). For each, give the concrete fix and why it's
-> faster or safer.
+**審查者 3 — 效率**
+> 審查此 diff 中的效率問題。尋找：多餘的工作（重複計算、重複讀取檔案、重複 API 呼叫、N+1 存取模式）；錯過的平行機會（互相獨立的操作卻序列執行）；熱路徑膨脹（啟動或每請求路徑上的沉重/阻塞工作）；TOCTOU 反模式（操作前先檢查存在性，而不是直接執行操作並處理錯誤）；記憶體問題（無界增長、缺少清理、監聽器/handle 洩漏；長壽命 callback 或以閉包建構的物件捕獲整個外部作用域 — 捕獲的一切都跟著物件存活，所以請改用只複製所需欄位的小型 class 或明確欄位的 struct）；過寬的讀取（整檔載入卻只需切片）；靜默失敗（空的 catch 區塊、被忽略的錯誤回傳值、`except: pass`、無處理的 `.catch(() => {})`、錯誤傳遞缺口 — 這些會藏住 bug，至少應在吞掉前先記錄）。每一項都要給出具體修法，以及為何更快或更安全。
 
-**Reviewer 4 — Altitude**
-> Review this diff for changes implemented at the wrong depth — band-aids
-> layered on top of shared infrastructure instead of fixes to the
-> infrastructure itself. Signs of a too-shallow fix: a special case added to
-> a generic code path to handle one caller (an `if (caller == X)` branch, a
-> type check, a magic-value escape hatch); a symptom patched at the call
-> site while sibling call sites keep the same flaw; a workaround stacked on
-> an earlier workaround; a wrapper added to avoid touching the thing that
-> actually needs changing; configuration or flags introduced to route around
-> a broken default instead of fixing the default. For each, identify the
-> underlying mechanism the change is dodging and describe the deeper fix —
-> generalize the shared path, fix the root default, or fix the whole bug
-> class — and honestly note when the deeper fix is large enough that it
-> should be its own task rather than part of this cleanup. Read the
-> surrounding code and `git blame` first: what looks like a band-aid is
-> sometimes a deliberate boundary (compat shims, staged migrations,
-> vendored-code isolation). Don't flag those.
+**審查者 4 — 層級（Altitude）**
+> 審查此 diff 中實作深度不對的變更 — 疊在共享基礎設施之上的權宜補丁，而不是對基礎設施本身的修復。修得太淺的跡象：為了處理單一呼叫者而在通用路徑上加特例（`if (caller == X)` 分支、型別檢查、魔法值逃生艙）；在呼叫點補症狀而同儕呼叫點仍帶同樣缺陷；在先前的 workaround 之上再疊一個 workaround；為了避開真正需要修改的東西而加 wrapper；引入設定或旗標繞過損壞的預設值，而不是修好預設值。每一項都要指出這個變更在躲避的底層機制，並描述更深層的修法 — 把共享路徑泛化、修好根部的預設值，或修掉整個 bug 類別 — 並在深層修法大到應該自成一個任務、而不屬於本次清理時，誠實註記。先讀周遭程式碼並執行 `git blame`：看起來像權宜補丁的，有時是刻意的邊界（相容墊片、分階段遷移、外部程式碼隔離）。那些不要標記。
 
-### Phase 3 — Aggregate and apply
+### 第三階段 — 彙整與套用
 
-Wait for all four to return (batch mode returns them together).
+等待四位全部回傳（批次模式會一起回傳）。
 
-1. **Merge** the findings into one list, deduping where reviewers overlap —
-   when two findings target the same line or the same underlying mechanism,
-   collapse them into one.
-2. **Discard false positives** — you have the most context; you don't have to
-   argue with a reviewer, just drop weak or wrong suggestions silently.
-3. **Resolve conflicts.** Reviewers can disagree (Reviewer 1: "use existing
-   util X"; Reviewer 3: "X is slow, inline it"). Default resolution order:
-   **correctness > the user's stated focus > readability/reuse > micro-perf.**
-   Don't apply a perf "fix" that hurts clarity unless the path is genuinely
-   hot. When two suggestions are mutually exclusive and both defensible, pick
-   the one that touches less code and note the alternative.
-4. **Apply in risk-tier order:**
-   - **SAFE first** (auto-apply): unused imports, commented-out code,
-     pass-through wrappers, redundant type assertions. Run tests after.
-   - **CAREFUL next** (apply with verification, one file at a time): rename
-     locals, flatten ternaries, extract helpers, consolidate dupes. Run tests
-     after each file. Revert any that break.
-   - **RISKY last** (flag for review — do NOT auto-apply): N+1 restructuring,
-     public API changes, concurrency fixes, error-handling changes. Present
-     each with risk description and test coverage status. Altitude findings
-     usually land here — deepening a fix means touching shared
-     infrastructure, so present the deeper fix and let the user decide
-     whether to do it now or as a follow-up.
-   If the user opted for a dry run, present all three tiers and apply nothing.
-5. **Verify** you didn't break anything: run the project's targeted tests for
-   the touched files (not the full suite), and re-run any linter/type check the
-   repo uses. If a fix breaks a test, revert that one fix and report it.
-6. **Summarize** what you changed: a short list of applied fixes grouped by
-   reviewer category and risk tier, plus any findings you deliberately skipped
-   and why. If you ran inline (no delegation), say so here.
+1. **合併**發現為一份清單，在審查者重疊之處去重 — 兩則發現指向同一行或同一底層機制時，合併成一則。
+2. **丟棄誤報** — 你擁有最多脈絡；不必與審查者爭辯，默默丟掉脆弱或錯誤的建議即可。
+3. **解決衝突。** 審查者可能意見相左（審查者 1：「用既有工具 X」；審查者 3：「X 很慢，把它內聯」）。預設解決順序：**正確性 > 使用者表明的聚焦 > 可讀性/重用 > 微效能。** 除非該路徑真的是熱路徑，否則不要套用傷害清晰度的效能「修復」。當兩個建議互斥且都站得住腳時，選觸碰程式碼較少的那個，並註記另一個選項。
+4. **依風險層級順序套用：**
+   - **先套 SAFE**（自動套用）：未使用的 import、被註解掉的程式碼、直通 wrapper、多餘的型別斷言。之後跑測試。
+   - **接著 CAREFUL**（驗證後套用，一次一個檔案）：重新命名區域變數、攤平三元運算、抽出輔助函式、合併重複。每個檔案之後跑測試。弄壞的就還原。
+   - **最後 RISKY**（標記供審查 — 不要自動套用）：N+1 重構、公開 API 變更、並行修正、錯誤處理變更。每一項都附上風險描述與測試覆蓋狀態呈現。層級（altitude）發現通常落在這裡 — 加深修復代表要碰共享基礎設施，所以把更深的修法提出來，讓使用者決定現在做還是當後續任務。
+   若使用者選擇乾跑，呈現三個層級但不套用任何東西。
+5. **驗證**你沒有弄壞任何東西：針對被觸碰的檔案跑專項測試（不是完整套件），並重跑倉庫使用的 linter/型別檢查。若某個修復弄壞了測試，還原該修復並回報。
+6. **總結**你改了什麼：依審查者類別與風險層級分組的已套用修復清單，加上你刻意略過的發現及原因。若你是內嵌執行（未委派），在此說明。
 
-## Pitfalls
+## 常見陷阱
 
-- **Don't fan out wider than 4.** More reviewers means more cost and more
-  conflicting suggestions to reconcile, not better coverage. The four
-  categories cover the space.
-- **Give the WHOLE diff to each reviewer.** Splitting the diff across reviewers
-  defeats the design — cross-file duplication and N+1s only show up with the
-  full picture.
-- **Reviewers search, they don't guess.** A reuse finding with no pointer to
-  the existing utility ("there's probably a helper for this") is noise. Require
-  `file:line` evidence; drop findings that lack it.
-- **Apply ≠ rewrite.** This is cleanup of the user's recent changes, not a
-  license to refactor the whole module. Keep edits scoped to what the diff
-  touched plus the minimal surrounding change a fix requires. Altitude
-  findings are the exception that proves the rule: when the right fix is
-  deeper than the diff, FLAG it — don't unilaterally rebuild the shared
-  mechanism inside a cleanup pass.
-- **Don't drift into bug-hunting.** If a reviewer surfaces a genuine
-  correctness bug, report it prominently — but as a separate "found a bug"
-  note, not folded into cleanup fixes. Correctness review is a different
-  pass with different verification standards.
-- **Respect project conventions.** If the repo has AGENTS.md / CLAUDE.md /
-  HERMES.md or a linter config, fold those rules into the reviewer prompts so
-  suggestions match house style instead of fighting it.
-- **Large diffs blow context.** If the diff is huge, scope it down before
-  delegating — four subagents each carrying a 5000-line diff is expensive and
-  may truncate.
-- **Over-trusting dead code tools.** `knip`, `ts-prune`, and `depcheck` flag
-  exports that ARE used dynamically (string-based imports, reflection). Always
-  grep for the symbol name before removing — a clean tool report is not proof.
-- **Renaming without checking public contracts.** Export names, API route
-  paths, DB column names, and config keys are contracts — even if the name is
-  bad, renaming breaks consumers. Tag public-contract changes as RISKY; never
-  auto-rename them.
-- **Removing "unnecessary" error handling.** An empty catch block or ignored
-  error might be intentional — the error is expected and benign in that
-  context. Flag it, don't remove it; let the human decide.
-- **Not every special case is a band-aid.** Compat shims, staged migrations,
-  and isolation layers around vendored code look like altitude violations but
-  are deliberate design. Check `git blame` and surrounding comments before
-  flagging; when the intent is unclear, mark `confidence: low`.
+- **不要分散超過 4。** 更多審查者代表更多成本、更多需要調和的衝突建議，而不是更好的涵蓋。這四類已涵蓋整個空間。
+- **把完整的 diff 給每位審查者。** 把 diff 拆散給不同審查者會破壞設計 — 跨檔案的重複與 N+1 只有在完整圖景下才會顯現。
+- **審查者靠搜尋，不靠猜。** 沒有指向既有工具的重用發現（「這裡大概有個輔助函式吧」）是噪音。要求 `file:line` 證據；丟掉缺乏證據的發現。
+- **套用 ≠ 重寫。** 這是使用者近期變更的清理，不是重整整個模組的許可。把編輯限制在 diff 觸及之處，加上修復所需的最小周邊變更。層級（altitude）發現是例外：當正確的修法比 diff 更深時，要**標記**它 — 不要在清理輪次中單方面重建共享機制。
+- **不要漂移成漏洞狩獵。** 若某位審查者發現真正的正確性 bug，顯著地回報 — 但要以獨立的「發現 bug」註記呈現，不要混進清理修復裡。正確性審查是不同的一輪，有不同的驗證標準。
+- **尊重專案慣例。** 若倉庫有 AGENTS.md / CLAUDE.md / HERMES.md 或 linter 設定，把那些規則併入審查者提示，讓建議符合專案風格而不是與之對抗。
+- **大型 diff 會撐爆上下文。** 若 diff 巨大，先縮小範圍再委派 — 四個子代理各帶一份 5000 行的 diff 很貴，而且可能被截斷。
+- **過度相信死碼工具。** `knip`、`ts-prune` 和 `depcheck` 會標記其實被動態使用的 export（字串型 import、反射）。移除前一律先 grep 該符號名；工具報告乾淨不是證明。
+- **未檢查公開契約就重新命名。** export 名稱、API 路由路徑、DB 欄位名與設定鍵都是契約 — 即使名稱很糟，改名也會破壞消費者。把公開契約變更標為 RISKY；絕不自動重新命名。
+- **移除「多餘的」錯誤處理。** 空的 catch 區塊或被忽略的錯誤可能是有意的 — 在該情境中，這個錯誤是預期且良性的。標記它，不要移除；讓人類決定。
+- **不是每個特例都是權宜補丁。** 相容墊片、分階段遷移、以及外部程式碼周圍的隔離層看起來像層級（altitude）違規，但其實是刻意設計。標記前先查 `git blame` 與周遭註解；意圖不明時，標記 `confidence: low`。
 
-## Related
+## 相關
 
-If your install has the `subagent-driven-development` skill (optional), it
-covers the complementary case: parallel review *during* implementation, per
-task. This skill is the standalone *after-the-fact* cleanup pass. Use
-`requesting-code-review` for the pre-commit security/quality gate — that's
-the bug hunt; this is the cleanup.
+若你的安裝有 `subagent-driven-development` 技能（選用），它涵蓋互補的情境：在實作「過程」中、依任務執行的平行審查。本技能則是獨立的「事後」清理輪次。提交前的安全/品質關卡請用 `requesting-code-review` — 那是漏洞狩獵；本技能是清理。

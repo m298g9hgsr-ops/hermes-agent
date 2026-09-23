@@ -1,6 +1,6 @@
 ---
 name: github
-description: "GitHub via gh CLI: PRs, issues, reviews, repos, auth."
+description: "透過 gh CLI 操作 GitHub：PR、issue、審查、倉庫、授權."
 version: 2.0.0
 author: Ben Barclay (benbarclay), Hermes Agent
 license: MIT
@@ -14,43 +14,30 @@ metadata:
 
 # GitHub
 
-Work GitHub end to end with the `gh` CLI (REST fallback where noted): auth,
-issues, the PR lifecycle, issue-to-PR delivery, code review, and repo
-management. This skill consolidates six former skills; each workflow lives
-complete in its reference file — ALWAYS read the matching reference before
-starting that workflow, the body below only routes.
+用 `gh` CLI 端對端操作 GitHub（註明處有 REST 後備）：auth、issue、PR 生命週期、issue 到 PR 的交付、程式碼審查與倉庫管理。本技能合併了先前的六個技能；每個工作流程都完整存在於各自的參考檔中 — 開始某個工作流程前**一律**先讀對應的參考檔，下方正文只做路由。
 
-## Routing
+## 路由
 
-| Task | Read first |
+| 任務 | 先閱讀 |
 |---|---|
-| Auth broken / new machine / token or SSH setup / gh login | `references/auth.md` |
-| Create, triage, label, assign, close issues | `references/issues.md` |
-| Branch, commit, open PR, watch CI, merge | `references/pr-workflow.md` |
-| Carry an ISSUE to a verified PR (full delivery loop) | `references/issue-to-pr.md` |
-| Review someone's PR: diffs, inline comments, verdict | `references/code-review.md` |
-| Clone/create/fork repos, remotes, releases | `references/repo-management.md` |
+| Auth 壞掉 / 新機器 / token 或 SSH 設定 / gh login | `references/auth.md` |
+| 建立、分類、標籤、指派、關閉 issue | `references/issues.md` |
+| 開分支、commit、開 PR、看 CI、合併 | `references/pr-workflow.md` |
+| 把一個 ISSUE 交付成已驗證的 PR（完整交付迴圈） | `references/issue-to-pr.md` |
+| 審查別人的 PR：diff、內嵌評論、裁決 | `references/code-review.md` |
+| 複製/建立/fork 倉庫、remote、release | `references/repo-management.md` |
 
-Supporting assets: `scripts/gh-env.sh` + `scripts/git-credential-token.py`
-(auth helpers), `templates/` (PR bodies, bug report, feature request),
-`references/ci-troubleshooting.md`, `references/conventional-commits.md`,
-`references/github-api-cheatsheet.md`, `references/review-output-template.md`.
+輔助資產：`scripts/gh-env.sh` + `scripts/git-credential-token.py`（auth 輔助）、`templates/`（PR 內文、bug 報告、功能請求）、`references/ci-troubleshooting.md`、`references/conventional-commits.md`、`references/github-api-cheatsheet.md`、`references/review-output-template.md`。
 
-## Core discipline (applies to every workflow)
+## 核心紀律（適用於每個工作流程）
 
-- Preflight once per session: `gh auth status` — if it fails, go to
-  `references/auth.md` before anything else.
-- Prefer `gh` over raw REST; drop to `gh api` only for endpoints the
-  porcelain lacks (the cheatsheet lists them).
-- Never report CI green without checking `gh pr checks` yourself; never
-  claim merged without verifying `state,mergedAt`.
-- Read full context before writing: `gh issue view --comments` /
-  `gh pr view --comments` — decisions live in threads, not titles.
-- Sweep for duplicates before creating anything:
-  `gh pr list --search` / `gh issue list --search`.
+- 每個 session 開場先 preflight：`gh auth status` — 若失敗，在碰任何其他東西之前先去看 `references/auth.md`。
+- 優先 `gh` 勝過裸 REST；只有 porcelain 沒有的端點才降級用 `gh api`（cheatsheet 列了它們）。
+- 沒有親自查 `gh pr checks`，就不要回報 CI 綠；沒有驗證 `state,mergedAt`，就不要宣稱已合併。
+- 動手寫之前先讀完整脈絡：`gh issue view --comments` / `gh pr view --comments` — 決定在討論串裡，不在標題裡。
+- 建立任何東西之前先掃重複：`gh pr list --search` / `gh issue list --search`。
 
-## Verification
+## 驗證
 
-- The workflow's own reference file defines done for that task.
-- Cross-cutting: every claim about remote state (CI, merge, release,
-  issue state) is backed by a fresh `gh` read, never memory.
+- 該工作流程自己的參考檔定義了何時算完成。
+- 跨領域規則：所有關於遠端狀態（CI、合併、release、issue 狀態）的主張，都以全新的 `gh` 讀取為憑，不能憑記憶。

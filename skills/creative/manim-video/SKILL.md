@@ -1,6 +1,6 @@
 ---
 name: manim-video
-description: "Manim CE animations: 3Blue1Brown math/algo videos."
+description: Manim CE 動畫：3Blue1Brown風格數學演算法影片.
 version: 1.0.0
 author: SHL0MS, Hermes Agent
 license: MIT
@@ -11,115 +11,115 @@ metadata:
     related_skills: []
 ---
 
-# Manim Video Production Pipeline
+# Manim 影片製作流程
 
-## When to use
+## 使用時機
 
-Use when users request: animated explanations, math animations, concept visualizations, algorithm walkthroughs, technical explainers, 3Blue1Brown style videos, or any programmatic animation with geometric/mathematical content. Creates 3Blue1Brown-style explainer videos, algorithm visualizations, equation derivations, architecture diagrams, and data stories using Manim Community Edition.
+當使用者要求以下內容時使用：動畫解說、數學動畫、概念視覺化、演算法走查、技術解說、3Blue1Brown 風格影片，或任何含幾何／數學內容的程式化動畫。以 Manim Community Edition 製作 3Blue1Brown 風格解說影片、演算法視覺化、公式推導、架構圖與數據故事。
 
-## Creative Standard
+## 創作標準
 
-This is educational cinema. Every frame teaches. Every animation reveals structure.
+這是教育電影。每一幀都在教學。每一個動畫都在揭示結構。
 
-**Before writing a single line of code**, articulate the narrative arc. What misconception does this correct? What is the "aha moment"? What visual story takes the viewer from confusion to understanding? The user's prompt is a starting point — interpret it with pedagogical ambition.
+**在寫下第一行程式碼之前**，先說清楚敘事弧線。這修正了什麼誤解？「啊哈時刻」是什麼？什麼樣的視覺故事能帶領觀眾從困惑走向理解？使用者的提示只是起點——請以教學企圖心去詮釋它。
 
-**Geometry before algebra.** Show the shape first, the equation second. Visual memory encodes faster than symbolic memory. When the viewer sees the geometric pattern before the formula, the equation feels earned.
+**先幾何，後代數。** 先展示形狀，再給公式。視覺記憶比符號記憶編碼更快。當觀眾先看到幾何模式再看到公式時，方程會讓人感覺是水到渠成的。
 
-**First-render excellence is non-negotiable.** The output must be visually clear and aesthetically cohesive without revision rounds. If something looks cluttered, poorly timed, or like "AI-generated slides," it is wrong.
+**首次渲染的優秀程度沒有商量餘地。** 成品必須在不經修輪的情況下視覺清晰且美學一致。如果看起來雜亂、節奏不佳，或像「AI 生成的投影片」，那就是錯的。
 
-**Opacity layering directs attention.** Never show everything at full brightness. Primary elements at 1.0, contextual elements at 0.4, structural elements (axes, grids) at 0.15. The brain processes visual salience in layers.
+**不透明度分層引導注意力。** 永遠不要把所有東西都以全亮度顯示。主要元素 1.0、語境元素 0.4、結構元素（座標軸、格線）0.15。大腦是分層處理視覺顯著性的。
 
-**Breathing room.** Every animation needs `self.wait()` after it. The viewer needs time to absorb what just appeared. Never rush from one animation to the next. A 2-second pause after a key reveal is never wasted.
+**呼吸空間。** 每個動畫之後都需要 `self.wait()`。觀眾需要時間消化剛出現的內容。永遠不要從一個動畫急著趕到下一個。關鍵揭曉後的 2 秒停頓永遠不浪費。
 
-**Cohesive visual language.** All scenes share a color palette, consistent typography sizing, matching animation speeds. A technically correct video where every scene uses random different colors is an aesthetic failure.
+**一致的視覺語言。** 所有場景共用一套色盤、一致的字級尺寸、相符的動畫速度。每個場景都用隨機不同顏色的影片，即使技術正確也是美學上的失敗。
 
-## Prerequisites
+## 前置需求
 
-Run `scripts/setup.sh` to verify all dependencies. Requires: Python 3.10+, Manim Community Edition v0.20+ (`pip install manim`), LaTeX (`texlive-full` on Linux, `mactex` on macOS), and ffmpeg. Reference docs tested against Manim CE v0.20.1.
+執行 `scripts/setup.sh` 驗證所有相依性。需要：Python 3.10+、Manim Community Edition v0.20+（`pip install manim`）、LaTeX（Linux 上 `texlive-full`、macOS 上 `mactex`）以及 ffmpeg。參考文件依 Manim CE v0.20.1 測試。
 
-## Modes
+## 模式
 
-| Mode | Input | Output | Reference |
+| 模式 | 輸入 | 輸出 | 參考 |
 |------|-------|--------|-----------|
-| **Concept explainer** | Topic/concept | Animated explanation with geometric intuition | `references/scene-planning.md` |
-| **Equation derivation** | Math expressions | Step-by-step animated proof | `references/equations.md` |
-| **Algorithm visualization** | Algorithm description | Step-by-step execution with data structures | `references/graphs-and-data.md` |
-| **Data story** | Data/metrics | Animated charts, comparisons, counters | `references/graphs-and-data.md` |
-| **Architecture diagram** | System description | Components building up with connections | `references/mobjects.md` |
-| **Paper explainer** | Research paper | Key findings and methods animated | `references/scene-planning.md` |
-| **3D visualization** | 3D concept | Rotating surfaces, parametric curves, spatial geometry | `references/camera-and-3d.md` |
+| **概念解說** | 主題／概念 | 含幾何直覺的動畫解說 | `references/scene-planning.md` |
+| **公式推導** | 數學表達式 | 逐步動畫證明 | `references/equations.md` |
+| **演算法視覺化** | 演算法描述 | 含資料結構的逐步執行 | `references/graphs-and-data.md` |
+| **數據故事** | 數據／指標 | 動畫圖表、比較、計數器 | `references/graphs-and-data.md` |
+| **架構圖** | 系統描述 | 元件逐步建構與連線 | `references/mobjects.md` |
+| **論文解說** | 研究論文 | 關鍵發現與方法動畫化 | `references/scene-planning.md` |
+| **3D 視覺化** | 3D 概念 | 旋轉曲面、參數曲線、空間幾何 | `references/camera-and-3d.md` |
 
-## Stack
+## 技術堆疊
 
-Single Python script per project. No browser, no Node.js, no GPU required.
+每個專案一支 Python 腳本。不需要瀏覽器、Node.js 或 GPU。
 
-| Layer | Tool | Purpose |
+| 層級 | 工具 | 用途 |
 |-------|------|---------|
-| Core | Manim Community Edition | Scene rendering, animation engine |
-| Math | LaTeX (texlive/MiKTeX) | Equation rendering via `MathTex` |
-| Video I/O | ffmpeg | Scene stitching, format conversion, audio muxing |
-| TTS | ElevenLabs / Qwen3-TTS (optional) | Narration voiceover |
+| 核心 | Manim Community Edition | 場景渲染、動畫引擎 |
+| 數學 | LaTeX（texlive/MiKTeX） | 透過 `MathTex` 渲染公式 |
+| 影片 I/O | ffmpeg | 場景串接、格式轉換、音訊混合 |
+| TTS | ElevenLabs / Qwen3-TTS（選用） | 旁白配音 |
 
-## Pipeline
+## 流程
 
 ```
 PLAN --> CODE --> RENDER --> STITCH --> AUDIO (optional) --> REVIEW
 ```
 
-1. **PLAN** — Write `plan.md` with narrative arc, scene list, visual elements, color palette, voiceover script
-2. **CODE** — Write `script.py` with one class per scene, each independently renderable
-3. **RENDER** — `manim -ql script.py Scene1 Scene2 ...` for draft, `-qh` for production
-4. **STITCH** — ffmpeg concat of scene clips into `final.mp4`
-5. **AUDIO** (optional) — Add voiceover and/or background music via ffmpeg. See `references/rendering.md`
-6. **REVIEW** — Render preview stills, verify against plan, adjust
+1. **PLAN** — 撰寫 `plan.md`，包含敘事弧線、場景清單、視覺元素、色盤、旁白腳本
+2. **CODE** — 撰寫 `script.py`，每個場景一個 class，各自可獨立渲染
+3. **RENDER** — `manim -ql script.py Scene1 Scene2 ...` 產出草稿，`-qh` 產出正式版
+4. **STITCH** — 用 ffmpeg 將場景片段串接為 `final.mp4`
+5. **AUDIO**（選用）— 透過 ffmpeg 加入旁白及／或背景音樂。見 `references/rendering.md`
+6. **REVIEW** — 渲染預覽靜幀，對照計畫驗證並調整
 
-## Project Structure
+## 專案結構
 
 ```
 project-name/
-  plan.md                # Narrative arc, scene breakdown
-  script.py              # All scenes in one file
-  concat.txt             # ffmpeg scene list
-  final.mp4              # Stitched output
-  media/                 # Auto-generated by Manim
+  plan.md                # 敘事弧線、場景拆解
+  script.py              # 所有場景在單一檔案
+  concat.txt             # ffmpeg 場景清單
+  final.mp4              # 串接後的成品
+  media/                 # 由 Manim 自動產生
     videos/script/480p15/
 ```
 
-## Creative Direction
+## 創作指導
 
-### Color Palettes
+### 色盤
 
-| Palette | Background | Primary | Secondary | Accent | Use case |
+| 色盤 | 背景 | 主色 | 次色 | 重點色 | 使用情境 |
 |---------|-----------|---------|-----------|--------|----------|
-| **Classic 3B1B** | `#1C1C1C` | `#58C4DD` (BLUE) | `#83C167` (GREEN) | `#FFFF00` (YELLOW) | General math/CS |
-| **Warm academic** | `#2D2B55` | `#FF6B6B` | `#FFD93D` | `#6BCB77` | Approachable |
-| **Neon tech** | `#0A0A0A` | `#00F5FF` | `#FF00FF` | `#39FF14` | Systems, architecture |
-| **Monochrome** | `#1A1A2E` | `#EAEAEA` | `#888888` | `#FFFFFF` | Minimalist |
+| **經典 3B1B** | `#1C1C1C` | `#58C4DD` (BLUE) | `#83C167` (GREEN) | `#FFFF00` (YELLOW) | 一般數學／CS |
+| **溫暖學院** | `#2D2B55` | `#FF6B6B` | `#FFD93D` | `#6BCB77` | 平易近人 |
+| **霓虹科技** | `#0A0A0A` | `#00F5FF` | `#FF00FF` | `#39FF14` | 系統、架構 |
+| **單色** | `#1A1A2E` | `#EAEAEA` | `#888888` | `#FFFFFF` | 極簡 |
 
-### Animation Speed
+### 動畫速度
 
-| Context | run_time | self.wait() after |
+| 情境 | run_time | 之後的 self.wait() |
 |---------|----------|-------------------|
-| Title/intro appear | 1.5s | 1.0s |
-| Key equation reveal | 2.0s | 2.0s |
-| Transform/morph | 1.5s | 1.5s |
-| Supporting label | 0.8s | 0.5s |
-| FadeOut cleanup | 0.5s | 0.3s |
-| "Aha moment" reveal | 2.5s | 3.0s |
+| 標題／開場出現 | 1.5s | 1.0s |
+| 關鍵公式揭曉 | 2.0s | 2.0s |
+| 轉換／變形 | 1.5s | 1.5s |
+| 輔助標籤 | 0.8s | 0.5s |
+| FadeOut 清場 | 0.5s | 0.3s |
+| 「啊哈時刻」揭曉 | 2.5s | 3.0s |
 
-### Typography Scale
+### 字級層級
 
-| Role | Font size | Usage |
+| 角色 | 字級 | 用途 |
 |------|-----------|-------|
-| Title | 48 | Scene titles, opening text |
-| Heading | 36 | Section headers within a scene |
-| Body | 30 | Explanatory text |
-| Label | 24 | Annotations, axis labels |
-| Caption | 20 | Subtitles, fine print |
+| 標題 | 48 | 場景標題、開場文字 |
+| 標頭 | 36 | 場景內的段落標題 |
+| 內文 | 30 | 說明文字 |
+| 標籤 | 24 | 註記、座標軸標籤 |
+| 說明 | 20 | 字幕、補充小字 |
 
-### Fonts
+### 字體
 
-**Use monospace fonts for all text.** Manim's Pango renderer produces broken kerning with proportional fonts at all sizes. See `references/visual-design.md` for full recommendations.
+**所有文字都使用等寬字體。** Manim 的 Pango 渲染器在任何字級下與比例字體搭配都會產生破損的字距。完整建議見 `references/visual-design.md`。
 
 ```python
 MONO = "Menlo"  # define once at top of file
@@ -129,25 +129,25 @@ Text("n=1: sin(x)", font_size=20, font=MONO)                  # labels
 MathTex(r"\nabla L")                                            # math (uses LaTeX)
 ```
 
-Minimum `font_size=18` for readability.
+最低 `font_size=18` 以確保可讀性。
 
-### Per-Scene Variation
+### 場景變化
 
-Never use identical config for all scenes. For each scene:
-- **Different dominant color** from the palette
-- **Different layout** — don't always center everything
-- **Different animation entry** — vary between Write, FadeIn, GrowFromCenter, Create
-- **Different visual weight** — some scenes dense, others sparse
+絕不對所有場景使用相同設定。每個場景：
+- 從色盤中選**不同的主導色**
+- **不同的版面** — 不要總是把所有東西置中
+- **不同的動畫入場** — 在 Write、FadeIn、GrowFromCenter、Create 之間變化
+- **不同的視覺重量** — 有些場景緊密，有些疏朗
 
-## Workflow
+## 工作流程
 
-### Step 1: Plan (plan.md)
+### 步驟 1：規劃（plan.md）
 
-Before any code, write `plan.md`. See `references/scene-planning.md` for the comprehensive template.
+寫任何程式碼之前，先撰寫 `plan.md`。完整範本見 `references/scene-planning.md`。
 
-### Step 2: Code (script.py)
+### 步驟 2：撰寫程式碼（script.py）
 
-One class per scene. Every scene is independently renderable.
+每個場景一個 class。每個場景都可獨立渲染。
 
 ```python
 from manim import *
@@ -168,20 +168,20 @@ class Scene1_Introduction(Scene):
         self.play(FadeOut(title), run_time=0.5)
 ```
 
-Key patterns:
-- **Subtitles** on every animation: `self.add_subcaption("text", duration=N)` or `subcaption="text"` on `self.play()`
-- **Shared color constants** at file top for cross-scene consistency
-- **`self.camera.background_color`** set in every scene
-- **Clean exits** — FadeOut all mobjects at scene end: `self.play(FadeOut(Group(*self.mobjects)))`
+關鍵模式：
+- **每個動畫都有字幕**：`self.add_subcaption("text", duration=N)` 或在 `self.play()` 上使用 `subcaption="text"`
+- **共用色彩常數**置於檔案頂端，確保跨場景一致
+- **`self.camera.background_color`** 在每個場景中設定
+- **乾淨離場** — 場景結束時 FadeOut 所有 mobject：`self.play(FadeOut(Group(*self.mobjects)))`
 
-### Step 3: Render
+### 步驟 3：渲染
 
 ```bash
 manim -ql script.py Scene1_Introduction Scene2_CoreConcept  # draft
 manim -qh script.py Scene1_Introduction Scene2_CoreConcept  # production
 ```
 
-### Step 4: Stitch
+### 步驟 4：串接
 
 ```bash
 cat > concat.txt << 'EOF'
@@ -191,85 +191,85 @@ EOF
 ffmpeg -y -f concat -safe 0 -i concat.txt -c copy final.mp4
 ```
 
-### Step 5: Review
+### 步驟 5：檢視
 
 ```bash
 manim -ql --format=png -s script.py Scene2_CoreConcept  # preview still
 ```
 
-## Critical Implementation Notes
+## 關鍵實作注意事項
 
-### Raw Strings for LaTeX
+### LaTeX 使用原始字串
 ```python
 # WRONG: MathTex("\frac{1}{2}")
 # RIGHT:
 MathTex(r"\frac{1}{2}")
 ```
 
-### buff >= 0.5 for Edge Text
+### 靠邊文字的 buff >= 0.5
 ```python
 label.to_edge(DOWN, buff=0.5)  # never < 0.5
 ```
 
-### FadeOut Before Replacing Text
+### 替換文字前先 FadeOut
 ```python
 self.play(ReplacementTransform(note1, note2))  # not Write(note2) on top
 ```
 
-### Never Animate Non-Added Mobjects
+### 絕不對未加入的 Mobject 執行動畫
 ```python
 self.play(Create(circle))  # must add first
 self.play(circle.animate.set_color(RED))  # then animate
 ```
 
-## Performance Targets
+## 效能目標
 
-| Quality | Resolution | FPS | Speed |
+| 品質 | 解析度 | FPS | 速度 |
 |---------|-----------|-----|-------|
-| `-ql` (draft) | 854x480 | 15 | 5-15s/scene |
-| `-qm` (medium) | 1280x720 | 30 | 15-60s/scene |
-| `-qh` (production) | 1920x1080 | 60 | 30-120s/scene |
+| `-ql`（草稿） | 854x480 | 15 | 5-15s/場景 |
+| `-qm`（中等） | 1280x720 | 30 | 15-60s/場景 |
+| `-qh`（正式版） | 1920x1080 | 60 | 30-120s/場景 |
 
-Always iterate at `-ql`. Only render `-qh` for final output.
+迭代一律使用 `-ql`。只有最終成品才渲染 `-qh`。
 
-## References
+## 參考文件
 
-| File | Contents |
+| 檔案 | 內容 |
 |------|----------|
-| `references/animations.md` | Core animations, rate functions, composition, `.animate` syntax, timing patterns |
-| `references/mobjects.md` | Text, shapes, VGroup/Group, positioning, styling, custom mobjects |
-| `references/visual-design.md` | 12 design principles, opacity layering, layout templates, color palettes |
-| `references/equations.md` | LaTeX in Manim, TransformMatchingTex, derivation patterns |
-| `references/graphs-and-data.md` | Axes, plotting, BarChart, animated data, algorithm visualization |
-| `references/camera-and-3d.md` | MovingCameraScene, ThreeDScene, 3D surfaces, camera control |
-| `references/scene-planning.md` | Narrative arcs, layout templates, scene transitions, planning template |
-| `references/rendering.md` | CLI reference, quality presets, ffmpeg, voiceover workflow, GIF export |
-| `references/troubleshooting.md` | LaTeX errors, animation errors, common mistakes, debugging |
-| `references/animation-design-thinking.md` | When to animate vs show static, decomposition, pacing, narration sync |
-| `references/updaters-and-trackers.md` | ValueTracker, add_updater, always_redraw, time-based updaters, patterns |
-| `references/paper-explainer.md` | Turning research papers into animations — workflow, templates, domain patterns |
-| `references/decorations.md` | SurroundingRectangle, Brace, arrows, DashedLine, Angle, annotation lifecycle |
-| `references/production-quality.md` | Pre-code, pre-render, post-render checklists, spatial layout, color, tempo |
+| `references/animations.md` | 核心動畫、速率函數、組合、`.animate` 語法、節奏模式 |
+| `references/mobjects.md` | 文字、形狀、VGroup/Group、定位、樣式、自訂 mobject |
+| `references/visual-design.md` | 12 條設計原則、不透明度分層、版面範本、色盤 |
+| `references/equations.md` | Manim 中的 LaTeX、TransformMatchingTex、推導模式 |
+| `references/graphs-and-data.md` | 座標軸、繪圖、BarChart、動畫數據、演算法視覺化 |
+| `references/camera-and-3d.md` | MovingCameraScene、ThreeDScene、3D 曲面、鏡頭控制 |
+| `references/scene-planning.md` | 敘事弧線、版面範本、場景轉場、規劃範本 |
+| `references/rendering.md` | CLI 參考、品質預設、ffmpeg、旁白工作流、GIF 匯出 |
+| `references/troubleshooting.md` | LaTeX 錯誤、動畫錯誤、常見錯誤、除錯 |
+| `references/animation-design-thinking.md` | 何時動畫 vs 靜態展示、拆解、節奏、旁白同步 |
+| `references/updaters-and-trackers.md` | ValueTracker、add_updater、always_redraw、時間驅動 updater、模式 |
+| `references/paper-explainer.md` | 將研究論文轉為動畫 — 工作流、範本、領域模式 |
+| `references/decorations.md` | SurroundingRectangle、Brace、箭頭、DashedLine、Angle、註記生命週期 |
+| `references/production-quality.md` | 寫碼前、渲染前、渲染後檢查清單、空間版面、色彩、節奏 |
 
 ---
 
-## Creative Divergence (use only when user requests experimental/creative/unique output)
+## 創作發散（僅在使用者要求實驗性／創意／獨特輸出時使用）
 
-If the user asks for creative, experimental, or unconventional explanatory approaches, select a strategy and reason through it BEFORE designing the animation.
+若使用者要求創意、實驗性或非傳統的解說手法，請先選擇策略並想清楚步驟，再設計動畫。
 
-- **SCAMPER** — when the user wants a fresh take on a standard explanation
-- **Assumption Reversal** — when the user wants to challenge how something is typically taught
+- **SCAMPER** — 當使用者想要對標準解說有新鮮看法
+- **假設顛覆** — 當使用者想挑戰某主題的典型教法
 
-### SCAMPER Transformation
-Take a standard mathematical/technical visualization and transform it:
-- **Substitute**: replace the standard visual metaphor (number line → winding path, matrix → city grid)
-- **Combine**: merge two explanation approaches (algebraic + geometric simultaneously)
-- **Reverse**: derive backward — start from the result and deconstruct to axioms
-- **Modify**: exaggerate a parameter to show why it matters (10x the learning rate, 1000x the sample size)
-- **Eliminate**: remove all notation — explain purely through animation and spatial relationships
+### SCAMPER 轉化
+取一個標準的數學／技術視覺化並轉化它：
+- **Substitute（替代）**：替換標準視覺隱喻（數字線 → 迂迴路徑、矩形 → 城市街廓）
+- **Combine（合併）**：融合兩種解說方式（代數＋幾何同時進行）
+- **Reverse（顛倒）**：反向推導 — 從結果出發，拆解回公理
+- **Modify（修改）**：誇大參數以說明其重要性（學習率 10 倍、樣本數 1000 倍）
+- **Eliminate（消除）**：移除所有符號 — 純粹用動畫與空間關係解說
 
-### Assumption Reversal
-1. List what's "standard" about how this topic is visualized (left-to-right, 2D, discrete steps, formal notation)
-2. Pick the most fundamental assumption
-3. Reverse it (right-to-left derivation, 3D embedding of a 2D concept, continuous morphing instead of steps, zero notation)
-4. Explore what the reversal reveals that the standard approach hides
+### 假設顛覆
+1. 列出此主題視覺化方式中所有「標準」之處（左到右、2D、離散步驟、正式符號）
+2. 挑出最根本的假設
+3. 顛倒它（右到左推導、2D 概念的 3D 嵌入、以連續變形取代步驟、零符號）
+4. 探索這個顛倒揭示了什麼標準手法所隱藏的東西

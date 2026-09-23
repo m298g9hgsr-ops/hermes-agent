@@ -1,6 +1,6 @@
 ---
 name: python-debugpy
-description: "Debug Python: pdb REPL + debugpy remote (DAP)."
+description: "用 pdb REPL 與 debugpy 遠端 (DAP) 除錯 Python."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -11,63 +11,63 @@ metadata:
     related_skills: [systematic-debugging, node-inspect-debugger]
 ---
 
-# Python Debugger (pdb + debugpy)
+# Python 偵錯器（pdb + debugpy）
 
-## Overview
+## 總覽
 
-Three tools, picked by situation:
+三個工具，依情況挑選：
 
-| Tool | When |
+| 工具 | 時機 |
 |---|---|
-| **`breakpoint()` + pdb** | Local, interactive, simplest. Add `breakpoint()` in the source, run normally, get a REPL at that line. |
-| **`python -m pdb`** | Launch an existing script under pdb with no source edits. Useful for quick poking. |
-| **`debugpy`** | Remote / headless / "attach to already-running process." Talks DAP, scriptable from terminal, works for long-lived processes (gateway, daemon, PTY children). |
+| **`breakpoint()` + pdb** | 本機、互動、最簡單。在原始碼加 `breakpoint()`、正常執行，就在那行拿到 REPL。 |
+| **`python -m pdb`** | 不用改原始碼就在 pdb 下啟動既有腳本。適合快速探查。 |
+| **`debugpy`** | 遠端 / 無頭 /「附加到已執行中的行程」。用 DAP 通話、可從終端機寫腳本、適用於長命行程（gateway、daemon、PTY 子行程）。 |
 
-**Start with `breakpoint()`.** It's the cheapest thing that works.
+**從 `breakpoint()` 開始。** 它是成本最低又能運作的東西。
 
-## When to Use
+## 使用時機
 
-- A test fails and the traceback doesn't reveal why a value is wrong
-- You need to step through a function and watch a collection mutate
-- A long-running process (hermes gateway, tui_gateway) misbehaves and you can't restart it
-- Post-mortem: an exception fired in prod-ish code and you want to inspect locals at the crash site
-- A subprocess / child (Python `_SlashWorker`, PTY bridge worker) is the actual bug site
+- 測試失敗而 traceback 沒有透露值為什麼錯
+- 你需要逐步走過一個函式，觀察集合在突變
+- 長命行程（hermes gateway、tui_gateway）行為不軌，而且你不能重啟
+- 事後剖析：例外在接近正式環境的程式碼中觸發，你想在崩潰點檢查 locals
+- 子行程 / 子行程（Python `_SlashWorker`、PTY bridge 工作者）才是真正的 bug 所在地
 
-**Don't use for:** things `print()` / `logging.debug` solve in under a minute, or things `pytest -vv --tb=long --showlocals` already reveals.
+**不要用於：** `print()` / `logging.debug` 一分鐘內能解決的事，或 `pytest -vv --tb=long --showlocals` 已經揭露的事。
 
-## pdb Quick Reference
+## pdb 快速參考
 
-Inside any pdb prompt (`(Pdb)`):
+在任何 pdb 提示（`(Pdb)`）內：
 
-| Command | Action |
+| 指令 | 動作 |
 |---|---|
-| `h` / `h cmd` | help |
-| `n` | next line (step over) |
+| `h` / `h cmd` | 求助 |
+| `n` | 下一行（step over） |
 | `s` | step into |
-| `r` | return from current function |
-| `c` | continue |
-| `unt N` | continue until line N |
-| `j N` | jump to line N (same function only) |
-| `l` / `ll` | list source around current line / full function |
-| `w` | where (stack trace) |
-| `u` / `d` | move up / down in the stack |
-| `a` | print args of the current function |
-| `p expr` / `pp expr` | print / pretty-print expression |
-| `display expr` | auto-print expr on every stop |
-| `b file:line` | set breakpoint |
-| `b func` | break on function entry |
-| `b file:line, cond` | conditional breakpoint |
-| `cl N` | clear breakpoint N |
-| `tbreak file:line` | one-shot breakpoint |
-| `!stmt` | execute arbitrary Python (assignments included) |
-| `interact` | drop into full Python REPL in current scope (Ctrl+D to exit) |
-| `q` | quit |
+| `r` | 從目前函式 return |
+| `c` | 繼續 |
+| `unt N` | 繼續直到第 N 行 |
+| `j N` | 跳到第 N 行（限同一個函式） |
+| `l` / `ll` | 列出目前行附近原始碼 / 整個函式 |
+| `w` | where（堆疊追蹤） |
+| `u` / `d` | 在堆疊中往上 / 往下 |
+| `a` | 印出目前函式的引數 |
+| `p expr` / `pp expr` | 印出 / 美化印出運算式 |
+| `display expr` | 每次停止時自動印出 expr |
+| `b file:line` | 設中斷點 |
+| `b func` | 函式進入時中斷 |
+| `b file:line, cond` | 條件中斷點 |
+| `cl N` | 清除中斷點 N |
+| `tbreak file:line` | 一次性中斷點 |
+| `!stmt` | 執行任意 Python（含指派） |
+| `interact` | 在目前 scope 進入完整 Python REPL（Ctrl+D 退出） |
+| `q` | 退出 |
 
-The `interact` command is the most powerful — you can import anything, inspect complex objects, even call methods that mutate state. Locals are read-only by default; use `!x = 42` from the `(Pdb)` prompt to mutate.
+`interact` 指令最強大 — 你可以 import 任何東西、檢查複雜物件，甚至呼叫會突變狀態的方法。Locals 預設唯讀；要突變就用 `(Pdb)` 提示中的 `!x = 42`。
 
-## Recipe 1: Local breakpoint
+## 做法 1：本機中斷點
 
-Easiest. Edit the file:
+最簡單。編輯檔案：
 
 ```python
 def compute(x, y):
@@ -76,14 +76,14 @@ def compute(x, y):
     return result + y
 ```
 
-Run the code normally. You land at the `breakpoint()` line with full access to locals.
+正常執行程式碼。你落在 `breakpoint()` 那行，完整存取 locals。
 
-**Don't forget to remove `breakpoint()` before committing.** Use `git diff` or a pre-commit grep:
+**提交前別忘了移除 `breakpoint()`。** 用 `git diff` 或 pre-commit grep：
 ```bash
 rg -n 'breakpoint\(\)' --type py
 ```
 
-## Recipe 2: Launch a script under pdb (no source edits)
+## 做法 2：在 pdb 下啟動腳本（不改原始碼）
 
 ```bash
 python -m pdb path/to/script.py arg1 arg2
@@ -92,9 +92,9 @@ python -m pdb path/to/script.py arg1 arg2
 (Pdb) c
 ```
 
-## Recipe 3: Debug a pytest test
+## 做法 3：除錯 pytest 測試
 
-The hermes test runner and pytest both support this:
+hermes 測試執行器與 pytest 都支援：
 
 ```bash
 # Drop to pdb on failure (or on any raised exception):
@@ -107,16 +107,16 @@ scripts/run_tests.sh tests/path/to/test_file.py::test_name --trace
 scripts/run_tests.sh tests/path/to/test_file.py --showlocals --tb=long
 ```
 
-Note: `scripts/run_tests.sh` runs each test file in a captured subprocess via `run_tests_parallel.py` (no xdist), so interactive pdb does NOT work under the wrapper. Run pytest directly for `--pdb`:
+注意：`scripts/run_tests.sh` 透過 `run_tests_parallel.py` 在擷取的子行程中跑每個測試檔（無 xdist），所以互動式 pdb 在 wrapper 下**無法運作**。要 `--pdb` 直接跑 pytest：
 
 ```bash
 source .venv/bin/activate
 python -m pytest tests/foo_test.py::test_bar --pdb
 ```
 
-This bypasses the hermetic-env guarantees — fine for debugging, but re-run under the wrapper to confirm before pushing.
+這繞過 hermetic-env 保證 — 除錯沒問題，但推上去前要在 wrapper 下重跑確認。
 
-## Recipe 4: Post-mortem on any exception
+## 做法 4：任何例外的事後剖析
 
 ```python
 import pdb, sys
@@ -126,14 +126,14 @@ except Exception:
     pdb.post_mortem(sys.exc_info()[2])
 ```
 
-Or wrap a whole script:
+或包住整個腳本：
 
 ```bash
 python -m pdb -c continue script.py
 # When it crashes, pdb catches it and you're in the frame of the exception
 ```
 
-Or set a global hook in a repl/jupyter:
+或在 repl/jupyter 中設全域 hook：
 
 ```python
 import sys
@@ -142,20 +142,20 @@ def excepthook(etype, value, tb):
 sys.excepthook = excepthook
 ```
 
-## Recipe 5: Remote debug with debugpy (attach to running process)
+## 做法 5：用 debugpy 遠端除錯（附加到執行中的行程）
 
-For long-lived processes: Hermes gateway, tui_gateway, a daemon, a process that's already misbehaving and can't be restarted clean.
+適用於長命行程：Hermes gateway、tui_gateway、daemon、或已在行為不軌、無法乾淨重啟的行程。
 
-### Setup
+### 設定
 
 ```bash
 source <hermes-agent-repo>/.venv/bin/activate
 pip install debugpy
 ```
 
-### Pattern A: Source-edit — process waits for debugger at launch
+### 模式 A：修改原始碼 — 啟動時等待除錯器
 
-Add near the top of the entry point (or inside the function you want to debug):
+在進入點頂部附近（或你想除錯的函式內）加入：
 
 ```python
 import debugpy
@@ -165,39 +165,39 @@ debugpy.wait_for_client()
 debugpy.breakpoint()       # optional: pause immediately once attached
 ```
 
-Start the process; it blocks on `wait_for_client()`.
+啟動行程；它會阻塞在 `wait_for_client()`。
 
-### Pattern B: No source edit — launch with `-m debugpy`
+### 模式 B：不改原始碼 — 用 `-m debugpy` 啟動
 
 ```bash
 python -m debugpy --listen 127.0.0.1:5678 --wait-for-client your_script.py arg1
 ```
 
-Equivalent for module entry:
+模組進入點的對應寫法：
 
 ```bash
 python -m debugpy --listen 127.0.0.1:5678 --wait-for-client -m your.module
 ```
 
-### Pattern C: Attach to an already-running process
+### 模式 C：附加到已是執行中的行程
 
-Needs the PID and debugpy preinstalled in the target's environment:
+需要 PID，且目標環境預先裝好 debugpy：
 
 ```bash
 python -m debugpy --listen 127.0.0.1:5678 --pid <pid>
 # debugpy injects itself into the process. Then attach a client as below.
 ```
 
-Some kernels/security configs block the ptrace-based injection (`/proc/sys/kernel/yama/ptrace_scope`). Fix with:
+某些 kernel/安全設定會擋基於 ptrace 的注入（`/proc/sys/kernel/yama/ptrace_scope`）。修法：
 ```bash
 echo 0 | sudo tee /proc/sys/kernel/yama/ptrace_scope
 ```
 
-### Connecting a client from the terminal
+### 從終端機連接用戶端
 
-The easiest terminal-side DAP client is VS Code CLI or a small script. From inside Hermes you have two practical options:
+最簡單的終端側 DAP 用戶端是 VS Code CLI 或一支小腳本。在 Hermes 內你有兩個實用選項：
 
-**Option 1: `debugpy`'s own CLI REPL** — not an official feature, but a tiny DAP client script:
+**選項 1：`debugpy` 自己的 CLI REPL** — 不是正式功能，而是一支很小的 DAP 用戶端腳本：
 
 ```python
 # ~/.hermes/cache/scratch/dap_client.py
@@ -234,9 +234,9 @@ send({"type": "request", "command": "configurationDone"})
 # ... loop reading events and sending continue/stepIn/etc.
 ```
 
-This is fine for one-off automation but painful as an interactive UX.
+對一次性自動化夠用，但作為互動式 UX 很痛苦。
 
-**Option 2: Attach from VS Code / Cursor / Zed** — if the user has one open, they can add a `launch.json`:
+**選項 2：從 VS Code / Cursor / Zed 附加** — 若使用者有開其中一個，他們可以加 `launch.json`：
 
 ```json
 {
@@ -251,96 +251,96 @@ This is fine for one-off automation but painful as an interactive UX.
 }
 ```
 
-**Option 3: Ditch DAP, use `remote-pdb`** — usually what you actually want from a terminal agent:
+**選項 3：丟掉 DAP，用 `remote-pdb`** — 這通常是終端機代理真正想要的：
 
 ```bash
 pip install remote-pdb
 ```
 
-In your code:
+在你的程式碼中：
 ```python
 from remote_pdb import set_trace
 set_trace(host="127.0.0.1", port=4444)   # blocks until connection
 ```
 
-Then from the terminal:
+然後從終端機：
 ```bash
 nc 127.0.0.1 4444
 # You get a (Pdb) prompt exactly as if debugging locally.
 ```
 
-`remote-pdb` is the cleanest agent-friendly choice when `debugpy`'s DAP protocol is overkill. Use `debugpy` only when you actually need IDE integration.
+當 `debugpy` 的 DAP 協定小題大作時，`remote-pdb` 是對代理最友善的乾淨選擇。只有當你真的需要 IDE 整合時才用 `debugpy`。
 
-## Debugging Hermes-specific Processes
+## 除錯 Hermes 特定行程
 
-### Tests
-See Recipe 3. The wrapper captures subprocess output, so run pytest directly for interactive pdb.
+### 測試
+見做法 3。wrapper 會擷取子行程輸出，所以要互動式 pdb 必須直接跑 pytest。
 
-### `run_agent.py` / CLI — one-shot
-Easiest: add `breakpoint()` near the suspect line, then run `hermes` normally. Control returns to your terminal at the pause point.
+### `run_agent.py` / CLI — 單次執行
+最簡單：在可疑行附近加 `breakpoint()`，然後正常執行 `hermes`。控制權在暫停點回到你的終端機。
 
-### `tui_gateway` subprocess (spawned by `hermes --tui`)
-The gateway runs as a child of the Node TUI. Options:
+### `tui_gateway` 子行程（由 `hermes --tui` 產生）
+gateway 以 Node TUI 的子行程執行。選項：
 
-**A. Source-edit the gateway:**
+**A. 修改 gateway 原始碼：**
 ```python
 # tui_gateway/server.py near the top of serve()
 import debugpy
 debugpy.listen(("127.0.0.1", 5678))
 debugpy.wait_for_client()
 ```
-Start `hermes --tui`. The TUI will appear frozen (its backend is waiting). Attach a client; execution resumes when you `continue`.
+啟動 `hermes --tui`。TUI 看起來會凍結（它的後端在等待）。附加用戶端；你 `continue` 時執行恢復。
 
-**B. Use `remote-pdb` at a specific handler:**
+**B. 在特定 handler 用 `remote-pdb`：**
 ```python
 from remote_pdb import set_trace
 set_trace(host="127.0.0.1", port=4444)   # in the RPC handler you want to trap
 ```
-Trigger the matching slash command from the TUI, then `nc 127.0.0.1 4444` in another terminal.
+從 TUI 觸發對應的 slash 指令，然後在另一個終端機 `nc 127.0.0.1 4444`。
 
-### `_SlashWorker` subprocess
-Same pattern — `remote-pdb` with `set_trace()` inside the worker's `exec` path. The worker is persistent across slash commands, so the first trigger blocks until you connect; subsequent slash commands pass through normally unless you re-arm.
+### `_SlashWorker` 子行程
+同樣模式 — 在 worker 的 `exec` 路徑內用 `remote-pdb` 的 `set_trace()`。worker 跨 slash 指令持久存在，所以第一次觸發會阻塞到連上；之後的 slash 指令正常通過，除非你再次設下陷阱。
 
-### Gateway (`gateway/run.py`)
-Long-lived. Use `remote-pdb` at a handler, or `debugpy` with `--wait-for-client` if you're restarting the gateway anyway.
+### Gateway（`gateway/run.py`）
+長生命的。在 handler 用 `remote-pdb`，或反正要重啟 gateway 時用 `debugpy` 的 `--wait-for-client`。
 
-## Common Pitfalls
+## 常見陷阱
 
-1. **pdb under a parallel/output-capturing runner silently does nothing.** You won't see the prompt, the test just hangs (true of pytest-xdist and of `scripts/run_tests.sh`'s captured per-file subprocesses). Run pytest directly on a single file for interactive debugging.
+1. **pdb 在平行/擷取輸出的 runner 下會靜默無事發生。** 你看不到提示，測試只是卡住（pytest-xdist 與 `scripts/run_tests.sh` 擷取的逐檔子行程都如此）。互動除錯要在單一檔案上直接跑 pytest。
 
-2. **`breakpoint()` in CI / non-TTY contexts hangs the process.** Safe locally; never commit it. Add a pre-commit grep as a safety net.
+2. **CI / 非 TTY 環境中的 `breakpoint()` 會卡住行程。** 本機安全；絕不提交。加個 pre-commit grep 當安全網。
 
-3. **`PYTHONBREAKPOINT=0`** disables all `breakpoint()` calls. Check the env if your breakpoint isn't hitting:
+3. **`PYTHONBREAKPOINT=0`** 停用所有 `breakpoint()` 呼叫。你的中斷點不中時檢查這個 env：
    ```bash
    echo $PYTHONBREAKPOINT
    ```
 
-4. **`debugpy.listen` blocks only if you also call `wait_for_client()`.** Without it, execution continues and your first breakpoint may fire before the client is attached.
+4. **`debugpy.listen` 只在你也呼叫 `wait_for_client()` 時才阻塞。** 沒有它，執行繼續，而且你的第一個中斷點可能在用戶端附加前就觸發。
 
-5. **Attach to PID fails on hardened kernels.** `ptrace_scope=1` (Ubuntu default) allows only same-user ptrace of child processes. Workaround: `echo 0 > /proc/sys/kernel/yama/ptrace_scope` (needs root) or launch under `debugpy` from the start.
+5. **在加固的 kernel 上附加 PID 會失敗。** `ptrace_scope=1`（Ubuntu 預設）只允許同使用者的 ptrace 子行程。Workaround：`echo 0 > /proc/sys/kernel/yama/ptrace_scope`（需要 root）或從頭就用 `debugpy` 啟動。
 
-6. **Threads.** `pdb` only debugs the current thread. For multithreaded code, use `debugpy` (thread-aware DAP) or set `threading.settrace()` per thread.
+6. **執行緒。** `pdb` 只除錯目前執行緒。對多執行緒程式碼，用 `debugpy`（執行緒感知的 DAP），或逐執行緒設 `threading.settrace()`。
 
-7. **asyncio.** `pdb` works in coroutines but `await` inside pdb requires Python 3.13+ or `await` from `interact` mode on older versions. For 3.11/3.12, use `asyncio.run_coroutine_threadsafe` tricks or `!stmt`-based awaits via `asyncio.ensure_future`.
+7. **asyncio。** `pdb` 在協程中可用，但 pdb 內的 `await` 需要 Python 3.13+，舊版本則要從 `interact` 模式 `await`。對 3.11/3.12，用 `asyncio.run_coroutine_threadsafe` 技巧，或用 `asyncio.ensure_future` 做 `!stmt` 式 await。
 
-8. **`scripts/run_tests.sh` strips credentials and sets `HOME=<tmpdir>`.** If your bug depends on user config or real API keys, it won't reproduce under the wrapper. Debug with raw `pytest` first to repro, then re-confirm under the wrapper.
+8. **`scripts/run_tests.sh` 會剝掉憑證並設 `HOME=<tmpdir>`。** 若你的 bug 依賴使用者設定或真實 API key，在 wrapper 下無法重現。先用裸 `pytest` 除錯重現，再在 wrapper 下重確認。
 
-9. **Forking / multiprocessing.** pdb does not follow forks. Each child needs its own `breakpoint()` or `set_trace()`. For Hermes subagents, debug one process at a time.
+9. **Fork / multiprocessing。** pdb 不跟隨 fork。每個子行程需要自己的 `breakpoint()` 或 `set_trace()`。對 Hermes 子代理，一次除錯一個行程。
 
-## Verification Checklist
+## 驗證清單
 
-- [ ] After `pip install debugpy`, confirm: `python -c "import debugpy; print(debugpy.__version__)"`
-- [ ] For remote debug, confirm the port is actually listening: `ss -tlnp | grep 5678`
-- [ ] First breakpoint actually hits (if it doesn't, you likely have `PYTHONBREAKPOINT=0`, you're under a parallel/capturing runner, or execution finished before attach)
-- [ ] `where` / `w` shows the expected call stack
-- [ ] Post-debug cleanup: no stray `breakpoint()` / `set_trace()` in committed code
+- [ ] 在 `pip install debugpy` 之後，確認：`python -c "import debugpy; print(debugpy.__version__)"`
+- [ ] 遠端除錯時，確認埠號真的有在監聽：`ss -tlnp | grep 5678`
+- [ ] 第一個中斷點真的有中（沒中，你大概有 `PYTHONBREAKPOINT=0`、在平行/擷取 runner 下，或執行在附加前就結束了）
+- [ ] `where` / `w` 顯示預期的呼叫堆疊
+- [ ] 除錯後清理：已提交的程式碼中沒有殘留的 `breakpoint()` / `set_trace()`
   ```bash
   rg -n 'breakpoint\(\)|set_trace\(|debugpy\.listen' --type py
   ```
 
-## One-Shot Recipes
+## 單次除錯配方
 
-**"Why is this dict missing a key?"**
+**「這個 dict 為什麼少了 key？」**
 ```python
 # add above the KeyError site
 breakpoint()
@@ -350,7 +350,7 @@ breakpoint()
 (Pdb) w                # how did we get here
 ```
 
-**"This test passes in isolation but fails in the suite."**
+**「這個測試單獨跑會過、整套跑會掛。」**
 ```bash
 scripts/run_tests.sh tests/the_test.py   # confirm it fails under the isolated runner first
 # For interactive debugging, or if it only fails WITH other tests:
@@ -359,14 +359,14 @@ python -m pytest tests/ -x --pdb
 # Now it pdb-traps at the exact failing test after state accumulated.
 ```
 
-**"My async handler deadlocks."**
+**「我的 async handler 死鎖。」**
 ```python
 # Add at handler entry
 import remote_pdb; remote_pdb.set_trace(host="127.0.0.1", port=4444)
 ```
-Trigger the handler. `nc 127.0.0.1 4444`, then `w` to see the suspended frame, `!import asyncio; asyncio.all_tasks()` to see what else is pending.
+觸發 handler。`nc 127.0.0.1 4444`，然後 `w` 看懸空的 frame，`!import asyncio; asyncio.all_tasks()` 看還有什麼在 pending。
 
-**"Post-mortem on a crash in an Ink child process / subprocess."**
+**「Ink 子行程 / 子行程崩潰的事後剖析。」**
 ```bash
 PYTHONFAULTHANDLER=1 python -m pdb -c continue path/to/entrypoint.py
 # On crash, pdb lands at the frame of the exception with full locals

@@ -1,6 +1,6 @@
 ---
 name: blocked-page-recovery
-description: "Use when a fetch fails: 403/429, paywall, WAF, bot wall."
+description: "網頁擷取失敗時使用：403/429、付費牆、WAF、機器人驗證牆."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -11,14 +11,11 @@ metadata:
     related_skills: [grounded-citations]
 ---
 
-# Blocked-Page Recovery
+# Blocked-Page Recovery 技能
 
-When a page won't fetch — 403/429, Cloudflare "Just a moment...", a paywall,
-or a bot-detection interstitial — don't give up and don't loop on the same
-URL. Third-party services often hold a **copy** of the page. Work down this
-ladder, cheapest first.
+當網頁無法擷取時——403/429、Cloudflare 的「Just a moment...」、付費牆或機器人偵測的過渡頁——不要放棄，也不要對同一個 URL 一直重試。第三方服務通常保有該頁面的**副本**。請依序循著下面的階梯，先從成本最低的開始。
 
-## The ladder
+## 階梯
 
 ```
 1. Wayback Machine  — archive.org "available" API  (snapshot + timestamp)
@@ -28,31 +25,29 @@ ladder, cheapest first.
 5. Real browser     — browser tool as the last, most expensive resort
 ```
 
-Run it in one shot with the bundled script:
+使用隨附的指令碼一次執行：
 
 ```bash
 python3 scripts/recover_page.py "https://example.com/blocked-article" --json
 ```
 
-The script tries each route in order, validates every body (see "Fake
-successes" below), and prints the first genuine hit with its provenance.
+指令碼會依序嘗試每一種途徑、驗證每一份取得的內容（見下方「假的成功」），並輸出第一個真正命中的結果及其來源資訊。
 
-## Provenance discipline (non-negotiable)
+## 來源紀律（不可妥協）
 
-Every recovered copy carries a provenance you MUST preserve when citing:
+每一份復原的副本都帶有來源資訊，引用時你**必須**保留：
 
-| Route | Provenance | How to cite |
+| 途徑 | 來源類型 | 引用方式 |
 |-------|-----------|-------------|
-| Wayback / archive.today | `snapshot` | Cite WITH the snapshot date: "as archived 2026-08-06". Never present a snapshot as the live page — it may be stale. |
-| Jina Reader | `live` | Server-side re-render of the live page; cite normally. |
-| Live fetch / browser | `live` | Cite normally. |
+| Wayback / archive.today | `snapshot` | 引用時**附上快照日期**：「as archived 2026-08-06」。絕不要把快照當成線上頁面——它可能是過時的。 |
+| Jina Reader | `live` | 線上頁面的伺服器端重新渲染；正常引用即可。 |
+| Live fetch / browser | `live` | 正常引用即可。 |
 
-If the user needs *current* data (prices, availability, breaking news), a
-snapshot is context, not an answer — say so explicitly and note its age.
+若使用者需要的是*最新的*資料（價格、庫存、即時新聞），快照只能當作參考脈絡，而不是答案——請明確說明，並註明快照的日期有多舊。
 
-## Manual routes
+## 手動途徑
 
-### 1. Wayback Machine (best provenance, try first)
+### 1. Wayback Machine（來源最佳，優先嘗試）
 
 ```bash
 # Discovery: returns closest snapshot URL + timestamp as JSON
@@ -60,22 +55,19 @@ curl -sL "https://archive.org/wayback/available?url={URL}"
 # Then fetch archived_snapshots.closest.url
 ```
 
-For enumerating many snapshots (or recovering deleted pages), the CDX index:
+若要列舉大量快照（或復原已刪除的頁面），可使用 CDX 索引：
 
 ```bash
 curl -sL "https://web.archive.org/cdx/search/cdx?url={URL}&output=json&limit=10"
 ```
 
-CDX intermittently returns 503 under load — if it does, fall back to the
-`available` API; don't retry-hammer it.
+CDX 在負載高時會間歇性回傳 503——若發生這種情況，請改用 `available` API，不要猛力重試。
 
-Works for: any publicly crawled URL. Fails for: robots-blocked sites,
-never-crawled URLs, JS-only SPAs (snapshots don't render).
+適用於：任何經公開爬取的 URL。不適用於：被 robots 封鎖的網站、從未被爬取的 URL、純 JS 的 SPA（快照無法渲染）。
 
-### 2. archive.today (paywalls, deleted content)
+### 2. archive.today（付費牆、已刪除的內容）
 
-User-submitted archives — often has paywalled news articles Wayback lacks.
-Rate-limits aggressively (429) and rotates domains, so iterate:
+使用者自行提交的封存——通常收錄了 Wayback 沒有的付費牆新聞文章。它會強力限制速率（429）並輪替網域，因此請嘗試多個：
 
 ```bash
 for d in archive.ph archive.md archive.li archive.is; do
@@ -84,54 +76,36 @@ for d in archive.ph archive.md archive.li archive.is; do
 done
 ```
 
-**Validate the body, not the status code** — a 429 still ships several KB of
-rate-limit HTML that looks like a success to a size check alone.
+**驗證的是內容本身，而不是狀態碼**——429 仍會回傳數 KB 的限流 HTML，單憑大小檢查看起來會像成功。
 
-### 3. Jina Reader (requires JINA_API_KEY)
+### 3. Jina Reader（需要 JINA_API_KEY）
 
-`r.jina.ai` re-renders the live page in a real browser server-side and
-returns markdown. Anonymous access is dead (401 → Turnstile); a key is
-required:
+`r.jina.ai` 會在真實瀏覽器中於伺服器端重新渲染線上頁面，並回傳 markdown。匿名存取已經失效（401 → Turnstile）；需要 API 金鑰：
 
 ```bash
 curl -s -H "Authorization: Bearer $JINA_API_KEY" "https://r.jina.ai/{URL}"
 ```
 
-Handles JS SPAs that archives can't. Skip this route entirely when the env
-var is unset.
+可處理封存服務無法應付的 JS SPA。當環境變數未設定時，請完全跳過此途徑。
 
-### 4. API-first pivot
+### 4. 優先轉向 API
 
-WAFs protect the HTML surface far more aggressively than the data endpoints
-behind it. After 2-3 blocked attempts on a site, stop fighting the HTML and
-look for:
+WAF 對 HTML 表面的保護遠比其背後的資料端點嚴密得多。對某個網站阻塞了 2-3 次之後，別再跟 HTML 纏鬥，改找：
 
-- `/api/...`, `/graphql`, or `.json` variants of the page URL
-- An RSS/Atom feed (`/feed`, `/rss`, `<link rel="alternate">` in any copy
-  you did recover)
-- A sitemap (`/sitemap.xml`) revealing canonical URLs that may not be gated
+- 頁面 URL 的 `/api/...`、`/graphql` 或 `.json` 變體
+- RSS/Atom 訂閱源（`/feed`、`/rss`，或任何你成功復原副本中的 `<link rel="alternate">`）
+- 站台地圖（`/sitemap.xml`），可能揭示未受封鎖的 canonical URL
 
-## Fake successes — routes that LIE
+## 假成功——會騙人的途徑
 
-These return HTTP 200 with a plausible body that is NOT the page. The script
-rejects them automatically; reject them manually too:
+這些途徑會回傳 HTTP 200 與看似合理的內容，但內容**不是**目標頁面。指令碼會自動拒絕它們；手動操作時也請拒絕：
 
-- **Google Cache is dead** (since mid-2024). `webcache.googleusercontent.com`
-  returns 200 + tens of KB, but it's a Google Search interstitial with a JS
-  redirect, not a cache. Never use it.
-- **AMP caches** (`*.cdn.ampproject.org`) mostly return a ~300-byte
-  `<title>Redirecting</title>` meta-refresh stub pointing back at the
-  original (blocked) URL. Treating that as success creates a fetch loop.
-- **Rate-limit bodies**: archive.today 429 pages are multi-KB HTML. Check for
-  the target's actual content (title words, expected strings), not just size.
+- **Google 快取已失效**（自 2024 年中起）。`webcache.googleusercontent.com` 會回傳 200 與數十 KB，但那是帶 JS 重新導向的 Google 搜尋過渡頁，並非快取。絕對不要使用。
+- **AMP 快取**（`*.cdn.ampproject.org`）大多回傳約 300 位元組的 `<title>Redirecting</title>` meta 重新整理 stub，指向原始（被封鎖的）URL。把這當作成功會造成抓取迴圈。
+- **限流內容**：archive.today 的 429 頁面是多 KB 的 HTML。請檢查目標頁面的實際內容（標題字詞、預期字串），而不是只看大小。
 
-Detection heuristics the script applies: body under a per-route byte floor;
-meta-refresh/JS-redirect stubs whose target is the original host; interstitial
-titles ("Just a moment", "Redirecting", "Google Search", "Attention Required").
+指令碼套用的偵測啟發式：內容低於各途徑的位元組下限；meta 重新整理/JS 重新導向 stub 指向原始主機；過渡頁標題（「Just a moment」、「Redirecting」、「Google Search」、「Attention Required」）。
 
-## Proxy relays: don't
+## 代理轉送器：不要用
 
-Generic "web proxy" relays are man-in-the-middle by construction. Never send
-cookies or Authorization headers through one, and don't use them for anything
-the user will rely on — provenance is unverifiable. Prefer archives, which at
-least timestamp their copies.
+一般的「網頁代理」轉送器本質上就是中間人攻擊。絕對不要經由它們傳送 cookie 或 Authorization 標頭，也不要用它們處理任何使用者會依賴的事情——來源無法驗證。請優先使用封存服務，至少有時間戳記其副本。

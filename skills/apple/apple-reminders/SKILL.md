@@ -1,6 +1,6 @@
 ---
 name: apple-reminders
-description: "Apple Reminders via remindctl: add, list, complete."
+description: "透過 remindctl 管理 Apple Reminders：新增、列出、完成."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -12,34 +12,34 @@ prerequisites:
   commands: [remindctl]
 ---
 
-# Apple Reminders
+# Apple Reminders 技能
 
-Use `remindctl` to manage Apple Reminders directly from the terminal. Tasks sync across all Apple devices via iCloud.
+使用 `remindctl` 直接從終端管理 Apple Reminders。任務會透過 iCloud 同步到所有 Apple 裝置。
 
-## Prerequisites
+## 前置需求
 
-- **macOS** with Reminders.app
-- Install: `brew install steipete/tap/remindctl`
-- Grant Reminders permission when prompted
-- Check: `remindctl status` / Request: `remindctl authorize`
+- **macOS** 且已安裝 Reminders.app
+- 安裝：`brew install steipete/tap/remindctl`
+- 出現提示時，授予 Reminders 存取權限
+- 檢查：`remindctl status` / 請求授權：`remindctl authorize`
 
-## When to Use
+## 使用時機
 
-- User mentions "reminder" or "Reminders app"
-- Creating personal to-dos with due dates that sync to iOS
-- Managing Apple Reminders lists
-- User wants tasks to appear on their iPhone/iPad
+- 使用者提到「reminder」或「Reminders app」
+- 建立具有截止日期且會同步到 iOS 的個人待辦事項
+- 管理 Apple Reminders 清單
+- 使用者希望任務出現在其 iPhone/iPad 上
 
-## When NOT to Use
+## 不適用時機
 
-- Scheduling agent alerts → use the cronjob tool instead
-- Calendar events → use Apple Calendar or Google Calendar
-- Project task management → use GitHub Issues, Notion, etc.
-- If user says "remind me" but means an agent alert → clarify first
+- 排定代理提醒 → 請改用 cronjob 工具
+- 行事曆事件 → 請使用 Apple Calendar 或 Google Calendar
+- 專案任務管理 → 請使用 GitHub Issues、Notion 等
+- 若使用者說「提醒我」但指的是代理提醒 → 請先確認
 
-## Quick Reference
+## 快速參考
 
-### View Reminders
+### 檢視提醒
 
 ```bash
 remindctl                    # Today's reminders
@@ -51,7 +51,7 @@ remindctl all                # Everything
 remindctl 2026-01-04         # Specific date
 ```
 
-### Manage Lists
+### 管理清單
 
 ```bash
 remindctl list               # List all lists
@@ -60,7 +60,7 @@ remindctl list Projects --create    # Create list
 remindctl list Work --delete        # Delete list
 ```
 
-### Create Reminders
+### 建立提醒
 
 ```bash
 remindctl add "Buy milk"
@@ -68,46 +68,46 @@ remindctl add --title "Call mom" --list Personal --due tomorrow
 remindctl add --title "Meeting prep" --due "2026-02-15 09:00"
 ```
 
-### Due Time vs Alarm / Early Nudge
+### 到期時間與鬧鐘/提早提醒
 
-`--due` and `--alarm` are different fields:
+`--due` 與 `--alarm` 是不同欄位：
 
-- `--due` sets the reminder's due date/time.
-- `--alarm` sets the EventKit alarm/notification trigger. Timed due reminders may default to an alarm at the due time, but pass `--alarm` explicitly when the user asks for an earlier nudge.
+- `--due` 設定提醒的到期日期/時間。
+- `--alarm` 設定 EventKit 的鬧鐘/通知觸發時間。有到期時間的提醒預設會在到期時刻觸發鬧鐘，但當使用者要求提早提醒時，請明確傳入 `--alarm`。
 
-For a reminder due at 2:00 PM with a notification 30 minutes earlier:
+例如提醒在下午 2:00 到期，但需提早 30 分鐘通知：
 
 ```bash
 remindctl add --title "Hairdresser" --due "2026-05-15 14:00" --alarm "2026-05-15 13:30"
 ```
 
-To edit an existing reminder:
+編輯既有的提醒：
 
 ```bash
 remindctl edit 87354 --due "2026-05-15 14:00" --alarm "2026-05-15 13:30"
 ```
 
-The Reminders UI may show or group the item by the alarm time because that is when the notification fires. Verify with JSON instead of assuming the due time moved:
+Reminders 介面可能會以鬧鐘時間顯示或分組項目，因為那才是通知觸發的時刻。請改用 JSON 驗證，而不要假定到期時間有變動：
 
 ```bash
 remindctl today --json
 ```
 
-Expected shape:
+預期的格式結構：
 
-- `dueDate`: actual due time
-- `alarmDate`: notification / early nudge time
+- `dueDate`：實際到期時間
+- `alarmDate`：通知/提早提醒時間
 
-Apple's public `EKReminder` docs list only reminder-specific properties. Alarm support comes from inherited `EKCalendarItem` behavior exposed by remindctl's `--alarm` flag.
+Apple 公開的 `EKReminder` 文件只列出提醒專用的屬性。鬧鐘支援來自繼承自 `EKCalendarItem` 的行為，透過 remindctl 的 `--alarm` 旗標對外提供。
 
-### Complete / Delete
+### 完成/刪除
 
 ```bash
 remindctl complete 1 2 3          # Complete by ID
 remindctl delete 4A83 --force     # Delete by ID
 ```
 
-### Output Formats
+### 輸出格式
 
 ```bash
 remindctl today --json       # JSON for scripting
@@ -115,16 +115,17 @@ remindctl today --plain      # TSV format
 remindctl today --quiet      # Counts only
 ```
 
-## Date Formats
+## 日期格式
 
-Accepted by `--due` and date filters:
+`--due` 與日期篩選可接受的格式：
+
 - `today`, `tomorrow`, `yesterday`
 - `YYYY-MM-DD`
 - `YYYY-MM-DD HH:mm`
 - ISO 8601 (`2026-01-04T12:34:56Z`)
 
-## Rules
+## 規則
 
-1. When user says "remind me", clarify: Apple Reminders (syncs to phone) vs agent cronjob alert
-2. Always confirm reminder content and due date before creating
-3. Use `--json` for programmatic parsing
+1. 當使用者說「提醒我」時，先釐清：Apple Reminders（同步到手機）還是代理的 cronjob 提醒
+2. 建立前務必先確認提醒內容與到期日期
+3. 程式化解析時請使用 `--json`

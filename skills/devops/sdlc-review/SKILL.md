@@ -1,6 +1,6 @@
 ---
 name: sdlc-review
-description: Review Kanban handoffs and route verified outcomes.
+description: "審核 Kanban 交接並導向已驗證的結果."
 version: 1.1.0
 author: Jakub Wolniewicz (@frizikk) + Hermes Agent
 license: MIT
@@ -14,101 +14,101 @@ environments:
   - kanban
 ---
 
-# SDLC Review Skill
+# SDLC Review 技能
 
-Independently verify work handed from a Kanban implementation run to the review lane, then approve it, request changes, or escalate. This skill reviews the deliverable and its evidence; it does not take over the implementer's work.
+獨立驗證由 Kanban 實作執行轉交到 review 車道的成果，然後核准它、要求修改或升級處理。本技能審查交付物與其證據；它不會接手實作者的實作工作。
 
-## When to Use
+## 使用時機
 
-Use this skill when all of the following are true:
+當下列所有條件都成立時使用本技能：
 
-- the dispatcher spawned you for a task claimed from the `review` lane;
-- an implementer submitted a `review_requested` handoff;
-- the task needs an independent verdict before it can be completed.
+- 分派器（dispatcher）為你產生了一個從 `review` 車道認領的任務；
+- 實作者已提交 `review_requested` 交接；
+- 該任務在完成前需要獨立的判定。
 
-Do not use it for a separate downstream review card. A downstream card is ordinary implementation work with a review-oriented specification and completes through its own lifecycle.
+不要把它用於另闢的下游審查卡片。下游卡片是帶有審查導向規格的普通實作工作，會透過自身生命週期完成。
 
-## Prerequisites
+## 前置需求
 
-- A Kanban worker context with the current task and run identifiers.
-- Native Kanban tools: `kanban_show`, `kanban_comment`, `kanban_complete`, `kanban_request_changes`, and `kanban_block`.
-- Workspace access through `read_file`, `search_files`, and `terminal` when the deliverable is code.
-- The task's original specification, acceptance criteria, handoff summary, and prior run history must be available through `kanban_show`.
+- 具目前任務與執行識別碼的 Kanban work 環境（worker context）。
+- 原生的 Kanban 工具：`kanban_show`、`kanban_comment`、`kanban_complete`、`kanban_request_changes` 與 `kanban_block`。
+- 當交付物是程式碼時，需透過 `read_file`、`search_files` 與 `terminal` 存取工作區。
+- 任務的原始規格、驗收標準、交接摘要與先前執行紀錄必須可透過 `kanban_show` 取得。
 
-## How to Run
+## 執行方式
 
-This skill is loaded automatically by the review dispatcher. Start with `kanban_show` before inspecting files or choosing a verdict.
+本技能會由 review 分派器自動載入。在檢視檔案或做出判定前，先執行 `kanban_show`。
 
-1. Read the task specification and the latest `review_requested` handoff.
-2. Inspect the actual deliverable and run relevant verification.
-3. Choose exactly one verdict: approve, request changes, or escalate.
-4. Record concrete evidence in the terminal Kanban transition.
+1. 讀取任務規格與最新的 `review_requested` 交接。
+2. 檢查實際交付物並執行相關驗證。
+3. 從核准、要求修改、升級處理三種判定中擇一。
+4. 在最終的 Kanban 轉換中記錄具體證據。
 
-## Quick Reference
+## 快速參考
 
-| Verdict | When | Final action |
+| 判定 | 時機 | 最終動作 |
 |---|---|---|
-| Approve | Acceptance criteria and verification pass | `kanban_complete` |
-| Request changes | Correctable implementation defects remain | `kanban_comment`, then `kanban_request_changes` |
-| Escalate | A human decision or external prerequisite is required | `kanban_block` |
+| 核准 | 驗收標準與驗證皆通過 | `kanban_complete` |
+| 要求修改 | 仍有可修正的實作缺失 | 先 `kanban_comment`，再 `kanban_request_changes` |
+| 升級處理 | 需要人工決定或外部前置條件 | `kanban_block` |
 
-A requested-changes transition returns the task to its original implementer. When that implementer requests review again without naming a reviewer, the persisted reviewer provenance routes the re-review back to the same reviewer profile.
+要求修改的轉換會把任務退回給原始實作者。當該實作者未指定審查者而再次請求審查時，已保存的審查者來源紀錄會將重新審查導回同一個審查者設定檔。
 
-## Review Lenses
+## 審查視角
 
-Vary how you look at the work on each round instead of repeating the same inspection. Decorrelated lenses catch different defect classes: a cold read of the artifact surfaces design and correctness problems that the implementer's narrative would have framed away, execution surfaces claims that do not reproduce, and a strict contract audit surfaces quiet scope drift. Repeating the round-1 lens on round 3 mostly re-finds what round 1 already found.
+每一輪都換個方式審視成果，而不是重複同樣的檢查。彼此去相關化的視角能抓到不同類別的缺陷：冷讀交付物會浮現實作者的敘述會掩蓋掉的設計與正確性問題；執行動作會浮現無法重現的主張；嚴格的合約審計則會浮現不易察覺的需求範圍偏移。在第 3 輪重複第 1 輪的視角，大多只會重新發現第 1 輪就已找到的問題。
 
-Determine the current round from the history the task record already gives you: count the `changes_requested` entries in the "Prior attempts on this task" section of your worker context (also visible as prior runs in `kanban_show`). The current review round is that count plus one. Round 1 therefore shows zero `changes_requested` attempts; round 2 shows one; and so on.
+從任務紀錄既有的歷史判斷目前是第幾輪：數一下你 worker context 中「Prior attempts on this task」區段的 `changes_requested` 條目（在 `kanban_show` 中也可看到先前的執行）。目前的審查輪數就是該數量加一。因此第 1 輪會看到零個 `changes_requested` 嘗試；第 2 輪一個；依此類推。
 
-| Round | Lens | How to apply it |
+| 輪數 | 視角 | 套用方式 |
 |---|---|---|
-| 1 | Artifact | Read the diff or deliverable cold, before the implementer's summary. Form an independent judgment, then compare it against the handoff narrative and investigate every mismatch. |
-| 2 | Execution | Check out the work and actually run it via `terminal`: build, test, and exercise the reported behavior yourself. Verify each handoff claim empirically instead of re-reading the artifact. |
-| 3+ | Contract | Re-read the ORIGINAL task body and acceptance criteria, then audit the deliverable strictly against them. Also verify that every item from every prior `kanban_request_changes` round actually landed. |
+| 1 | 交付物（Artifact） | 在實作者的摘要之前，先冷讀 diff 或交付物。形成獨立判斷後，再與交接敘述比對，並調查每一處不一致。 |
+| 2 | 執行動作（Execution） | 取出成果並透過 `terminal` 實際執行：自行建置、測試並操作所描述的行為。以實證方式驗證交接中的每一項主張，而不是重讀交付物。 |
+| 3+ | 合約（Contract） | 重讀**原始**任務內文與驗收標準，然後嚴格比對審計交付物。同時確認先前每一輪 `kanban_request_changes` 的每個項目都已確實完成。 |
 
-The baseline duties in the Procedure section still apply on every round; the lens sets which inspection you lead with and weight most heavily.
+「操作步驟」一節中的基本職責在每一輪仍然適用；視角決定你優先且最著重哪一種檢查。
 
-### Lens variation for ad-hoc review fan-outs
+### 臨時審查分派的視角變化
 
-The same principle applies outside the Kanban review lane. When spawning multiple parallel reviewers via `delegate_task`, give each reviewer a different lens — one diff-only brief, one full-context brief, one checkout-and-run brief — rather than identical briefs. Identical briefs produce correlated verdicts and duplicate findings; varied briefs cover more defect classes for the same review spend.
+同樣的原則也適用於 Kanban review 車道之外。當透過 `delegate_task` 分派多位並行審查者時，給每位審查者不同的視角——一份只含 diff 的簡報、一份完整脈絡的簡報、一份取出並執行的簡報——而不是一模一樣的簡報。相同的簡報會產生互相關聯的判定與重複的發現；多樣化的簡報才能在相同的審查成本下涵蓋更多缺陷類別。
 
-## Procedure
+## 操作步驟
 
-### 1. Orient from the durable task record
+### 1. 從持久化的任務紀錄建立全貌
 
-Call `kanban_show` and identify:
+呼叫 `kanban_show` 並辨識：
 
-- the original task body and acceptance criteria;
-- the latest implementation summary and structured metadata;
-- changed files, commit identifiers, and test evidence;
-- comments and decisions from earlier runs;
-- findings from prior review rounds.
+- 原始任務內文與驗收標準；
+- 最新的實作摘要與結構化中繼資料；
+- 變更的檔案、提交識別碼與測試證據；
+- 先前執行的註解與決定；
+- 先前審查輪次的發現。
 
-Treat the handoff as a claim to verify, not as proof that the work is correct.
+把交接內容視為有待驗證的主張，而不是成果正確的證明。
 
-### 2. Compare requested behavior with delivered behavior
+### 2. 比對需求行為與交付行為
 
-Map every acceptance criterion to concrete implementation or output evidence. Note omissions, changed semantics, and unrelated scope before deciding whether to run deeper checks.
+將每一項驗收標準對應到具體的實作或輸出證據。在決定是否進行更深入的檢查前，先記下遺漏、語意變更與無關的範圍。
 
-For code work:
+程式碼類工作：
 
-1. Use `read_file` and `search_files` to inspect the changed paths and their callers.
-2. Use `terminal` to inspect the diff and run the project's existing focused tests, lint, type checks, or build commands.
-3. Exercise the reported failure path and at least one ordinary control path when practical.
-4. Check error handling, edge cases, concurrency boundaries, data preservation, security boundaries, and cross-platform behavior relevant to the change.
-5. Confirm that tests assert behavior rather than merely snapshotting source text or constants.
+1. 使用 `read_file` 與 `search_files` 檢查變更的路徑及其呼叫端。
+2. 使用 `terminal` 檢視 diff，並執行專案既有的針對性測試、lint、型別檢查或建置指令。
+3. 實際操演所報告的失敗路徑，並在可行時至少操演一條一般控制路徑。
+4. 檢查錯誤處理、邊界情況、並行界限、資料保存、安全界限，以及與此變更相關的跨平台行為。
+5. 確認測試是斷言行為，而非只是快照原始碼文字或常數。
 
-For non-code work:
+非程式碼類工作：
 
-1. Inspect the complete deliverable rather than only its summary.
-2. Check correctness, completeness, formatting, and provenance.
-3. Validate referenced URLs or external facts with the appropriate native tools when they affect the verdict.
+1. 檢查完整的交付物，而不只是它的摘要。
+2. 檢查正確性、完整性、格式與來源。
+3. 當所引用的 URL 或外部事實會影響判定時，使用適當的原生工具進行驗證。
 
-### 3. Choose one verdict
+### 3. 選擇一種判定
 
-#### Approve
+#### 核准
 
-Approve only when the acceptance criteria are satisfied and the evidence is sufficient. Call:
+只有當驗收標準已滿足且證據充分時才核准。呼叫：
 
 ```text
 kanban_complete(
@@ -117,11 +117,11 @@ kanban_complete(
 )
 ```
 
-Include the exact checks that passed and any bounded caveat that does not block acceptance.
+列出確實通過的檢查項目，以及任何不阻礙驗收的有限注意事項。
 
-#### Request changes
+#### 要求修改
 
-Use this for specific, correctable defects. First record actionable findings:
+用於具體且可修正的缺失。先記錄可採取行動的發現：
 
 ```text
 kanban_comment(
@@ -130,7 +130,7 @@ kanban_comment(
 )
 ```
 
-Then return the same task to its implementer:
+然後把同一個任務退回給實作者：
 
 ```text
 kanban_request_changes(
@@ -138,11 +138,11 @@ kanban_request_changes(
 )
 ```
 
-State where the defect is, how it reproduces, why it violates the task, and what minimum outcome would resolve it. The transition does not use blocker recurrence accounting.
+說明缺失位置、如何重現、為何違反任務，以及需要什麼樣的最低結果才能解決。此轉換不會使用阻礙事項的重複發生計帳。
 
-#### Escalate
+#### 升級處理
 
-Use escalation only when the reviewer and implementer cannot resolve the problem without a human decision or external prerequisite:
+只有在審查者與實作者沒有人工決定或外部前置條件就無法解決問題時，才使用升級處理：
 
 ```text
 kanban_block(
@@ -150,32 +150,32 @@ kanban_block(
 )
 ```
 
-Explain the blocked decision and the smallest information needed to continue.
+說明被封鎖的決定，以及繼續進行所需的最少資訊。
 
-### 4. Preserve role separation
+### 4. 維持角色分離
 
-Do not edit the implementation while acting as reviewer. Request changes and let the implementer produce the next candidate; then independently verify that candidate in the next review run.
+以審查者身分行事時，不要修改實作。要求修改並讓實作者產出下一版候選，然後在下一輪審查中獨立驗證該候選。
 
-## Pitfalls
+## 常見陷阱
 
-- **Rubber-stamping:** A passing handoff summary is not independent evidence.
-- **Reviewer implementation:** Editing the deliverable hides ownership and weakens the re-review boundary.
-- **Vague findings:** “Needs work” does not give the implementer a reproducible correction target.
-- **Style-only blocking:** Do not request changes for preference-level nits when behavior and repository standards are satisfied.
-- **Skipping prior rounds:** Re-review must confirm both the requested corrections and preservation of previously passing behavior.
-- **Using blockers for ordinary rework:** Correctable defects belong in `kanban_request_changes`; reserve `kanban_block` for genuine external blockers or human decisions.
-- **Completing without evidence:** Every approval summary must name the checks or artifacts actually inspected.
+- **橡皮圖章式放行：**通過的交接摘要並非獨立證據。
+- **審查者動手實作：**修改交付物會隱藏責任歸屬，並削弱重新審查的界線。
+- **模糊的發現：**「還需要改進」這種話不會給實作者一個可重現的修正目標。
+- **只因風格而封鎖：**當行為與儲存庫標準都已符合時，不要為個人偏好級別的細微問題要求修改。
+- **跳過先前輪次：**重新審查必須同時確認要求修正的項目已落實，以及先前通過的行為仍然維持。
+- **把阻礙事項用於一般返工：**可修正的缺失應歸入 `kanban_request_changes`；`kanban_block` 保留給真正的外部阻礙或人工決定。
+- **沒有證據就完成：**每一份核准摘要都必須說明實際檢查過哪些檢查項目或交付物。
 
-## Verification
+## 驗證
 
-Before submitting the verdict, confirm:
+提交判定前，請確認：
 
-- [ ] `kanban_show` was read for the current task and run.
-- [ ] Every acceptance criterion was mapped to evidence.
-- [ ] The actual deliverable was inspected.
-- [ ] Relevant focused checks were run or an explicit reason was recorded when execution was impossible.
-- [ ] Prior requested changes were re-tested on re-review.
-- [ ] Unrelated regressions and scope changes were considered.
-- [ ] The verdict uses exactly one terminal action.
-- [ ] The summary contains concrete, non-secret evidence.
-- [ ] No implementation files were edited by the reviewer.
+- [ ] 已對目前任務與執行讀取 `kanban_show`。
+- [ ] 每一項驗收標準都已對應到證據。
+- [ ] 已檢查實際交付物。
+- [ ] 已執行相關的針對性檢查，或無法執行時已記錄明確原因。
+- [ ] 重新審查時已重新測試先前要求修改的項目。
+- [ ] 已考慮無關的退化與範圍變更。
+- [ ] 判定恰好使用一種最終動作。
+- [ ] 摘要包含具體且非機密的證據。
+- [ ] 審查者沒有編輯任何實作檔案。

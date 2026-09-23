@@ -1,6 +1,6 @@
 ---
 name: dogfood
-description: "Exploratory QA of web apps: find bugs, evidence, reports."
+description: "Web 應用的探索式 QA：找 bug、收證據、出報告."
 version: 1.0.0
 author: Teknium (teknium1), Hermes Agent
 license: MIT
@@ -11,154 +11,154 @@ metadata:
     related_skills: []
 ---
 
-# Dogfood: Systematic Web Application QA Testing
+# Dogfood：系統化 Web 應用 QA 測試
 
-## Overview
+## 總覽
 
-This skill guides you through systematic exploratory QA testing of web applications using the browser toolset. You will navigate the application, interact with elements, capture evidence of issues, and produce a structured bug report.
+本技能引導你使用瀏覽器工具組對 Web 應用進行系統化的探索式 QA 測試。你將瀏覽應用程式、與元素互動、擷取問題的證據，並產出結構化的 bug 報告。
 
-## Prerequisites
+## 前置需求
 
-- Browser toolset must be available (`browser_navigate`, `browser_snapshot`, `browser_click`, `browser_type`, `browser_vision`, `browser_console`, `browser_scroll`, `browser_back`, `browser_press`)
-- A target URL and testing scope from the user
+- 必須有瀏覽器工具組可用（`browser_navigate`、`browser_snapshot`、`browser_click`、`browser_type`、`browser_vision`、`browser_console`、`browser_scroll`、`browser_back`、`browser_press`）
+- 使用者提供目標 URL 與測試範圍
 
-## Inputs
+## 輸入
 
-The user provides:
-1. **Target URL** — the entry point for testing
-2. **Scope** — what areas/features to focus on (or "full site" for comprehensive testing)
-3. **Output directory** (optional) — where to save screenshots and the report (default: `./dogfood-output`)
+使用者提供：
+1. **目標 URL** — 測試的進入點
+2. **範圍** — 要聚焦哪些區域/功能（或完整網站以做全面測試）
+3. **輸出目錄**（選用）— 截圖與報告的儲存位置（預設：`./dogfood-output`）
 
-## Workflow
+## 工作流程
 
-Follow this 5-phase systematic workflow:
+遵循這個 5 階段系統化工作流程：
 
-### Phase 1: Plan
+### 第一階段：規劃
 
-1. Create the output directory structure:
+1. 建立輸出目錄結構：
    ```
    {output_dir}/
    ├── screenshots/       # Evidence screenshots
    └── report.md          # Final report (generated in Phase 5)
    ```
-2. Identify the testing scope based on user input.
-3. Build a rough sitemap by planning which pages and features to test:
-   - Landing/home page
-   - Navigation links (header, footer, sidebar)
-   - Key user flows (sign up, login, search, checkout, etc.)
-   - Forms and interactive elements
-   - Edge cases (empty states, error pages, 404s)
+2. 依使用者輸入界定測試範圍。
+3. 規劃要測試的頁面與功能，建立粗略的網站地圖：
+   - 著陸/首頁
+   - 導覽連結（頁首、頁尾、側邊欄）
+   - 關鍵使用者流程（註冊、登入、搜尋、結帳等）
+   - 表單與互動元素
+   - 邊緣案例（空狀態、錯誤頁、404）
 
-### Phase 2: Explore
+### 第二階段：探索
 
-For each page or feature in your plan:
+對計畫中的每個頁面或功能：
 
-1. **Navigate** to the page:
+1. **導覽**到該頁面：
    ```
    browser_navigate(url="https://example.com/page")
    ```
 
-2. **Take a snapshot** to understand the DOM structure:
+2. **拍快照**以了解 DOM 結構：
    ```
    browser_snapshot()
    ```
 
-3. **Check the console** for JavaScript errors:
+3. **檢查 console** 是否有 JavaScript 錯誤：
    ```
    browser_console(clear=true)
    ```
-   Do this after every navigation and after every significant interaction. Silent JS errors are high-value findings.
+   每次導覽後、每次重要互動後都做。靜默的 JS 錯誤是高價值發現。
 
-4. **Take an annotated screenshot** to visually assess the page and identify interactive elements:
+4. **拍帶註記的截圖**，以視覺方式評估頁面並找出互動元素：
    ```
    browser_vision(question="Describe the page layout, identify any visual issues, broken elements, or accessibility concerns", annotate=true)
    ```
-   The `annotate=true` flag overlays numbered `[N]` labels on interactive elements. Each `[N]` maps to ref `@eN` for subsequent browser commands.
+   `annotate=true` 旗標會在互動元素上疊加編號的 `[N]` 標籤。每個 `[N]` 對應到 `@eN` ref，供後續瀏覽器指令使用。
 
-5. **Test interactive elements** systematically:
-   - Click buttons and links: `browser_click(ref="@eN")`
-   - Fill forms: `browser_type(ref="@eN", text="test input")`
-   - Test keyboard navigation: `browser_press(key="Tab")`, `browser_press(key="Enter")`
-   - Scroll through content: `browser_scroll(direction="down")`
-   - Test form validation with invalid inputs
-   - Test empty submissions
+5. **系統化測試互動元素**：
+   - 點擊按鈕與連結：`browser_click(ref="@eN")`
+   - 填寫表單：`browser_type(ref="@eN", text="test input")`
+   - 測試鍵盤導覽：`browser_press(key="Tab")`、`browser_press(key="Enter")`
+   - 捲動內容：`browser_scroll(direction="down")`
+   - 用無效輸入測試表單驗證
+   - 測試空提交
 
-6. **After each interaction**, check for:
-   - Console errors: `browser_console()`
-   - Visual changes: `browser_vision(question="What changed after the interaction?")`
-   - Expected vs actual behavior
+6. **每次互動後**，檢查：
+   - Console 錯誤：`browser_console()`
+   - 視覺變化：`browser_vision(question="What changed after the interaction?")`
+   - 預期 vs 實際行為
 
-### Phase 3: Collect Evidence
+### 第三階段：蒐集證據
 
-For every issue found:
+對發現的每個問題：
 
-1. **Take a screenshot** showing the issue:
+1. **拍截圖**顯示該問題：
    ```
    browser_vision(question="Capture and describe the issue visible on this page", annotate=false)
    ```
-   Save the `screenshot_path` from the response — you will reference it in the report.
+   從回應中儲存 `screenshot_path` — 報告中會參照它。
 
-2. **Record the details**:
-   - URL where the issue occurs
-   - Steps to reproduce
-   - Expected behavior
-   - Actual behavior
-   - Console errors (if any)
-   - Screenshot path
+2. **記錄細節**：
+   - 問題發生的 URL
+   - 重現步驟
+   - 預期行為
+   - 實際行為
+   - Console 錯誤（若有）
+   - 截圖路徑
 
-3. **Classify the issue** using the issue taxonomy (see `references/issue-taxonomy.md`):
-   - Severity: Critical / High / Medium / Low
-   - Category: Functional / Visual / Accessibility / Console / UX / Content
+3. **分類問題**，使用問題分類法（見 `references/issue-taxonomy.md`）：
+   - 嚴重度：Critical / High / Medium / Low
+   - 類別：Functional / Visual / Accessibility / Console / UX / Content
 
-### Phase 4: Categorize
+### 第四階段：分類
 
-1. Review all collected issues.
-2. De-duplicate — merge issues that are the same bug manifesting in different places.
-3. Assign final severity and category to each issue.
-4. Sort by severity (Critical first, then High, Medium, Low).
-5. Count issues by severity and category for the executive summary.
+1. 檢視所有蒐集到的問題。
+2. 去重 — 合併同一個 bug 在不同地方表現的案例。
+3. 為每個問題指派最終嚴重度與類別。
+4. 依嚴重度排序（Critical 優先，接著 High、Medium、Low）。
+5. 依嚴重度與類別統計問題數，供執行摘要使用。
 
-### Phase 5: Report
+### 第五階段：報告
 
-Generate the final report using the template at `templates/dogfood-report-template.md`.
+使用 `templates/dogfood-report-template.md` 的範本產生最終報告。
 
-The report must include:
-1. **Executive summary** with total issue count, breakdown by severity, and testing scope
-2. **Per-issue sections** with:
-   - Issue number and title
-   - Severity and category badges
-   - URL where observed
-   - Description of the issue
-   - Steps to reproduce
-   - Expected vs actual behavior
-   - Screenshot references (use `MEDIA:<screenshot_path>` for inline images)
-   - Console errors if relevant
-3. **Summary table** of all issues
-4. **Testing notes** — what was tested, what was not, any blockers
+報告必須包含：
+1. **執行摘要**，含問題總數、依嚴重度拆解、測試範圍
+2. **每個問題的專節**，含：
+   - 問題編號與標題
+   - 嚴重度與類別徽章
+   - 觀察到的 URL
+   - 問題描述
+   - 重現步驟
+   - 預期 vs 實際行為
+   - 截圖參照（用 `MEDIA:<screenshot_path>` 內嵌圖片）
+   - 相關的 console 錯誤
+3. **所有問題的摘要表**
+4. **測試註記** — 測試了什麼、沒測什麼、任何阻礙因素
 
-Save the report to `{output_dir}/report.md`.
+把報告儲存到 `{output_dir}/report.md`。
 
-## Tools Reference
+## 工具參考
 
-| Tool | Purpose |
+| 工具 | 用途 |
 |------|---------|
-| `browser_navigate` | Go to a URL |
-| `browser_snapshot` | Get DOM text snapshot (accessibility tree) |
-| `browser_click` | Click an element by ref (`@eN`) or text |
-| `browser_type` | Type into an input field |
-| `browser_scroll` | Scroll up/down on the page |
-| `browser_back` | Go back in browser history |
-| `browser_press` | Press a keyboard key |
-| `browser_vision` | Screenshot + AI analysis; use `annotate=true` for element labels |
-| `browser_console` | Get JS console output and errors |
+| `browser_navigate` | 前往一個 URL |
+| `browser_snapshot` | 取得 DOM 文字快照（無障礙樹） |
+| `browser_click` | 依 ref（`@eN`）或文字點擊元素 |
+| `browser_type` | 在輸入欄位中輸入 |
+| `browser_scroll` | 在頁面上上下捲動 |
+| `browser_back` | 在瀏覽器歷史中往回 |
+| `browser_press` | 按一個鍵盤按鍵 |
+| `browser_vision` | 截圖 + AI 分析；用 `annotate=true` 取得元素標籤 |
+| `browser_console` | 取得 JS console 輸出與錯誤 |
 
-## Tips
+## 小提示
 
-- **Always check `browser_console()` after navigating and after significant interactions.** Silent JS errors are among the most valuable findings.
-- **Use `annotate=true` with `browser_vision`** when you need to reason about interactive element positions or when the snapshot refs are unclear.
-- **Test with both valid and invalid inputs** — form validation bugs are common.
-- **Scroll through long pages** — content below the fold may have rendering issues.
-- **Test navigation flows** — click through multi-step processes end-to-end.
-- **Check responsive behavior** by noting any layout issues visible in screenshots.
-- **Don't forget edge cases**: empty states, very long text, special characters, rapid clicking.
-- When reporting screenshots to the user, include `MEDIA:<screenshot_path>` so they can see the evidence inline.
+- **導覽後與重要互動後一律檢查 `browser_console()`。** 靜默的 JS 錯誤是價值最高的發現之一。
+- **需要推理互動元素位置或 snapshot refs 不清楚時**，對 `browser_vision` 用 `annotate=true`。
+- **有效與無效輸入都要測** — 表單驗證 bug 很常見。
+- **長頁面要捲動** — 摺疊線以下的內容可能有渲染問題。
+- **測試導覽流程** — 端對端點完多步驟流程。
+- **檢查回應式行為** — 留意截圖中可見的版面問題。
+- **別忘了邊緣案例：** 空狀態、超長文字、特殊字元、快速連點。
+- 向使用者回報截圖時，加上 `MEDIA:<screenshot_path>` 讓他們能以內嵌方式看到證據。

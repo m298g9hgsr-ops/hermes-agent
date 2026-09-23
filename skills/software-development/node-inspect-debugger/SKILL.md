@@ -1,6 +1,6 @@
 ---
 name: node-inspect-debugger
-description: "Debug Node.js via --inspect + Chrome DevTools Protocol CLI."
+description: "以 --inspect 與 Chrome DevTools Protocol CLI 除錯 Node.js."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -11,32 +11,32 @@ metadata:
     related_skills: [systematic-debugging, python-debugpy]
 ---
 
-# Node.js Inspect Debugger
+# Node.js Inspect 除錯器
 
-## Overview
+## 總覽
 
-When `console.log` isn't enough, drive Node's built-in V8 inspector programmatically from the terminal. You get real breakpoints, step in/over/out, call-stack walking, local/closure scope dumps, and arbitrary expression evaluation in the paused frame.
+當 `console.log` 不夠用時，從終端機以程式化方式驅動 Node 內建的 V8 inspector。你能獲得真正的中斷點、step in/over/out、呼叫堆疊走查、local/closure scope 傾印，以及在暫停 frame 中求值任意表達式。
 
-Two tools, pick one:
+兩個工具，挑一個：
 
-- **`node inspect`** — built-in, zero install, CLI REPL. Best for quick poking.
-- **`ndb` / CDP via `chrome-remote-interface`** — scriptable from Node/Python; best when you want to automate many breakpoints, collect state across runs, or debug non-interactively from an agent loop.
+- **`node inspect`** — 內建、零安裝、CLI REPL。最適合快速探查。
+- **`ndb` / 透過 `chrome-remote-interface` 的 CDP** — 可從 Node/Python 寫腳本；當你想自動化大量中斷點、跨執行收集狀態，或從代理迴圈中非互動除錯時最適合。
 
-**Prefer `node inspect` first.** It's always available and the REPL is fast.
+**優先試 `node inspect`。** 它永遠可用，而且 REPL 很快。
 
-## When to Use
+## 使用時機
 
-- A Node test fails and you need to see intermediate state
-- ui-tui crashes or behaves wrong and you want to inspect React/Ink state pre-render
-- tui_gateway child processes (`_SlashWorker`, PTY bridge workers) misbehave
-- You need to inspect a value in a closure that `console.log` can't reach without patching
-- Perf: attach to a running process to capture a CPU profile or heap snapshot
+- Node 測試失敗，你需要看中間狀態
+- ui-tui 當掉或行為錯誤，你想檢查 pre-render 的 React/Ink 狀態
+- tui_gateway 子行程（`_SlashWorker`、PTY bridge 工作者）行為不軌
+- 你需要檢查閉包中的某個值，而 `console.log` 不打補丁到不了
+- 效能：附加到執行中的行程，擷取 CPU profile 或 heap snapshot
 
-**Don't use for:** things `console.log` solves in under a minute. Breakpoint-driven debugging is heavier; use it when the payoff is real.
+**不要用於：** `console.log` 一分鐘內能解決的事。中斷點驅動的除錯比較重；在回報真的值得時才用它。
 
-## Quick Reference: `node inspect` REPL
+## 快速參考：`node inspect` REPL
 
-Launch paused on first line:
+從第一行暫停啟動：
 
 ```bash
 node inspect path/to/script.js
@@ -44,35 +44,35 @@ node inspect path/to/script.js
 node --inspect-brk $(which tsx) path/to/script.ts
 ```
 
-The `debug>` prompt accepts:
+`debug>` 提示接受：
 
-| Command | Action |
+| 指令 | 動作 |
 |---|---|
-| `c` or `cont` | continue |
-| `n` or `next` | step over |
-| `s` or `step` | step into |
-| `o` or `out` | step out |
-| `pause` | pause running code |
-| `sb('file.js', 42)` | set breakpoint at file.js line 42 |
-| `sb(42)` | set breakpoint at line 42 of current file |
-| `sb('functionName')` | break when function is called |
-| `cb('file.js', 42)` | clear breakpoint |
-| `breakpoints` | list all breakpoints |
-| `bt` | backtrace (call stack) |
-| `list(5)` | show 5 lines of source around current position |
-| `watch('expr')` | evaluate expr on every pause |
-| `watchers` | show watched expressions |
-| `repl` | drop into REPL in current scope (Ctrl+C to exit REPL) |
-| `exec expr` | evaluate expression once |
-| `restart` | restart script |
-| `kill` | kill the script |
-| `.exit` | quit debugger |
+| `c` 或 `cont` | 繼續 |
+| `n` 或 `next` | step over |
+| `s` 或 `step` | step into |
+| `o` 或 `out` | step out |
+| `pause` | 暫停執行中的程式碼 |
+| `sb('file.js', 42)` | 在 file.js 第 42 行設中斷點 |
+| `sb(42)` | 在目前檔案第 42 行設中斷點 |
+| `sb('functionName')` | 函式被呼叫時中斷 |
+| `cb('file.js', 42)` | 清除中斷點 |
+| `breakpoints` | 列出所有中斷點 |
+| `bt` | backtrace（呼叫堆疊） |
+| `list(5)` | 顯示目前位置周圍 5 行原始碼 |
+| `watch('expr')` | 每次暫停時求值 expr |
+| `watchers` | 顯示被 watch 的運算式 |
+| `repl` | 在目前 scope 進入 REPL（Ctrl+C 退出 REPL） |
+| `exec expr` | 求值一次運算式 |
+| `restart` | 重新啟動腳本 |
+| `kill` | 殺掉腳本 |
+| `.exit` | 退出除錯器 |
 
-**In the `repl` sub-mode:** type any JS expression, including access to locals/closure variables. `Ctrl+C` exits back to `debug>`.
+**在 `repl` 子模式中：** 輸入任何 JS 運算式，包括存取 locals/closure 變數。`Ctrl+C` 回到 `debug>`。
 
-## Attaching to a Running Process
+## 附加到執行中的行程
 
-When the process is already running (e.g. a long-lived dev server or the TUI gateway):
+當行程已在執行時（例如長命的 dev server 或 TUI gateway）：
 
 ```bash
 # 1. Send SIGUSR1 to enable the inspector on an existing process
@@ -85,7 +85,7 @@ node inspect -p <pid>
 node inspect ws://127.0.0.1:9229/<uuid>
 ```
 
-To start a process with the inspector from the beginning:
+從一開始就帶著 inspector 啟動行程：
 
 ```bash
 node --inspect script.js           # listen on 127.0.0.1:9229, keep running
@@ -93,7 +93,7 @@ node --inspect-brk script.js       # listen AND pause on first line
 node --inspect=0.0.0.0:9230 script.js   # custom host:port
 ```
 
-For TypeScript via tsx:
+TypeScript 經 tsx：
 
 ```bash
 node --inspect-brk --import tsx script.ts
@@ -101,9 +101,9 @@ node --inspect-brk --import tsx script.ts
 node --inspect-brk -r tsx/cjs script.ts
 ```
 
-## Programmatic CDP (scripting from terminal)
+## 程式化 CDP（從終端機寫腳本）
 
-When you want to automate — set many breakpoints, capture scope state, script a repro — use `chrome-remote-interface`:
+當你想自動化 — 設很多中斷點、擷取 scope 狀態、重現腳本化 — 用 `chrome-remote-interface`：
 
 ```bash
 npm i -g chrome-remote-interface        # or project-local
@@ -111,7 +111,7 @@ npm i -g chrome-remote-interface        # or project-local
 node --inspect-brk=9229 target.js &
 ```
 
-Driver script (save as `~/.hermes/cache/scratch/cdp-debug.js`):
+驅動腳本（存為 `~/.hermes/cache/scratch/cdp-debug.js`）：
 
 ```javascript
 const CDP = require('chrome-remote-interface');
@@ -161,26 +161,26 @@ const CDP = require('chrome-remote-interface');
 })();
 ```
 
-Run it:
+執行它：
 
 ```bash
 node ~/.hermes/cache/scratch/cdp-debug.js
 ```
 
-Hermes-specific note: `chrome-remote-interface` is NOT in `ui-tui/package.json`. Install it to a throwaway location if you don't want to dirty the project:
+Hermes 特定註記：`chrome-remote-interface` **不在** `ui-tui/package.json` 裡。若你不想弄髒專案，把它裝到一個可丟棄的位置：
 
 ```bash
 mkdir -p ~/.hermes/cache/scratch/cdp-tools && cd ~/.hermes/cache/scratch/cdp-tools && npm i chrome-remote-interface
 NODE_PATH=~/.hermes/cache/scratch/cdp-tools/node_modules node ~/.hermes/cache/scratch/cdp-debug.js
 ```
 
-## Debugging Hermes ui-tui
+## 除錯 Hermes ui-tui
 
-The TUI is built Ink + tsx. Two common scenarios:
+TUI 用 Ink + tsx 建構。兩個常見情境：
 
-### Debugging a single Ink component under dev
+### 在開發模式下除錯單一 Ink 元件
 
-`ui-tui/package.json` has `npm run dev` (tsx --watch). Add `--inspect-brk` by running tsx directly:
+`ui-tui/package.json` 有 `npm run dev`（tsx --watch）。直接跑 tsx 來加上 `--inspect-brk`：
 
 ```bash
 cd <hermes-agent-repo>/ui-tui
@@ -190,18 +190,18 @@ node --inspect-brk dist/entry.js
 node inspect -p <node pid>
 ```
 
-Then inside `debug>`:
+然後在 `debug>` 內：
 
 ```
 sb('dist/app.js', 220)     # or wherever the suspect render is
 cont
 ```
 
-When it pauses, `repl` → inspect `props`, state refs, `useInput` handler values, etc.
+暫停時，`repl` → 檢查 `props`、state refs、`useInput` handler 值等。
 
-### Debugging a running `hermes --tui`
+### 除錯執行中的 `hermes --tui`
 
-The TUI spawns Node from the Python CLI. Easiest path:
+TUI 從 Python CLI 產生 Node。最簡單的路徑：
 
 ```bash
 # 1. Launch TUI
@@ -218,13 +218,13 @@ curl -s http://127.0.0.1:9229/json/list | jq -r '.[0].webSocketDebuggerUrl'
 node inspect ws://127.0.0.1:9229/<uuid>
 ```
 
-Interacting with the TUI (typing in its window) continues to advance execution; your debugger can pause it on a breakpoint at any `sb(...)`.
+與 TUI 互動（在其視窗中輸入）會繼續推進執行；你的除錯器可以在任何 `sb(...)` 中斷點上暫停它。
 
-### Debugging `_SlashWorker` / PTY child processes
+### 除錯 `_SlashWorker` / PTY 子行程
 
-Those are Python, not Node — use the `python-debugpy` skill for them. Only Node portions (Ink UI, tui_gateway client, tsx-run tests under `ui-tui/`) use this skill.
+那些是 Python，不是 Node — 用 `python-debugpy` 技能。只有 Node 的部分（Ink UI、tui_gateway 用戶端、`ui-tui/` 下以 tsx 跑的測試）用本技能。
 
-## Running Vitest Tests Under the Debugger
+## 在除錯器下執行 Vitest 測試
 
 ```bash
 cd <hermes-agent-repo>/ui-tui
@@ -232,13 +232,13 @@ cd <hermes-agent-repo>/ui-tui
 node --inspect-brk ./node_modules/vitest/vitest.mjs run --no-file-parallelism src/app/foo.test.tsx
 ```
 
-In another terminal: `node inspect -p <pid>`, then `sb('src/app/foo.tsx', 42)`, `cont`.
+在另一個終端機：`node inspect -p <pid>`，然後 `sb('src/app/foo.tsx', 42)`、`cont`。
 
-Use `--no-file-parallelism` (vitest) or `--runInBand` (jest) so only one worker exists — debugging a pool is painful.
+用 `--no-file-parallelism`（vitest）或 `--runInBand`（jest）讓只有一個 worker 存在 — 除錯一個 pool 很痛苦。
 
-## Heap Snapshots & CPU Profiles (Non-interactive)
+## Heap 快照與 CPU Profile（非互動）
 
-From the CDP driver above, swap Debugger for `HeapProfiler` / `Profiler`:
+在上述 CDP 驅動中，把 Debugger 換成 `HeapProfiler` / `Profiler`：
 
 ```javascript
 // CPU profile for 5 seconds
@@ -259,37 +259,37 @@ await client.HeapProfiler.takeHeapSnapshot({ reportProgress: false });
 require('fs').writeFileSync('~/.hermes/cache/scratch/heap.heapsnapshot', chunks.join(''));
 ```
 
-## Common Pitfalls
+## 常見陷阱
 
-1. **Wrong line numbers in TS source.** Breakpoints hit the emitted JS, not the `.ts`. Either (a) break in the built `dist/*.js`, or (b) enable sourcemaps (`node --enable-source-maps`) and use `sb('src/app.tsx', N)` — but only with CDP clients that follow sourcemaps. `node inspect` CLI does not.
+1. **TS 原始碼中的行號錯誤。** 中斷點打在產生的 JS 上，不是 `.ts`。要嘛 (a) 在已建置的 `dist/*.js` 中斷，要嘛 (b) 啟用 sourcemap（`node --enable-source-maps`）並用 `sb('src/app.tsx', N)` — 但只在會跟隨 sourcemap 的 CDP client 下才行。`node inspect` CLI 不會。
 
-2. **`--inspect` vs `--inspect-brk`.** `--inspect` starts the inspector but doesn't pause; your script races past your first breakpoint if you attach too late. Use `--inspect-brk` when you need to set breakpoints before any code runs.
+2. **`--inspect` vs `--inspect-brk`。** `--inspect` 啟動 inspector 但不暫停；你附加太晚時，腳本會衝過你的第一個中斷點。要在任何程式碼執行前設中斷點，用 `--inspect-brk`。
 
-3. **Port collisions.** Default is `9229`. If multiple Node processes are inspecting, pass `--inspect=0` (random port) and read the actual URL from `/json/list`:
+3. **埠號衝突。** 預設是 `9229`。若多個 Node 行程在 inspect，傳 `--inspect=0`（隨機埠）並從 `/json/list` 讀實際 URL：
    ```bash
    curl -s http://127.0.0.1:9229/json/list   # lists all inspectable targets on the host
    ```
 
-4. **Child processes.** `--inspect` on a parent does NOT inspect its children. Use `NODE_OPTIONS='--inspect-brk' node parent.js` to propagate to every child; be aware they all need unique ports (Node auto-increments when `NODE_OPTIONS='--inspect'` is inherited).
+4. **子行程。** 父行程的 `--inspect` **不會**檢查它的子行程。用 `NODE_OPTIONS='--inspect-brk' node parent.js` 傳播給每個子行程；注意它們都需要獨特埠號（當繼承 `NODE_OPTIONS='--inspect'` 時 Node 會自動遞增）。
 
-5. **Background kills.** If you `Ctrl+C` out of `node inspect` while the target is paused, the target stays paused. Either `cont` first, or `kill` the target explicitly.
+5. **背景殺除。** 若目標暫停時你 `Ctrl+C` 退出 `node inspect`，目標會停在暫停狀態。先 `cont`，或明確 `kill` 目標。
 
-6. **Running `node inspect` through an agent terminal.** It's a PTY-friendly REPL. In Hermes, launch it with `terminal(pty=true)` or `background=true` + `process(action='submit', data='...')`. Non-PTY foreground mode will work for one-shot commands but not for interactive stepping.
+6. **透過代理終端機跑 `node inspect`。** 它是 PTY 友善的 REPL。在 Hermes 中，用 `terminal(pty=true)` 或 `background=true` + `process(action='submit', data='...')` 啟動它。非 PTY 的前景模式可用於單次指令，但不適用於互動式 step。
 
-7. **Security.** `--inspect=0.0.0.0:9229` exposes arbitrary code execution. Always bind to `127.0.0.1` (the default) unless you have an isolated network.
+7. **安全。** `--inspect=0.0.0.0:9229` 暴露任意程式碼執行。除非你有隔離網路，否則一律綁到 `127.0.0.1`（預設）。
 
-## Verification Checklist
+## 驗證清單
 
-After setting up a debug session, verify:
+設定除錯 session 後驗證：
 
-- [ ] `curl -s http://127.0.0.1:9229/json/list` returns exactly the target you expect
-- [ ] First breakpoint actually hits (if it doesn't, you likely missed `--inspect-brk` or attached after execution completed)
-- [ ] Source listing at pause shows the right file (mismatch = sourcemap issue, see pitfall 1)
-- [ ] `exec process.pid` in `repl` returns the PID you meant to attach to
+- [ ] `curl -s http://127.0.0.1:9229/json/list` 回傳的正是你預期的目標
+- [ ] 第一個中斷點真的有中（沒中，你大概漏了 `--inspect-brk`，或在執行完成後才附加）
+- [ ] 暫停時原始碼列出的檔案正確（不符 = sourcemap 問題，見陷阱 1）
+- [ ] 在 `repl` 中 `exec process.pid` 回傳你本想附加的 PID
 
-## One-Shot Recipes
+## 單次除錯配方
 
-**"Why is this variable undefined at line X?"**
+**「這個變數為什麼在第 X 行是 undefined？」**
 ```bash
 node --inspect-brk script.js &
 node inspect -p $!
@@ -302,7 +302,7 @@ repl
 > Object.keys(this)
 ```
 
-**"What's the call path into this function?"**
+**「這函式的呼叫路徑是什麼？」**
 ```
 debug> sb('suspectFn')
 debug> cont
@@ -310,7 +310,7 @@ debug> cont
 debug> bt
 ```
 
-**"This async chain hangs — where?"**
+**「這條 async 鏈卡住了 — 卡在哪？」**
 ```
 # Start with --inspect (no -brk), let it run to the hang, then:
 debug> pause

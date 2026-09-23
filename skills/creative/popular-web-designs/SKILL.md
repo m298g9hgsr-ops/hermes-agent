@@ -1,6 +1,6 @@
 ---
 name: popular-web-designs
-description: 54 real design systems (Stripe, Linear, Vercel) as HTML/CSS.
+description: 54 套真實設計系統，可直接生成 HTML/CSS.
 version: 1.0.0
 author: Hermes Agent + Teknium (design systems sourced from VoltAgent/awesome-design-md)
 license: MIT
@@ -18,35 +18,28 @@ triggers:
   - website styled like
 ---
 
-# Popular Web Designs
+# 熱門網頁設計
 
-54 real-world design systems ready for use when generating HTML/CSS. Each template captures a
-site's complete visual language: color palette, typography hierarchy, component styles, spacing
-system, shadows, responsive behavior, and practical agent prompts with exact CSS values.
+54 套真實世界的設計系統，生成 HTML/CSS 時可直接取用。每個範本都完整擷取一個網站的視覺語言：色盤、字體層級、元件樣式、間距系統、陰影、響應式行為，以及附有精確 CSS 數值的實用代理提示。
 
-## Related design skills
+## 相關設計技能
 
-- **`claude-design`** — use for the design *process and taste* (scoping a brief,
-  producing variants, verifying a local HTML artifact, avoiding AI-design slop).
-  Pair it with this skill when the user wants a thoughtfully-designed page styled
-  after a known brand: `claude-design` drives the workflow, this skill supplies
-  the visual vocabulary.
-- **`design-md`** — use when the deliverable is a formal DESIGN.md token spec
-  file, not a rendered artifact.
+- **`claude-design`** — 用於設計的*流程與品味*（界定設計需求、產出變體、驗證本機 HTML 作品、避免 AI 設計俗物）。當使用者想要一個經過用心設計、比照已知品牌風格的頁面時，與本技能搭配使用：`claude-design` 主導流程，本技能提供視覺詞彙。
+- **`design-md`** — 當交付物是正式的 DESIGN.md 權杖規格檔，而非渲染後的成品時使用。
 
-## How to Use
+## 使用方式
 
-1. Pick a design from the catalog below
-2. Load it: `skill_view(name="popular-web-designs", file_path="templates/<site>.md")`
-3. Use the design tokens and component specs when generating HTML
-4. Pair with the `generative-widgets` skill to serve the result via cloudflared tunnel
+1. 從下方目錄中挑選一個設計
+2. 載入它：`skill_view(name="popular-web-designs", file_path="templates/<site>.md")`
+3. 產生 HTML 時套用其設計權杖與元件規格
+4. 搭配 `generative-widgets` 技能，透過 cloudflared tunnel 提供成果
 
-Each template includes a **Hermes Implementation Notes** block at the top with:
-- CDN font substitute and Google Fonts `<link>` tag (ready to paste)
-- CSS font-family stacks for primary and monospace
-- Reminders to use `write_file` for HTML creation and `browser_vision` for verification
+每個範本頂端都有一個 **Hermes Implementation Notes** 區塊，包含：
+- CDN 字體替代方案與 Google Fonts `<link>` 標籤（可直接貼上）
+- 主要與等寬的 CSS font-family 字堆
+- 提醒使用 `write_file` 建立 HTML、使用 `browser_vision` 進行驗證
 
-## HTML Generation Pattern
+## HTML 產生模式
 
 ```html
 <!DOCTYPE html>
@@ -82,133 +75,128 @@ Each template includes a **Hermes Implementation Notes** block at the top with:
 </html>
 ```
 
-Write the file with `write_file`, serve with the `generative-widgets` workflow (cloudflared tunnel),
-and verify the result with `browser_vision` to confirm visual accuracy.
+用 `write_file` 寫入檔案，以 `generative-widgets` 工作流（cloudflared tunnel）提供服務，並用 `browser_vision` 驗證成果是否符合視覺預期。
 
-## Font Substitution Reference
+## 字體替換參考
 
-Most sites use proprietary fonts unavailable via CDN. Each template maps to a Google Fonts
-substitute that preserves the design's character. Common mappings:
+多數網站使用的專有字體無法透過 CDN 取得。每個範本都對應一個能保留原設計個性的 Google Fonts 替代字體。常見對應：
 
-| Proprietary Font | CDN Substitute | Character |
+| 專有字體 | CDN 替代 | 特性 |
 |---|---|---|
-| Geist / Geist Sans | Geist (on Google Fonts) | Geometric, compressed tracking |
-| Geist Mono | Geist Mono (on Google Fonts) | Clean monospace, ligatures |
-| sohne-var (Stripe) | Source Sans 3 | Light weight elegance |
-| Berkeley Mono | JetBrains Mono | Technical monospace |
-| Airbnb Cereal VF | DM Sans | Rounded, friendly geometric |
-| Circular (Spotify) | DM Sans | Geometric, warm |
-| figmaSans | Inter | Clean humanist |
-| Pin Sans (Pinterest) | DM Sans | Friendly, rounded |
-| NVIDIA-EMEA | Inter (or Arial system) | Industrial, clean |
-| CoinbaseDisplay/Sans | DM Sans | Geometric, trustworthy |
-| UberMove | DM Sans | Bold, tight |
-| HashiCorp Sans | Inter | Enterprise, neutral |
-| waldenburgNormal (Sanity) | Space Grotesk | Geometric, slightly condensed |
-| IBM Plex Sans/Mono | IBM Plex Sans/Mono | Available on Google Fonts |
-| Rubik (Sentry) | Rubik | Available on Google Fonts |
+| Geist / Geist Sans | Geist（Google Fonts 上） | 幾何感、緊縮字距 |
+| Geist Mono | Geist Mono（Google Fonts 上） | 乾淨等寬、連字 |
+| sohne-var (Stripe) | Source Sans 3 | 細字重的優雅 |
+| Berkeley Mono | JetBrains Mono | 技術感等寬 |
+| Airbnb Cereal VF | DM Sans | 圓潤友善的幾何風 |
+| Circular (Spotify) | DM Sans | 幾何感、溫暖 |
+| figmaSans | Inter | 乾淨人文風 |
+| Pin Sans (Pinterest) | DM Sans | 友善、圓潤 |
+| NVIDIA-EMEA | Inter（或 Arial 系統字） | 工業感、乾淨 |
+| CoinbaseDisplay/Sans | DM Sans | 幾何感、值得信賴 |
+| UberMove | DM Sans | 大膽、緊湊 |
+| HashiCorp Sans | Inter | 企業感、中性 |
+| waldenburgNormal (Sanity) | Space Grotesk | 幾何感、略緊縮 |
+| IBM Plex Sans/Mono | IBM Plex Sans/Mono | Google Fonts 上可取得 |
+| Rubik (Sentry) | Rubik | Google Fonts 上可取得 |
 
-When a template's CDN font matches the original (Inter, IBM Plex, Rubik, Geist), no
-substitution loss occurs. When a substitute is used (DM Sans for Circular, Source Sans 3
-for sohne-var), follow the template's weight, size, and letter-spacing values closely —
-those carry more visual identity than the specific font face.
+當範本的 CDN 字體與原版相同（Inter、IBM Plex、Rubik、Geist）時，沒有替換損失。當使用替代字體時（以 DM Sans 取代 Circular、以 Source Sans 3 取代 sohne-var），請緊密遵循範本的字重、字級與字距數值——這些比特定字體本身承載更多視覺識別。
 
-## Design Catalog
+## 設計目錄
 
-### AI & Machine Learning
+### AI 與機器學習
 
-| Template | Site | Style |
+| 範本 | 網站 | 風格 |
 |---|---|---|
-| `claude.md` | Anthropic Claude | Warm terracotta accent, clean editorial layout |
-| `cohere.md` | Cohere | Vibrant gradients, data-rich dashboard aesthetic |
-| `elevenlabs.md` | ElevenLabs | Dark cinematic UI, audio-waveform aesthetics |
-| `minimax.md` | Minimax | Bold dark interface with neon accents |
-| `mistral.ai.md` | Mistral AI | French-engineered minimalism, purple-toned |
-| `ollama.md` | Ollama | Terminal-first, monochrome simplicity |
-| `opencode.ai.md` | OpenCode AI | Developer-centric dark theme, full monospace |
-| `replicate.md` | Replicate | Clean white canvas, code-forward |
-| `runwayml.md` | RunwayML | Cinematic dark UI, media-rich layout |
-| `together.ai.md` | Together AI | Technical, blueprint-style design |
-| `voltagent.md` | VoltAgent | Void-black canvas, emerald accent, terminal-native |
-| `x.ai.md` | xAI | Stark monochrome, futuristic minimalism, full monospace |
+| `claude.md` | Anthropic Claude | 溫暖赤陶色重點、乾淨的編輯式版面 |
+| `cohere.md` | Cohere | 明亮漸層、資料豐富的儀表板美學 |
+| `elevenlabs.md` | ElevenLabs | 暗色電影感 UI、音波美學 |
+| `minimax.md` | Minimax | 大膽暗色介面搭配霓虹重點色 |
+| `mistral.ai.md` | Mistral AI | 法式工程極簡風、紫色調 |
+| `ollama.md` | Ollama | 終端機優先、單色純粹 |
+| `opencode.ai.md` | OpenCode AI | 開發者導向暗色主題、全等寬字體 |
+| `replicate.md` | Replicate | 乾淨白色畫布、程式碼優先 |
+| `runwayml.md` | RunwayML | 電影感暗色 UI、媒體豐富版面 |
+| `together.ai.md` | Together AI | 技術感、藍圖風格設計 |
+| `voltagent.md` | VoltAgent | 虛空黑畫布、翡翠綠重點、終端機原生 |
+| `x.ai.md` | xAI | 冷峻單色、未來感極簡、全等寬字體 |
 
-### Developer Tools & Platforms
+### 開發者工具與平台
 
-| Template | Site | Style |
+| 範本 | 網站 | 風格 |
 |---|---|---|
-| `cursor.md` | Cursor | Sleek dark interface, gradient accents |
-| `expo.md` | Expo | Dark theme, tight letter-spacing, code-centric |
-| `linear.app.md` | Linear | Ultra-minimal dark-mode, precise, purple accent |
-| `lovable.md` | Lovable | Playful gradients, friendly dev aesthetic |
-| `mintlify.md` | Mintlify | Clean, green-accented, reading-optimized |
-| `posthog.md` | PostHog | Playful branding, developer-friendly dark UI |
-| `raycast.md` | Raycast | Sleek dark chrome, vibrant gradient accents |
-| `resend.md` | Resend | Minimal dark theme, monospace accents |
-| `sentry.md` | Sentry | Dark dashboard, data-dense, pink-purple accent |
-| `supabase.md` | Supabase | Dark emerald theme, code-first developer tool |
-| `superhuman.md` | Superhuman | Premium dark UI, keyboard-first, purple glow |
-| `vercel.md` | Vercel | Black and white precision, Geist font system |
-| `warp.md` | Warp | Dark IDE-like interface, block-based command UI |
-| `zapier.md` | Zapier | Warm orange, friendly illustration-driven |
+| `cursor.md` | Cursor | 流暢暗色介面、漸層重點色 |
+| `expo.md` | Expo | 暗色主題、緊字距、程式碼為本 |
+| `linear.app.md` | Linear | 超極簡暗色模式、精準、紫色重點 |
+| `lovable.md` | Lovable | 俏皮漸層、友善開發美學 |
+| `mintlify.md` | Mintlify | 乾淨、綠色重點、閱讀優化 |
+| `posthog.md` | PostHog | 俏皮品牌、開發者友善暗色 UI |
+| `raycast.md` | Raycast | 流暢暗色金屬感、明亮漸層重點 |
+| `resend.md` | Resend | 極簡暗色主題、等寬重點色 |
+| `sentry.md` | Sentry | 暗色儀表板、資料密集、粉紫重點 |
+| `supabase.md` | Supabase | 暗翡翠主題、程式碼優先開發工具 |
+| `superhuman.md` | Superhuman | 高端暗色 UI、鍵盤優先、紫色光暈 |
+| `vercel.md` | Vercel | 黑白精準、Geist 字體系統 |
+| `warp.md` | Warp | 暗色 IDE 風介面、區塊式指令 UI |
+| `zapier.md` | Zapier | 溫暖橘色、友善插畫驅動 |
 
-### Infrastructure & Cloud
+### 基礎設施與雲端
 
-| Template | Site | Style |
+| 範本 | 網站 | 風格 |
 |---|---|---|
-| `clickhouse.md` | ClickHouse | Yellow-accented, technical documentation style |
-| `composio.md` | Composio | Modern dark with colorful integration icons |
-| `hashicorp.md` | HashiCorp | Enterprise-clean, black and white |
-| `mongodb.md` | MongoDB | Green leaf branding, developer documentation focus |
-| `sanity.md` | Sanity | Red accent, content-first editorial layout |
-| `stripe.md` | Stripe | Signature purple gradients, weight-300 elegance |
+| `clickhouse.md` | ClickHouse | 黃色重點、技術文件風格 |
+| `composio.md` | Composio | 現代暗色搭配繽紛整合圖示 |
+| `hashicorp.md` | HashiCorp | 企業級乾淨、黑白 |
+| `mongodb.md` | MongoDB | 綠葉品牌、開發者文件導向 |
+| `sanity.md` | Sanity | 紅色重點、內容優先編輯版面 |
+| `stripe.md` | Stripe | 標誌性紫色漸層、300 字重的優雅 |
 
-### Design & Productivity
+### 設計與生產力
 
-| Template | Site | Style |
+| 範本 | 網站 | 風格 |
 |---|---|---|
-| `airtable.md` | Airtable | Colorful, friendly, structured data aesthetic |
-| `cal.md` | Cal.com | Clean neutral UI, developer-oriented simplicity |
-| `clay.md` | Clay | Organic shapes, soft gradients, art-directed layout |
-| `figma.md` | Figma | Vibrant multi-color, playful yet professional |
-| `framer.md` | Framer | Bold black and blue, motion-first, design-forward |
-| `intercom.md` | Intercom | Friendly blue palette, conversational UI patterns |
-| `miro.md` | Miro | Bright yellow accent, infinite canvas aesthetic |
-| `notion.md` | Notion | Warm minimalism, serif headings, soft surfaces |
-| `pinterest.md` | Pinterest | Red accent, masonry grid, image-first layout |
-| `webflow.md` | Webflow | Blue-accented, polished marketing site aesthetic |
+| `airtable.md` | Airtable | 繽紛、友善、結構化資料美學 |
+| `cal.md` | Cal.com | 乾淨中性 UI、開發者導向的簡潔 |
+| `clay.md` | Clay | 有機形狀、柔和漸層、藝術指導版面 |
+| `figma.md` | Figma | 明亮多彩、俏皮而專業 |
+| `framer.md` | Framer | 大膽黑藍、動效優先、設計導向 |
+| `intercom.md` | Intercom | 友善藍色系、對話式 UI 模式 |
+| `miro.md` | Miro | 明亮黃色重點、無限畫布美學 |
+| `notion.md` | Notion | 溫暖極簡、襯線標題、柔和表面 |
+| `pinterest.md` | Pinterest | 紅色重點、瀑布流網格、圖片優先版面 |
+| `webflow.md` | Webflow | 藍色重點、精緻行銷網站美學 |
 
-### Fintech & Crypto
+### 金融科技與加密貨幣
 
-| Template | Site | Style |
+| 範本 | 網站 | 風格 |
 |---|---|---|
-| `coinbase.md` | Coinbase | Clean blue identity, trust-focused, institutional feel |
-| `kraken.md` | Kraken | Purple-accented dark UI, data-dense dashboards |
-| `revolut.md` | Revolut | Sleek dark interface, gradient cards, fintech precision |
-| `wise.md` | Wise | Bright green accent, friendly and clear |
+| `coinbase.md` | Coinbase | 乾淨藍色識別、信任導向、機構感 |
+| `kraken.md` | Kraken | 紫色重點暗色 UI、資料密集儀表板 |
+| `revolut.md` | Revolut | 流暢暗色介面、漸層卡片、金融科技精準感 |
+| `wise.md` | Wise | 明亮綠色重點、友善清晰 |
 
-### Enterprise & Consumer
+### 企業與消費品牌
 
-| Template | Site | Style |
+| 範本 | 網站 | 風格 |
 |---|---|---|
-| `airbnb.md` | Airbnb | Warm coral accent, photography-driven, rounded UI |
-| `apple.md` | Apple | Premium white space, SF Pro, cinematic imagery |
-| `bmw.md` | BMW | Dark premium surfaces, precise engineering aesthetic |
-| `ibm.md` | IBM | Carbon design system, structured blue palette |
-| `nvidia.md` | NVIDIA | Green-black energy, technical power aesthetic |
-| `spacex.md` | SpaceX | Stark black and white, full-bleed imagery, futuristic |
-| `spotify.md` | Spotify | Vibrant green on dark, bold type, album-art-driven |
-| `uber.md` | Uber | Bold black and white, tight type, urban energy |
+| `airbnb.md` | Airbnb | 溫暖珊瑚色重點、攝影驅動、圓角 UI |
+| `apple.md` | Apple | 高端留白、SF Pro、電影感影像 |
+| `bmw.md` | BMW | 暗色高端表面、精密工程美學 |
+| `ibm.md` | IBM | Carbon 設計系統、結構化藍色系 |
+| `nvidia.md` | NVIDIA | 綠黑能量、技術力量美學 |
+| `spacex.md` | SpaceX | 冷峻黑白、滿版影像、未來感 |
+| `spotify.md` | Spotify | 暗底上的明亮綠色、大膽字體、專輯封面驅動 |
+| `uber.md` | Uber | 大膽黑白、緊湊字體、都市能量 |
 
-## Choosing a Design
+## 選擇設計
 
-Match the design to the content:
+讓設計與內容相符：
 
-- **Developer tools / dashboards:** Linear, Vercel, Supabase, Raycast, Sentry
-- **Documentation / content sites:** Mintlify, Notion, Sanity, MongoDB
-- **Marketing / landing pages:** Stripe, Framer, Apple, SpaceX
-- **Dark mode UIs:** Linear, Cursor, ElevenLabs, Warp, Superhuman
-- **Light / clean UIs:** Vercel, Stripe, Notion, Cal.com, Replicate
-- **Playful / friendly:** PostHog, Figma, Lovable, Zapier, Miro
-- **Premium / luxury:** Apple, BMW, Stripe, Superhuman, Revolut
-- **Data-dense / dashboards:** Sentry, Kraken, Cohere, ClickHouse
-- **Monospace / terminal aesthetic:** Ollama, OpenCode, x.ai, VoltAgent
+- **開發者工具／儀表板：** Linear、Vercel、Supabase、Raycast、Sentry
+- **文件／內容網站：** Mintlify、Notion、Sanity、MongoDB
+- **行銷／著陸頁：** Stripe、Framer、Apple、SpaceX
+- **暗色模式 UI：** Linear、Cursor、ElevenLabs、Warp、Superhuman
+- **淺色／乾淨 UI：** Vercel、Stripe、Notion、Cal.com、Replicate
+- **俏皮／友善：** PostHog、Figma、Lovable、Zapier、Miro
+- **高端／奢華：** Apple、BMW、Stripe、Superhuman、Revolut
+- **資料密集／儀表板：** Sentry、Kraken、Cohere、ClickHouse
+- **等寬／終端機美學：** Ollama、OpenCode、x.ai、VoltAgent

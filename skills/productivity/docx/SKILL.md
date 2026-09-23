@@ -1,6 +1,6 @@
 ---
 name: docx
-description: Create, read, edit, template, and review Word .docx files.
+description: 建立、讀取、編輯、套用範本及檢閱 Word .docx 檔案.
 version: 1.1.0
 author: Nous Research
 license: MIT
@@ -12,40 +12,39 @@ metadata:
     related_skills: [pdf, xlsx, powerpoint]
 ---
 
-# Docx Skill
+# Docx 技能
 
-Create, read, edit, and template Microsoft Word `.docx` files with
-python-docx via small CLIs. It handles text, styles, lists, tables,
-images, headers/footers, `{{token}}` templating, tracked changes
-(list/accept/reject), comments (list/add/delete), TOC and page-number
-fields, and package health checks. It does not render documents itself
-(PDF needs LibreOffice — see Converting to PDF) or edit legacy `.doc`.
+用 python-docx 透過小型 CLI 建立、讀取、編輯與套用 Microsoft Word
+`.docx` 範本。可處理文字、樣式、清單、表格、圖片、頁首／頁尾、
+`{{token}}` 範本、追蹤修訂（列出／接受／拒絕）、註解（列出／新增／刪除）、
+目錄與頁碼欄位，以及封裝健康檢查。本身不渲染文件
+（轉 PDF 需要 LibreOffice——見「轉換為 PDF」），也不編輯舊版 `.doc`。
 
-## When to Use
+## 使用時機
 
-- The user asks to generate a Word document (report, letter, contract).
-- You need the text, outline, styles, or embedded images of a `.docx`.
-- You must change an existing `.docx`: replace text, edit table cells,
-  insert/delete paragraphs, apply styles, merge fragmented runs.
-- You have a `.docx` template with `{{placeholders}}` to fill from data.
-- The document has tracked changes to review, accept, or reject.
-- You need to read reviewers' comments, or add/delete comments.
-- A `.docx` won't open or behaves oddly and you need corruption triage.
-- The document needs a table of contents or "Page X of Y" footers.
-- Not for: `.doc` (legacy), `.odt`, or WYSIWYG layout work.
+- 使用者要求產生 Word 文件（報告、信函、合約）。
+- 需要取得 `.docx` 的文字、大綱、樣式或內嵌圖片。
+- 必須修改既有 `.docx`：取代文字、編輯表格儲存格、插入／刪除段落、
+  套用樣式、合併碎片化的 runs。
+- 有含 `{{placeholders}}` 的 `.docx` 範本，需以資料填入。
+- 文件有追蹤修訂需要檢閱、接受或拒絕。
+- 需要讀取審閱者的註解，或新增／刪除註解。
+- `.docx` 打不開或行為異常，需要進行損毀診斷。
+- 文件需要目錄或「第 X 頁／共 Y 頁」頁尾。
+- 不適用於：`.doc`（舊版）、`.odt` 或所見即所得的版面工作。
 
-## Prerequisites
+## 前置需求
 
-- Python 3.10+ with `python-docx` installed:
-  `pip install python-docx` (import name is `docx`; lxml comes with it).
-- Comments `add` uses the native API on python-docx >= 1.2 and an XML
-  fallback on older versions — both are automatic.
-- For image blocks: the image files must exist locally (PNG/JPEG).
+- Python 3.10+ 與已安裝的 `python-docx`：
+  `pip install python-docx`（匯入名稱為 `docx`；lxml 隨附其中）。
+- 註解的 `add` 在 python-docx >= 1.2 使用原生 API，舊版則退回 XML
+  ——兩者皆自動處理。
+- 圖片區塊：圖片檔案必須存在於本機（PNG/JPEG）。
 
-## How to Run
+## 執行方式
 
-All helpers live in `scripts/` next to this file. Run them with the
-`terminal` tool; each supports `--help` and prints JSON to stdout.
+所有輔助腳本都在本檔旁的 `scripts/`。用 `terminal` 工具執行；
+每個都支援 `--help` 並將 JSON 印到 stdout。
 
 ```bash
 python scripts/docx_create.py spec.json out.docx
@@ -57,140 +56,124 @@ python scripts/docx_comments.py list out.docx
 python scripts/docx_validate.py out.docx
 ```
 
-## Quick Reference
+## 快速參考
 
-| Task | Command |
+| 任務 | 指令 |
 | --- | --- |
-| Create from JSON spec | `docx_create.py spec.json out.docx` |
-| Full text (body+tables+headers/footers) | `docx_read.py f.docx --text` |
-| Heading outline + table shapes | `docx_read.py f.docx --structure` |
-| Styles actually used | `docx_read.py f.docx --styles` |
-| Extract embedded images | `docx_read.py f.docx --images outdir/` |
-| Detect tracked changes/comments | `docx_read.py f.docx --revisions` |
-| Find/replace (formatting kept) | `docx_edit.py replace f.docx --find A --replace B -o out.docx` |
-| Set a table cell | `docx_edit.py set-cell f.docx --table 0 --row 1 --col 2 --text X` |
-| Insert paragraph before index N | `docx_edit.py insert f.docx --index N --text X --style Normal` |
-| Delete paragraph N | `docx_edit.py delete f.docx --index N` |
-| Apply style to paragraph N | `docx_edit.py style f.docx --index N --style "Heading 1"` |
-| Merge equal-format adjacent runs | `docx_edit.py normalize f.docx -o out.docx` |
-| Insert TOC field before para N | `docx_edit.py toc f.docx --index N -o out.docx` |
-| "Page X of Y" footer fields | `docx_edit.py page-numbers f.docx` |
-| Fill `{{tokens}}` | `docx_template.py tpl.docx values.json out.docx --strict` |
-| List revisions (id/author/date/text) | `docx_revisions.py list f.docx` |
-| Accept / reject all revisions | `docx_revisions.py accept-all f.docx -o out.docx` (or `reject-all`) |
-| Accept / reject one revision | `docx_revisions.py accept f.docx --id 3 -o out.docx` |
-| List comments (+anchored text) | `docx_comments.py list f.docx` |
-| Add comment anchored to text | `docx_comments.py add f.docx --target "phrase" --text "note" --author You` |
-| Delete comment by id | `docx_comments.py delete f.docx --id 0` |
-| Health-check the package | `docx_validate.py f.docx` (exit 1 on errors) |
+| 依 JSON spec 建立 | `docx_create.py spec.json out.docx` |
+| 完整文字（內文＋表格＋頁首／頁尾） | `docx_read.py f.docx --text` |
+| 標題大綱＋表格形狀 | `docx_read.py f.docx --structure` |
+| 實際使用的樣式 | `docx_read.py f.docx --styles` |
+| 匯出內嵌圖片 | `docx_read.py f.docx --images outdir/` |
+| 偵測追蹤修訂／註解 | `docx_read.py f.docx --revisions` |
+| 尋找／取代（保留格式） | `docx_edit.py replace f.docx --find A --replace B -o out.docx` |
+| 設定表格儲存格 | `docx_edit.py set-cell f.docx --table 0 --row 1 --col 2 --text X` |
+| 在索引 N 前插入段落 | `docx_edit.py insert f.docx --index N --text X --style Normal` |
+| 刪除第 N 段 | `docx_edit.py delete f.docx --index N` |
+| 對第 N 段套用樣式 | `docx_edit.py style f.docx --index N --style "Heading 1"` |
+| 合併格式相同的相鄰 runs | `docx_edit.py normalize f.docx -o out.docx` |
+| 在第 N 段前插入目錄欄位 | `docx_edit.py toc f.docx --index N -o out.docx` |
+| 「第 X 頁／共 Y 頁」頁尾欄位 | `docx_edit.py page-numbers f.docx` |
+| 填入 `{{tokens}}` | `docx_template.py tpl.docx values.json out.docx --strict` |
+| 列出修訂（id／作者／日期／文字） | `docx_revisions.py list f.docx` |
+| 接受／拒絕全部修訂 | `docx_revisions.py accept-all f.docx -o out.docx`（或 `reject-all`） |
+| 接受／拒絕單一修訂 | `docx_revisions.py accept f.docx --id 3 -o out.docx` |
+| 列出註解（＋錨定文字） | `docx_comments.py list f.docx` |
+| 新增錨定到文字的註解 | `docx_comments.py add f.docx --target "phrase" --text "note" --author You` |
+| 依 id 刪除註解 | `docx_comments.py delete f.docx --id 0` |
+| 封裝健康檢查 | `docx_validate.py f.docx`（有錯誤時結束碼 1） |
 
-## Procedure
+## 操作步驟
 
-1. **Create.** Write a JSON spec with `write_file`, then run
-   `scripts/docx_create.py`. The spec supports: `page` (size + margins in
-   mm), `header`/`footer` strings, `footer_page_numbers` (adds a
-   "Page X of Y" field footer), `styles` (custom paragraph styles with
-   font, size, bold/italic, hex `color`), and `blocks` — `heading`
-   (level 1-9), `paragraph` (either `text` or a `runs` list where each run
-   may set `bold`/`italic`/`underline`), `bullet_list`, `numbered_list`,
-   `table` (`header` row rendered bold, `rows`, optional built-in table
-   `style` such as `Table Grid`), `image` (`path`, optional `width_mm`),
-   `toc` (Table of Contents field), and `page_break`. The full spec
-   format is documented at the top of `scripts/docx_create.py`.
-2. **Read.** Use `scripts/docx_read.py` with exactly one mode flag.
-   `--text` returns body paragraphs, all table cell text, and
-   header/footer text as JSON. `--structure` returns the heading outline
-   plus paragraph/table/section counts. `--images DIR` copies every file
-   under `word/media/` out of the package.
-3. **Edit.** Use `scripts/docx_edit.py`. `replace` walks body, tables
-   (nested included), headers and footers, and preserves run formatting;
-   add `--body-only` to skip headers/footers. Pass `-o out.docx` to keep
-   the original; omit it to edit in place. Paragraph indices for
-   `insert`/`delete`/`style`/`toc` refer to `--structure`/`--text` body
-   order. Run `normalize` first on documents that came out of heavy Word
-   editing — it merges adjacent runs with identical formatting so later
-   find-replace matches reliably.
-4. **Review revisions.** `docx_revisions.py list` reports every `w:ins`
-   and `w:del` (id, author, date, affected text) anywhere in body,
-   tables, headers, or footers. `accept-all` / `reject-all` resolve them
-   in bulk; `accept`/`reject --id N` handles a single revision. Accept
-   keeps insertions and drops deleted text; reject does the reverse.
-5. **Comments.** `docx_comments.py list` returns each comment's id,
-   author, date, body text, and the document text it is anchored to.
-   `add --target "some phrase"` anchors a new comment to the first
-   occurrence of that phrase (runs are split as needed; formatting is
-   preserved). `delete --id N` removes the comment and its markers
-   without touching document text.
-6. **Template.** Put `{{name}}`-style tokens in the document. Run
-   `scripts/docx_template.py` with a JSON object of values. Use
-   `--strict` to fail when tokens remain unfilled; the JSON output lists
-   `filled` counts and `unfilled_tokens` either way.
-7. **Verify** (always): re-read the output with `--text` or
-   `--structure`, and run `docx_validate.py` on anything you produced
-   via revision/comment surgery.
+1. **建立。** 用 `write_file` 撰寫 JSON spec，再執行
+   `scripts/docx_create.py`。spec 支援：`page`（尺寸＋頁邊界，單位 mm）、
+   `header`／`footer` 字串、`footer_page_numbers`（加入「第 X 頁／共 Y 頁」
+   欄位頁尾）、`styles`（自訂段落樣式，含字型、大小、粗／斜體、十六進位
+   `color`），以及 `blocks` —— `heading`（層級 1-9）、`paragraph`
+   （`text` 或 `runs` 清單，每個 run 可設 `bold`／`italic`／`underline`）、
+   `bullet_list`、`numbered_list`、`table`（`header` 列以粗體渲染、`rows`、
+   選填的內建表格 `style` 如 `Table Grid`）、`image`（`path`、選填
+   `width_mm`）、`toc`（目錄欄位）與 `page_break`。完整 spec 格式
+   記錄在 `scripts/docx_create.py` 開頭。
+2. **讀取。** 使用 `scripts/docx_read.py`，且只能指定一個模式旗標。
+   `--text` 以 JSON 回傳內文段落、所有表格儲存格文字與頁首／頁尾文字。
+   `--structure` 回傳標題大綱以及段落／表格／節的計數。
+   `--images DIR` 將 `word/media/` 底下的所有檔案複製出封裝。
+3. **編輯。** 使用 `scripts/docx_edit.py`。`replace` 會走訪內文、表格
+   （含巢狀）、頁首與頁尾，並保留 run 格式；加 `--body-only` 可略過
+   頁首／頁尾。指定 `-o out.docx` 可保留原始檔；省略則就地編輯。
+   `insert`／`delete`／`style`／`toc` 的段落索引係對應
+   `--structure`／`--text` 的內文順序。經過重度 Word 編輯的文件請先執行
+   `normalize`——它會合併格式完全相同的相鄰 runs，讓後續的尋找取代
+   能可靠比對。
+4. **檢視修訂。** `docx_revisions.py list` 會回報內文、表格、頁首或頁尾
+   中任何位置的 `w:ins` 與 `w:del`（id、作者、日期、受影響文字）。
+   `accept-all`／`reject-all` 批量處理；`accept`／`reject --id N`
+   處理單一修訂。接受會保留插入並捨棄被刪文字；拒絕則相反。
+5. **註解。** `docx_comments.py list` 回傳每則註解的 id、作者、日期、
+   內文，以及其錨定的文件文字。`add --target "some phrase"` 將新註解
+   錨定到該片語首次出現處（必要時會拆分 runs；格式會保留）。
+   `delete --id N` 移除註解與其標記，且不觸碰文件文字。
+6. **範本。** 在文件中放入 `{{name}}` 形式的 tokens，並執行
+   `scripts/docx_template.py`，搭配含值的 JSON 物件。使用 `--strict`
+   可在仍有未填 tokens 時失敗；無論如何 JSON 輸出都會列出 `filled`
+   數量與 `unfilled_tokens`。
+7. **驗證**（務必執行）：用 `--text` 或 `--structure` 重新讀取輸出，
+   並對任何經過修訂／註解手術的產物執行 `docx_validate.py`。
 
-## Converting to PDF
+## 轉換為 PDF
 
-No script needed. When LibreOffice is installed, convert headlessly:
+不需腳本。安裝 LibreOffice 後即可無頭轉換：
 
 ```bash
 soffice --headless --convert-to pdf --outdir outdir/ file.docx
 ```
 
-Check availability first (`command -v soffice || command -v
-libreoffice`). If neither exists, tell the user PDF conversion is
-unavailable in this environment rather than improvising — python-docx
-cannot render PDFs, and layout fidelity requires a real renderer.
+先確認可用性（`command -v soffice || command -v
+libreoffice`）。兩者皆不存在時，請告知使用者此環境無法轉 PDF，
+不要自行 improvise——python-docx 無法渲染 PDF，版面保真度需要真正的渲染器。
 
-## Pitfalls
+## 常見陷阱
 
-- **Tokens split across runs.** Word often fragments text into several
-  runs. The replace helpers collapse matched runs (replacement inherits
-  the first run's formatting); running `docx_edit.py normalize` first
-  reduces fragmentation for all later edits.
-- **Revision coverage.** `docx_revisions.py` resolves run-level
-  insertions and deletions (the overwhelming majority). Paragraph-mark
-  and table-row revisions, format-change records, and moves are detected
-  by `--revisions` but not auto-resolved — see
-  `references/revisions-and-comments.md` and hand those to Word.
-- **Comment threading.** Replies and "resolved" status live in
-  `commentsExtended.xml`, which this skill ignores; comments it adds are
-  plain top-level comments.
-- **Field results are computed by Word.** `toc`, `page-numbers`, and the
-  `toc`/`footer_page_numbers` spec options write *field codes*.
-  Word/LibreOffice populates the actual entries and numbers when the
-  file is opened (Word may prompt to update fields); python-docx never
-  computes them, so placeholder text shows until then.
-- **Validation is a health check, not schema validation.**
-  `docx_validate.py` verifies the zip, required parts, relationship
-  targets, image magic bytes, and referenced styles. It is NOT XSD
-  validation — a file can pass and still contain XML Word dislikes.
-- **Style names must exist.** Applying a style that isn't defined in the
-  document raises `KeyError`. Built-ins like `Heading 1`, `List Bullet`,
-  `List Number`, `Table Grid` exist in the default template; custom
-  styles must be declared in the create spec first.
-- **Numbered lists restart.** `List Number` relies on Word's default
-  numbering; separate lists in one document may continue numbering
-  instead of restarting. Warn users needing precise multi-list numbering.
-- **Cell writes replace formatting.** `set-cell` uses `cell.text = ...`,
-  which resets runs in that cell to plain formatting.
-- **Encoding.** All JSON specs/values files are read as UTF-8 explicitly;
-  never rely on locale defaults when writing your own glue code.
-- **Don't unzip-and-sed the XML.** Edit through the scripts (or
-  python-docx); raw text substitution in `document.xml` corrupts files
-  easily. Use `patch`/`write_file` only for the JSON inputs, never on the
-  `.docx` itself.
+- **Token 被拆散到多個 runs。** Word 常把文字碎裂成多個 runs。
+  取消輔助腳本會合併比對到的 runs（取代文字繼承第一個 run 的格式）；
+  先執行 `docx_edit.py normalize` 可減少後續所有編輯的碎裂問題。
+- **修訂涵蓋範圍。** `docx_revisions.py` 可處理 run 層級的插入與刪除
+  （占絕大多數）。段落標記與表格列修訂、格式變更記錄以及移動
+  可由 `--revisions` 偵測但不會自動解決——見
+  `references/revisions-and-comments.md`，此類請交給 Word 處理。
+- **註解串接。** 回覆與「已解決」狀態存於 `commentsExtended.xml`，
+  本技能忽略該檔；新增的註解都是單純的頂層註解。
+- **欄位結果由 Word 計算。** `toc`、`page-numbers` 以及 spec 選項
+   `toc`／`footer_page_numbers` 寫入的是*欄位代碼*。
+  Word/LibreOffice 在檔案開啟時才填入實際條目與編號（Word 可能會提示
+  更新欄位）；python-docx 從不計算它們，因此在此之前顯示的是預留文字。
+- **驗證是健康檢查，不是 schema 驗證。** `docx_validate.py` 檢查
+  zip、必要部件、關係目標、圖片魔術位元組與被引用的樣式。
+  它不是 XSD 驗證——檔案可能通過卻仍含 Word 不喜歡的 XML。
+- **樣式名稱必須存在。** 套用文件中未定義的樣式會引發 `KeyError`。
+  `Heading 1`、`List Bullet`、`List Number`、`Table Grid` 等內建樣式
+  存在於預設範本；自訂樣式必須先在建立 spec 中宣告。
+- **編號清單會重新起算。** `List Number` 依賴 Word 的預設編號；
+  同一文件中的不同清單可能延續編號而非重新起算。需要精確多清單編號時
+  請提醒使用者。
+- **寫入儲存格會覆蓋格式。** `set-cell` 使用 `cell.text = ...`，
+  會將該儲存格的 runs 重設為一般格式。
+- **編碼。** 所有 JSON spec／數值檔皆明確以 UTF-8 讀取；
+  撰寫自己的串接程式碼時，切勿依賴 locale 預設值。
+- **不要解壓後直接 sed XML。** 請透過腳本（或 python-docx）編輯；
+  對 `document.xml` 做純文字取代極易損壞檔案。`patch`／`write_file`
+  只用於 JSON 輸入，絕不用於 `.docx` 本身。
 
-## Verification
+## 驗證
 
-- After create/edit/template, run `docx_read.py out.docx --text` and
-  check the expected strings appear (and old strings are gone).
-- After accept/reject, `docx_revisions.py list` should return `[]` (or
-  only the ids you intentionally left); after comment surgery,
-  `docx_comments.py list` should reflect the change and `--text` output
-  must be unchanged.
-- `docx_validate.py out.docx` exits 0 with `"ok": true` on a healthy
-  package — run it after any revision/comment/field manipulation.
-- For templates run with `--strict`, or check `unfilled_tokens == []`.
-- Structure checks: `--structure` should show the expected heading
-  outline and table shapes; `--styles` confirms custom styles applied.
+- 建立／編輯／範本後，執行 `docx_read.py out.docx --text`，
+  確認預期字串出現（且舊字串已消失）。
+- 接受／拒絕後，`docx_revisions.py list` 應回傳 `[]`（或僅剩你刻意
+  保留的 id）；註解手術後，`docx_comments.py list` 應反映變更，
+  且 `--text` 輸出必須完全未變。
+- `docx_validate.py out.docx` 對健康封裝應以 0 結束並回傳
+  `"ok": true`——任何修訂／註解／欄位操作後都應執行。
+- 範本請以 `--strict` 執行，或檢查 `unfilled_tokens == []`。
+- 結構檢查：`--structure` 應顯示預期的標題大綱與表格形狀；
+  `--styles` 確認自訂樣式已套用。

@@ -1,6 +1,6 @@
 ---
 name: xlsx
-description: Create, read, edit Excel .xlsx workbooks and CSVs.
+description: 建立、讀取、編輯 Excel .xlsx 活頁簿與 CSV.
 version: 1.1.0
 author: Nous Research
 license: MIT
@@ -12,41 +12,37 @@ metadata:
     related_skills: [docx, pdf, powerpoint]
 ---
 
-# Xlsx Skill
+# Xlsx 技能
 
-Work with Excel .xlsx workbooks using Python and openpyxl: build styled
-multi-sheet workbooks with formulas and charts, inspect or dump existing
-files, edit cells and structure, and convert to/from CSV. All helper
-scripts are argparse CLIs that print JSON and use explicit UTF-8 I/O.
+用 Python 與 openpyxl 處理 Excel .xlsx 活頁簿：建立含公式與圖表的
+多工作表樣式活頁簿、檢視或傾印既有檔案、編輯儲存格與結構，以及與 CSV
+互相轉換。所有輔助腳本皆為 argparse CLI，輸出 JSON 並使用明確的 UTF-8 I/O。
 
-## When to Use
+## 使用時機
 
-- Creating .xlsx reports: multiple sheets, number formats, styling,
-  merged cells, freeze panes, autofilter, conditional formatting,
-  charts, data-validation dropdowns, native Excel tables, defined
-  names, hyperlinks, cell notes, sheet protection.
-- Reading a workbook: sheet inventory, dumping data as JSON or CSV,
-  listing formulas vs cached values, notes, defined names, tables.
-- Editing existing files: set cells, append rows, insert/delete
-  rows/columns (reference-aware via `xlsx_restructure.py`),
-  copy/rename sheets, tables, names, notes, protection.
-- Recalculating formulas headlessly via LibreOffice
-  (`xlsx_recalc.py`).
-- CSV interop with type inference and non-UTF-8 encodings.
-- Not for the legacy .xls binary format (use LibreOffice to convert
-  first: `soffice --headless --convert-to xlsx old.xls`).
+- 建立 .xlsx 報表：多工作表、數字格式、樣式、合併儲存格、凍結窗格、
+  自動篩選、設定格式化條件、圖表、資料驗證下拉選單、原生 Excel 表格、
+  已定義名稱、超連結、儲存格註解、工作表保護。
+- 讀取活頁簿：工作表清單、傾印資料為 JSON 或 CSV、列出公式與快取值、
+  註解、已定義名稱、表格。
+- 編輯既有檔案：設定儲存格、附加列、插入／刪除列欄
+  （透過 `xlsx_restructure.py` 可感知參照）、複製／重新命名工作表、
+  表格、名稱、註解、保護。
+- 透過 LibreOffice 無頭重新計算公式（`xlsx_recalc.py`）。
+- CSV 互通：支援型別推論與非 UTF-8 編碼。
+- 不適用於舊版 .xls 二進位格式（先用 LibreOffice 轉換：
+  `soffice --headless --convert-to xlsx old.xls`）。
 
-## Prerequisites
+## 前置需求
 
-- Python 3.10+ with `openpyxl` (`pip install openpyxl`). No other
-  third-party packages are needed; everything else is stdlib.
-- Optional: LibreOffice (`soffice`) for headless recalculation or
-  format conversion.
+- Python 3.10+ 與 `openpyxl`（`pip install openpyxl`）。不需要其他
+  第三方套件；其餘皆屬標準函式庫。
+- 選擇性：LibreOffice（`soffice`），用於無頭重新計算或格式轉換。
 
-## How to Run
+## 執行方式
 
-Run the helper scripts with the `terminal` tool from this skill's
-`scripts/` directory (every script supports `--help`):
+在本技能的 `scripts/` 目錄下用 `terminal` 工具執行輔助腳本
+（每個腳本都支援 `--help`）：
 
 ```bash
 python scripts/xlsx_create.py spec.json report.xlsx   # build from JSON spec
@@ -60,137 +56,121 @@ python scripts/csv_to_xlsx.py data.csv out.xlsx --encoding utf-8
 python scripts/xlsx_to_csv.py report.xlsx out.csv --sheet Data
 ```
 
-Author the JSON spec with `write_file`, inspect script JSON output with
-`read_file` or directly from stdout.
+用 `write_file` 撰寫 JSON spec，用 `read_file` 或直接從 stdout 檢視腳本的 JSON 輸出。
 
-## Quick Reference
+## 快速參考
 
-| Task | Command |
+| 任務 | 指令 |
 |---|---|
-| Create workbook from spec | `xlsx_create.py spec.json out.xlsx` |
-| Sheet names + dimensions | `xlsx_read.py f.xlsx --sheets` |
-| Dump sheet as JSON | `xlsx_read.py f.xlsx --json --sheet S` |
-| Dump sheet as CSV | `xlsx_read.py f.xlsx --csv --out d.csv` |
-| List formulas + cached values | `xlsx_read.py f.xlsx --formulas` |
-| Set a cell / formula | `xlsx_edit.py f.xlsx --set "A1==SUM(B:B)"` |
-| Append a row | `xlsx_edit.py f.xlsx --append '[1,"x",true]'` |
-| Insert 2 rows, refs NOT shifted | `xlsx_edit.py f.xlsx --insert-rows 3:2` |
-| Insert 2 rows, refs shifted | `xlsx_restructure.py f.xlsx --insert-rows 3:2` |
-| Delete a column, refs shifted | `xlsx_restructure.py f.xlsx --delete-cols B` |
-| Create a native table | `xlsx_edit.py f.xlsx --add-table Sales:A1:C9` |
-| Append inside a table | `--table-append 'Sales=["West",5]'` |
-| List tables | `xlsx_edit.py f.xlsx --list-tables` |
-| Defined names | `--define-name "Rates='Data'!$B$2:$B$9"` / `--delete-name Rates` / `xlsx_read.py f.xlsx --names` |
-| Hyperlink | `--hyperlink "A1=https://example.com|Docs"` |
-| Cell note | `--note "B2=Check this|Reviewer"`; read via `xlsx_read.py f.xlsx --notes` |
-| Protect sheet (see Pitfalls) | `--protect your-password --unlock B2:B9` |
-| Recalculate via LibreOffice | `xlsx_recalc.py f.xlsx` |
-| Copy / rename sheet | `--copy-sheet Src:New --rename-sheet Old:New` |
-| Force recalc on open | `xlsx_edit.py f.xlsx --recalc` |
-| CSV -> styled xlsx | `csv_to_xlsx.py in.csv out.xlsx` |
-| xlsx -> CSV | `xlsx_to_csv.py f.xlsx out.csv --encoding utf-8` |
+| 依 spec 建立活頁簿 | `xlsx_create.py spec.json out.xlsx` |
+| 工作表名稱＋維度 | `xlsx_read.py f.xlsx --sheets` |
+| 傾印工作表為 JSON | `xlsx_read.py f.xlsx --json --sheet S` |
+| 傾印工作表為 CSV | `xlsx_read.py f.xlsx --csv --out d.csv` |
+| 列出公式＋快取值 | `xlsx_read.py f.xlsx --formulas` |
+| 設定儲存格／公式 | `xlsx_edit.py f.xlsx --set "A1==SUM(B:B)"` |
+| 附加一列 | `xlsx_edit.py f.xlsx --append '[1,"x",true]'` |
+| 插入 2 列，參照不平移 | `xlsx_edit.py f.xlsx --insert-rows 3:2` |
+| 插入 2 列，參照平移 | `xlsx_restructure.py f.xlsx --insert-rows 3:2` |
+| 刪除欄，參照平移 | `xlsx_restructure.py f.xlsx --delete-cols B` |
+| 建立原生表格 | `xlsx_edit.py f.xlsx --add-table Sales:A1:C9` |
+| 在表格內附加 | `--table-append 'Sales=["West",5]'` |
+| 列出表格 | `xlsx_edit.py f.xlsx --list-tables` |
+| 已定義名稱 | `--define-name "Rates='Data'!$B$2:$B$9"` / `--delete-name Rates` / `xlsx_read.py f.xlsx --names` |
+| 超連結 | `--hyperlink "A1=https://example.com|Docs"` |
+| 儲存格註解 | `--note "B2=Check this|Reviewer"`；以 `xlsx_read.py f.xlsx --notes` 讀取 |
+| 保護工作表（見常見陷阱） | `--protect your-password --unlock B2:B9` |
+| 以 LibreOffice 重新計算 | `xlsx_recalc.py f.xlsx` |
+| 複製／重新命名工作表 | `--copy-sheet Src:New --rename-sheet Old:New` |
+| 開啟時強制重算 | `xlsx_edit.py f.xlsx --recalc` |
+| CSV → 有樣式的 xlsx | `csv_to_xlsx.py in.csv out.xlsx` |
+| xlsx → CSV | `xlsx_to_csv.py f.xlsx out.csv --encoding utf-8` |
 
-## Procedure
+## 操作步驟
 
-1. **Create**: write a JSON spec (schema documented in
-   `xlsx_create.py --help` and its docstring). Each sheet supports
-   `rows` (scalars or styled cell objects), sparse `cells` overrides,
-   `column_widths`, `row_heights`, `merges`, `freeze_panes`,
-   `autofilter`, `conditional_formats` (cell_is rules and color
-   scales), `charts` (bar/line/pie from cell ranges),
-   `validations` (list dropdowns), `tables` (native Excel tables with
-   a style name), and `protection`. Workbook-level `defined_names`
-   maps names to refs. Cell objects also take `hyperlink` and `note`.
-   Typed values: JSON numbers/bools
-   pass through; dates use `{"value": "2026-01-31", "type": "date"}`.
-   Number formats are Excel format strings: currency `"$#,##0.00"`,
-   percent `"0.0%"`, date `"yyyy-mm-dd"`.
-2. **Formulas**: set with `"formula": "SUM(B2:B9)"` in the spec or
-   `--set "C1==SUM(A:A)"` in the editor. When writing formulas, add
-   `"full_calc_on_load": true` (spec) or `--recalc` (editor); this sets
-   the workbook's `fullCalcOnLoad` flag so Excel/LibreOffice recompute
-   everything on open. openpyxl itself NEVER evaluates formulas.
-3. **Read**: `--sheets` for inventory (names, dimensions, merged
-   ranges, chart count, tables, protection, defined names),
-   `--json`/`--csv` for data, `--formulas` to
-   pair each formula string with its cached result, `--notes` for
-   cell comments, `--names` for defined names. Cached results
-   exist only if the file was last saved by a real spreadsheet app;
-   files fresh from openpyxl return `null` there. To materialize
-   results headlessly run `xlsx_recalc.py file.xlsx` (uses
-   LibreOffice; prints `{"recalculated": false, ...}` and exits 0
-   when `soffice` is absent), then reload with `--data-only`.
-4. **Edit**: `xlsx_edit.py` applies renames/copies first, then
-   structural row/column changes, then `--set`/`--append`. It edits in
-   place unless `--out` is given — copy the file first if you need the
-   original.
-5. **Restructure**: for insert/delete on sheets that have formulas,
-   merges, tables, or filters, use `xlsx_restructure.py` instead of
-   `xlsx_edit.py`. It rewrites formula references on ALL sheets
-   (absolute `$` refs, ranges, cross-sheet refs), shifts merges,
-   autofilter, freeze panes, validation and conditional-format
-   ranges, table refs, defined names, and row/column dimensions, then
-   prints a JSON report including a `not_shifted` list. Rules and
-   limits: `references/restructuring.md`.
-6. **CSV interop**: `csv_to_xlsx.py` infers int/float/bool/ISO-date
-   per cell and styles the header row; `xlsx_to_csv.py` writes ISO
-   dates and blank strings for empty cells. Both default to UTF-8 and
-   accept `--encoding` (e.g. `utf-8-sig` for Excel-friendly BOM,
-   `cp1252` for legacy Windows exports).
+1. **建立**：撰寫 JSON spec（格式記錄在 `xlsx_create.py --help`
+   與其 docstring）。每個工作表支援 `rows`（純量或有樣式的儲存格物件）、
+   稀疏的 `cells` 覆寫、`column_widths`、`row_heights`、`merges`、
+   `freeze_panes`、`autofilter`、`conditional_formats`（cell_is 規則與
+   色階）、`charts`（由儲存格範圍產生直條／折線／圓形圖）、
+   `validations`（清單下拉選單）、`tables`（帶樣式名稱的原生 Excel
+   表格）以及 `protection`。活頁簿層級的 `defined_names` 將名稱對應到
+   參照。儲存格物件也可帶 `hyperlink` 與 `note`。
+   型別值：JSON 數字／布林值直接通過；日期用
+   `{"value": "2026-01-31", "type": "date"}`。
+   數字格式為 Excel 格式字串：貨幣 `"$#,##0.00"`、百分比 `"0.0%"`、
+   日期 `"yyyy-mm-dd"`。
+2. **公式**：在 spec 中用 `"formula": "SUM(B2:B9)"`，或在編輯器中用
+   `--set "C1==SUM(A:A)"` 設定。寫入公式時，請加上
+   `"full_calc_on_load": true`（spec）或 `--recalc`（編輯器）；這會設定
+   活頁簿的 `fullCalcOnLoad` 旗標，讓 Excel/LibreOffice 在開啟時重算
+   全部內容。openpyxl 本身從不評估公式。
+3. **讀取**：`--sheets` 取得清單（名稱、維度、合併範圍、圖表數、表格、
+   保護、已定義名稱），`--json`／`--csv` 取得資料，`--formulas`
+   將每條公式字串與其快取結果配對，`--notes` 取得儲存格註解，
+   `--names` 取得已定義名稱。快取結果只有在檔案最後是由真正的試算表
+   應用程式儲存時才存在；openpyxl 產生的檔案此處回傳 `null`。
+   若要無頭產生結果，執行 `xlsx_recalc.py file.xlsx`
+   （使用 LibreOffice；`soffice` 不存在時印出
+   `{"recalculated": false, ...}` 並以 0 結束），再以 `--data-only` 重新載入。
+4. **編輯**：`xlsx_edit.py` 依序套用重新命名／複製、結構性列欄變更，
+   然後才是 `--set`／`--append`。未指定 `--out` 時直接就地編輯——
+   若需要保留原始檔，請先複製。
+5. **結構調整**：對含公式、合併、表格或篩選的工作表進行插入／刪除時，
+   請改用 `xlsx_restructure.py` 而非 `xlsx_edit.py`。它會重寫**所有**
+   工作表上的公式參照（絕對 `$` 參照、範圍、跨工作表參照）、平移合併、
+   自動篩選、凍結窗格、驗證與設定格式化範圍、表格參照、已定義名稱以及
+   列／欄尺寸，然後印出包含 `not_shifted` 清單的 JSON 報告。
+   規則與限制見 `references/restructuring.md`。
+6. **CSV 互通**：`csv_to_xlsx.py` 逐格推論 int/float/bool/ISO 日期並為
+   標題列上樣式；`xlsx_to_csv.py` 輸出 ISO 日期、空儲存格輸出空字串。
+   兩者預設皆為 UTF-8，並接受 `--encoding`（例如 `utf-8-sig` 取得
+   Excel 相容的 BOM，`cp1252` 用於舊版 Windows 匯出）。
 
-## Converting to PDF
+## 轉換為 PDF
 
-LibreOffice converts headlessly (also works for CSV export of a single
-sheet):
+LibreOffice 可無頭轉換（單一工作表的 CSV 匯出也適用）：
 
 ```bash
 soffice --headless --convert-to pdf report.xlsx --outdir out/
 soffice --headless --convert-to csv report.xlsx --outdir out/  # 1st sheet only
 ```
 
-Only the first sheet lands in a CSV; for other sheets use
-`xlsx_to_csv.py --sheet NAME`. If `soffice` is missing, install
-LibreOffice or hand the file to the user unconverted.
+CSV 只會收錄第一個工作表；其他工作表請用
+`xlsx_to_csv.py --sheet NAME`。若缺少 `soffice`，請安裝
+LibreOffice，或將未轉換的檔案交還使用者。
 
-## Pitfalls
+## 常見陷阱
 
-- **openpyxl does not calculate.** Formula results are available only
-  via `load_workbook(path, data_only=True)` and only when the file was
-  previously saved by Excel/LibreOffice. Otherwise you get `None`.
-- **`xlsx_edit.py` insert/delete does not shift references** (raw
-  openpyxl behavior). Use `xlsx_restructure.py`, which does — but even
-  it cannot move chart anchors, images, or conditional-format RULE
-  formulas; read its JSON report's `not_shifted` list and
-  `references/restructuring.md`.
-- **Sheet protection is NOT security.** `--protect` sets the standard
-  xlsx sheet-protection hash: it signals "don't edit this" to
-  well-behaved apps and nothing more. Anyone can strip it by editing
-  the zip's XML or unchecking it in LibreOffice. Never rely on it for
-  confidentiality or integrity; it does not encrypt anything.
-- **`data_only=True` then save** silently discards all formulas
-  (cached values replace them). Never save a workbook loaded that way
-  unless that is the goal.
-- **Loading strips charts/images**: openpyxl does not round-trip
-  charts, so editing a charted workbook and saving drops the charts.
-  Re-add charts after editing, or avoid re-saving charted files.
-- **CSV locale traps**: always pass explicit encodings (the scripts
-  already do) and remember European CSVs often use `;` delimiters and
-  decimal commas — use `--delimiter ';'` and expect strings like
-  `"12,5"` to stay strings.
-- **Dates are datetimes**: Excel stores dates as serial numbers;
-  openpyxl returns `datetime`/`date` objects. Dumps here emit ISO
-  strings.
-- Sheet names are capped at 31 chars and reject `[ ] : * ? / \`.
+- **openpyxl 不做計算。** 公式結果只有在檔案先前曾由
+  Excel/LibreOffice 儲存時，才能透過
+  `load_workbook(path, data_only=True)` 取得，否則會得到 `None`。
+- **`xlsx_edit.py` 的插入／刪除不會平移參照**（openpyxl 的原始行為）。
+  請改用會平移的 `xlsx_restructure.py`——但即使它也無法移動圖表錨點、
+  圖片或設定格式化的**規則**公式；請閱讀其 JSON 報告的 `not_shifted`
+  清單與 `references/restructuring.md`。
+- **工作表保護不是安全機制。** `--protect` 設定的是標準 xlsx
+  工作表保護雜湊：只會向守規矩的應用程式表示「請勿編輯」，僅此而已。
+  任何人都能透過編輯 zip 內的 XML 或在 LibreOffice 取消勾選來解除。
+  永遠不要仰賴它保護機密性或完整性；它不做任何加密。
+- **先用 `data_only=True` 再儲存**會靜默丟棄所有公式（被快取值取代）。
+  除非這就是你的目的，否則絕不要以這種方式載入後儲存活頁簿。
+- **載入會剔除圖表／圖片**：openpyxl 無法往返保留圖表，編輯含圖表的
+  活頁簿後儲存會遺失圖表。編輯後請重新加入圖表，或避免重新儲存含圖表的檔案。
+- **CSV 地區設定陷阱**：一律明確指定編碼（腳本已如此），並記得歐洲
+  CSV 常用 `;` 分隔、小數點用逗號——請用 `--delimiter ';'`，並預期
+  `"12,5"` 這類值仍是字串。
+- **日期即日期時間**：Excel 以序號儲存日期；openpyxl 回傳
+  `datetime`／`date` 物件。此處的傾印會輸出 ISO 字串。
+- 工作表名稱上限 31 個字元，且不可含 `[ ] : * ? / \`。
 
-## Verification
+## 驗證
 
-- After creating: `xlsx_read.py out.xlsx --sheets` and confirm sheet
-  names, dimensions, merged ranges, and chart counts match intent.
-- Dump data with `--json` and compare against the source values.
-- After edits: re-dump the touched range; if formulas were written,
-  confirm `--formulas` lists them and that `--recalc` was applied.
-- After `xlsx_restructure.py`: read its JSON report, then re-run
-  `--formulas` and `--sheets` to confirm references and ranges landed
-  where expected.
-- For a full visual check, open in LibreOffice:
-  `soffice --headless --convert-to pdf out.xlsx` and inspect the PDF.
+- 建立後：執行 `xlsx_read.py out.xlsx --sheets`，確認工作表名稱、維度、
+  合併範圍與圖表數符合預期。
+- 以 `--json` 傾印資料，與來源值比對。
+- 編輯後：重新傾印受影響的範圍；若寫入了公式，確認 `--formulas`
+  有列出它們，且已套用 `--recalc`。
+- 執行 `xlsx_restructure.py` 後：閱讀其 JSON 報告，再重跑
+  `--formulas` 與 `--sheets`，確認參照與範圍落在預期位置。
+- 需要完整視覺檢查時，用 LibreOffice 開啟：
+  `soffice --headless --convert-to pdf out.xlsx` 並檢視 PDF。

@@ -1,6 +1,6 @@
 ---
 name: airtable
-description: Airtable REST API via curl. Records CRUD, filters, upserts.
+description: 用 curl 操作 Airtable REST API：記錄 CRUD 與篩選.
 version: 1.1.0
 author: community
 license: MIT
@@ -14,89 +14,89 @@ metadata:
     homepage: https://airtable.com/developers/web/api/introduction
 ---
 
-# Airtable — Bases, Tables & Records
+# Airtable — 資料庫、資料表與記錄
 
-Work with Airtable's REST API directly via `curl` using the `terminal` tool. No MCP server, no OAuth flow, no Python SDK — just `curl` and a personal access token.
+用 `terminal` 工具直接透過 `curl` 操作 Airtable 的 REST API。不需要 MCP server、不需要 OAuth 流程、不需要 Python SDK——只要 `curl` 與個人存取權杖。
 
-## Prerequisites
+## 前置需求
 
-1. Create a **Personal Access Token (PAT)** at https://airtable.com/create/tokens (tokens start with `pat...`).
-2. Grant these scopes (minimum):
-   - `data.records:read` — read rows
-   - `data.records:write` — create / update / delete rows
-   - `schema.bases:read` — list bases and tables
-3. **Important:** in the same token UI, add each base you want to access to the token's **Access** list. PATs are scoped per-base — a valid token on the wrong base returns `403`.
-4. Store the token in `${HERMES_HOME:-~/.hermes}/.env` (or via `hermes setup`):
+1. 在 https://airtable.com/create/tokens 建立**個人存取權杖（PAT）**（權杖開頭為 `pat...`）。
+2. 授與以下權限範圍（最低要求）：
+   - `data.records:read` — 讀取列
+   - `data.records:write` — 建立／更新／刪除列
+   - `schema.bases:read` — 列出資料庫與資料表
+3. **重要：**在同一個權杖 UI 中，把你想要存取的每個資料庫加入該權杖的 **Access** 清單。PAT 是以資料庫為範圍——用在錯誤資料庫上的有效權杖會回傳 `403`。
+4. 將權杖存入 `${HERMES_HOME:-~/.hermes}/.env`（或透過 `hermes setup`）：
    ```
    AIRTABLE_API_KEY=pat_your_token_here
    ```
 
-> Note: legacy `key...` API keys were deprecated Feb 2024. Only PATs and OAuth tokens work now.
+> 注意：舊版 `key...` API 金鑰已於 2024 年 2 月棄用。目前僅 PAT 與 OAuth 權杖可用。
 
-## API Basics
+## API 基本概念
 
-- **Endpoint:** `https://api.airtable.com/v0`
-- **Auth header:** `Authorization: Bearer $AIRTABLE_API_KEY`
-- **All requests** use JSON (`Content-Type: application/json` for any POST/PATCH/PUT body).
-- **Object IDs:** bases `app...`, tables `tbl...`, records `rec...`, fields `fld...`. IDs never change; names can. Prefer IDs in automations.
-- **Rate limit:** 5 requests/sec/base. `429` → back off. Burst on a single base will be throttled.
+- **端點：** `https://api.airtable.com/v0`
+- **驗證標頭：** `Authorization: Bearer $AIRTABLE_API_KEY`
+- **所有請求**皆使用 JSON（任何 POST/PATCH/PUT body 都用 `Content-Type: application/json`）。
+- **物件 ID：** 資料庫 `app...`、資料表 `tbl...`、記錄 `rec...`、欄位 `fld...`。ID 永不改變；名稱可改。自動化中請優先使用 ID。
+- **速率限制：** 每個資料庫每秒 5 個請求。`429` → 退避。對單一資料庫的突發請求會被限流。
 
-Base curl pattern:
+基本 curl 模式：
 ```bash
 curl -s "https://api.airtable.com/v0/$BASE_ID/$TABLE?maxRecords=5" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
 
-`-s` suppresses curl's progress bar — keep it set for every call so the tool output stays clean for Hermes. Pipe through `python -m json.tool` (always present) or `jq` (if installed) for readable JSON.
+`-s` 會隱藏 curl 的進度條——每次呼叫都保留它，讓 Hermes 的工具輸出保持乾淨。可透過 `python -m json.tool`（一律存在）或 `jq`（若已安裝）管線處理以取得可讀 JSON。
 
-## Field Types (request body shapes)
+## 欄位型別（請求 body 形式）
 
-| Field type | Write shape |
+| 欄位型別 | 寫入形式 |
 |---|---|
-| Single line text | `"Name": "hello"` |
-| Long text | `"Notes": "multi\nline"` |
-| Number | `"Score": 42` |
-| Checkbox | `"Done": true` |
-| Single select | `"Status": "Todo"` (name must already exist unless `typecast: true`) |
-| Multi-select | `"Tags": ["urgent", "bug"]` |
-| Date | `"Due": "2026-04-01"` |
-| DateTime (UTC) | `"At": "2026-04-01T14:30:00.000Z"` |
-| URL / Email / Phone | `"Link": "https://…"` |
-| Attachment | `"Files": [{"url": "https://…"}]` (Airtable fetches + rehosts) |
-| Linked record | `"Owner": ["recXXXXXXXXXXXXXX"]` (array of record IDs) |
-| User | `"AssignedTo": {"id": "usrXXXXXXXXXXXXXX"}` |
+| 單行文字 | `"Name": "hello"` |
+| 長文字 | `"Notes": "multi\nline"` |
+| 數字 | `"Score": 42` |
+| 核取方塊 | `"Done": true` |
+| 單選 | `"Status": "Todo"`（除非 `typecast: true`，名稱必須已存在） |
+| 多選 | `"Tags": ["urgent", "bug"]` |
+| 日期 | `"Due": "2026-04-01"` |
+| 日期時間（UTC） | `"At": "2026-04-01T14:30:00.000Z"` |
+| URL／電子郵件／電話 | `"Link": "https://…"` |
+| 附件 | `"Files": [{"url": "https://…"}]`（Airtable 負責抓取＋重新託管） |
+| 關聯記錄 | `"Owner": ["recXXXXXXXXXXXXXX"]`（記錄 ID 陣列） |
+| 使用者 | `"AssignedTo": {"id": "usrXXXXXXXXXXXXXX"}` |
 
-Pass `"typecast": true` at the top level of a create/update body to let Airtable auto-coerce values (e.g. create a new select option on the fly, convert `"42"` → `42`).
+在建立／更新 body 的頂層傳入 `"typecast": true`，可讓 Airtable 自動轉換值（例如即興建立新的選項、將 `"42"` 轉為 `42`）。
 
-## Common Queries
+## 常見查詢
 
-### List bases the token can see
+### 列出權杖可見的資料庫
 ```bash
 curl -s "https://api.airtable.com/v0/meta/bases" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
 
-### List tables + schema for a base
+### 列出某資料庫的資料表＋結構
 ```bash
 curl -s "https://api.airtable.com/v0/meta/bases/$BASE_ID/tables" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
-Use this BEFORE mutating — confirms exact field names and IDs, surfaces `options.choices` for select fields, and shows primary-field names.
+**在任何變更前**先執行此步——可確認精確的欄位名稱與 ID、顯示選取欄位的 `options.choices`，以及主要欄位名稱。
 
-### List records (first 10)
+### 列出記錄（前 10 筆）
 ```bash
 curl -s "https://api.airtable.com/v0/$BASE_ID/$TABLE?maxRecords=10" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
 
-### Get a single record
+### 取得單筆記錄
 ```bash
 curl -s "https://api.airtable.com/v0/$BASE_ID/$TABLE/$RECORD_ID" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
 
-### Filter records (filterByFormula)
-Airtable formulas must be URL-encoded. Let Python stdlib do it — never hand-encode:
+### 篩選記錄（filterByFormula）
+Airtable 公式必須經 URL 編碼。交給 Python 標準函式庫處理——絕不手動編碼：
 ```bash
 FORMULA="{Status}='Todo'"
 ENC=$(python -c 'import sys, urllib.parse; print(urllib.parse.quote(sys.argv[1], safe=""))' "$FORMULA")
@@ -104,31 +104,31 @@ curl -s "https://api.airtable.com/v0/$BASE_ID/$TABLE?filterByFormula=$ENC&maxRec
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
 
-Useful formula patterns:
-- Exact match: `{Email}='user@example.com'`
-- Contains: `FIND('bug', LOWER({Title}))`
-- Multiple conditions: `AND({Status}='Todo', {Priority}='High')`
-- Or: `OR({Owner}='alice', {Owner}='bob')`
-- Not empty: `NOT({Assignee}='')`
-- Date comparison: `IS_AFTER({Due}, TODAY())`
+實用公式模式：
+- 完全相符：`{Email}='user@example.com'`
+- 包含：`FIND('bug', LOWER({Title}))`
+- 多個條件：`AND({Status}='Todo', {Priority}='High')`
+- 或：`OR({Owner}='alice', {Owner}='bob')`
+- 非空：`NOT({Assignee}='')`
+- 日期比較：`IS_AFTER({Due}, TODAY())`
 
-### Sort + select specific fields
+### 排序＋選取特定欄位
 ```bash
 curl -s "https://api.airtable.com/v0/$BASE_ID/$TABLE?sort%5B0%5D%5Bfield%5D=Priority&sort%5B0%5D%5Bdirection%5D=asc&fields%5B%5D=Name&fields%5B%5D=Status" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
-Square brackets in query params MUST be URL-encoded (`%5B` / `%5D`).
+查詢參數中的方括號**必須**經 URL 編碼（`%5B` / `%5D`）。
 
-### Use a named view
+### 使用命名檢視
 ```bash
 curl -s "https://api.airtable.com/v0/$BASE_ID/$TABLE?view=Grid%20view&maxRecords=50" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
-Views apply their saved filter + sort server-side.
+檢視會在伺服器端套用其已儲存的篩選與排序。
 
-## Common Mutations
+## 常見變更操作
 
-### Create a record
+### 建立記錄
 ```bash
 curl -s -X POST "https://api.airtable.com/v0/$BASE_ID/$TABLE" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" \
@@ -136,7 +136,7 @@ curl -s -X POST "https://api.airtable.com/v0/$BASE_ID/$TABLE" \
   -d '{"fields":{"Name":"New task","Status":"Todo","Priority":"High"}}' | python -m json.tool
 ```
 
-### Create up to 10 records in one call
+### 一次呼叫最多建立 10 筆記錄
 ```bash
 curl -s -X POST "https://api.airtable.com/v0/$BASE_ID/$TABLE" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" \
@@ -149,9 +149,9 @@ curl -s -X POST "https://api.airtable.com/v0/$BASE_ID/$TABLE" \
     ]
   }' | python -m json.tool
 ```
-Batch endpoints are capped at **10 records per request**. For larger inserts, loop in batches of 10 with a short sleep to respect 5 req/sec/base.
+批次端點上限為**每次請求 10 筆記錄**。大量插入請以 10 筆為一批迴圈執行，並加上短暫 sleep，以遵守每資料庫每秒 5 個請求的限制。
 
-### Update a record (PATCH — merges, preserves unchanged fields)
+### 更新記錄（PATCH — 合併並保留未變更欄位）
 ```bash
 curl -s -X PATCH "https://api.airtable.com/v0/$BASE_ID/$TABLE/$RECORD_ID" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" \
@@ -159,7 +159,7 @@ curl -s -X PATCH "https://api.airtable.com/v0/$BASE_ID/$TABLE/$RECORD_ID" \
   -d '{"fields":{"Status":"Done"}}' | python -m json.tool
 ```
 
-### Upsert by a merge field (no ID needed)
+### 依合併欄位 Upsert（不需 ID）
 ```bash
 curl -s -X PATCH "https://api.airtable.com/v0/$BASE_ID/$TABLE" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" \
@@ -171,23 +171,23 @@ curl -s -X PATCH "https://api.airtable.com/v0/$BASE_ID/$TABLE" \
     ]
   }' | python -m json.tool
 ```
-`performUpsert` creates records whose merge-field values are new, patches records whose merge-field values already exist. Great for idempotent syncs.
+`performUpsert` 會為合併欄位值是新的記錄建立新列，為已存在的記錄套用 PATCH。非常適合需要冪等的同步作業。
 
-### Delete a record
+### 刪除記錄
 ```bash
 curl -s -X DELETE "https://api.airtable.com/v0/$BASE_ID/$TABLE/$RECORD_ID" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
 
-### Delete up to 10 records in one call
+### 一次呼叫最多刪除 10 筆記錄
 ```bash
 curl -s -X DELETE "https://api.airtable.com/v0/$BASE_ID/$TABLE?records%5B%5D=rec1&records%5B%5D=rec2" \
   -H "Authorization: Bearer $AIRTABLE_API_KEY" | python -m json.tool
 ```
 
-## Pagination
+## 分頁
 
-List endpoints return at most **100 records per page**. If the response includes `"offset": "..."`, pass it back on the next call. Loop until the field is absent:
+列出端點每頁最多回傳 **100 筆記錄**。若回應包含 `"offset": "..."`，下次請求請傳回該值。持續迴圈直到此欄位不存在：
 
 ```bash
 OFFSET=""
@@ -201,29 +201,29 @@ while :; do
 done
 ```
 
-## Typical Hermes Workflow
+## 典型 Hermes 工作流程
 
-1. **Confirm auth.** `curl -s -o /dev/null -w "%{http_code}\n" https://api.airtable.com/v0/meta/bases -H "Authorization: Bearer $AIRTABLE_API_KEY"` — expect `200`.
-2. **Find the base.** List bases (step above) OR ask the user for the `app...` ID directly if the token lacks `schema.bases:read`.
-3. **Inspect the schema.** `GET /v0/meta/bases/$BASE_ID/tables` — cache the exact field names and primary-field name locally in the session before mutating anything.
-4. **Read before you write.** For "update X where Y", `filterByFormula` first to resolve the `rec...` ID, then `PATCH /v0/$BASE_ID/$TABLE/$RECORD_ID`. Never guess record IDs.
-5. **Batch writes.** Combine related creates into one 10-record POST to stay under the 5 req/sec budget.
-6. **Destructive ops.** Deletions can't be undone via API. If the user says "delete all Xs", echo back the filter + record count and confirm before firing.
+1. **確認驗證。** `curl -s -o /dev/null -w "%{http_code}\n" https://api.airtable.com/v0/meta/bases -H "Authorization: Bearer $AIRTABLE_API_KEY"` ——預期 `200`。
+2. **找出資料庫。** 列出資料庫（上一步），或當權杖缺少 `schema.bases:read` 時直接向使用者索取 `app...` ID。
+3. **檢查結構。** `GET /v0/meta/bases/$BASE_ID/tables` ——在變更任何內容前，先在 session 本機快取精確的欄位名稱與主要欄位名稱。
+4. **先讀後寫。** 對於「在 Y 條件下更新 X」，先用 `filterByFormula` 解析出 `rec...` ID，再 `PATCH /v0/$BASE_ID/$TABLE/$RECORD_ID`。絕不猜測記錄 ID。
+5. **批次寫入。** 把相關的建立操作合併成一次 10 筆的 POST，以維持在每秒 5 個請求的預算內。
+6. **破壞性操作。** 刪除無法透過 API 復原。若使用者說「刪除所有 X」，請先回傳篩選條件＋記錄數量並確認後再執行。
 
-## Pitfalls
+## 常見陷阱
 
-- **`filterByFormula` MUST be URL-encoded.** Field names with spaces or non-ASCII also need encoding (`{My Field}` → `%7BMy%20Field%7D`). Use Python stdlib (pattern above) — never hand-escape.
-- **Empty fields are omitted from responses.** A missing `"Assignee"` key doesn't mean the field doesn't exist — it means this record's value is empty. Check the schema (step 3) before concluding a field is missing.
-- **PATCH vs PUT.** `PATCH` merges supplied fields into the record. `PUT` replaces the record entirely and clears any field you didn't include. Default to `PATCH`.
-- **Single-select options must exist.** Writing `"Status": "Shipping"` when `Shipping` isn't in the field's option list errors with `INVALID_MULTIPLE_CHOICE_OPTIONS` unless you pass `"typecast": true` (which auto-creates the option).
-- **Per-base token scoping.** A `403` on one base while another works means the token's Access list doesn't include that base — not a scope or auth issue. Send the user to https://airtable.com/create/tokens to grant it.
-- **Rate limits are per base, not per token.** 5 req/sec on `baseA` and 5 req/sec on `baseB` is fine; 6 req/sec on `baseA` alone will throttle. Monitor the `Retry-After` header on `429`.
+- **`filterByFormula` 必須經 URL 編碼。** 含空格或非 ASCII 的欄位名稱同樣需要編碼（`{My Field}` → `%7BMy%20Field%7D`）。請使用 Python 標準函式庫（見上方模式）——絕不手動跳脫。
+- **空欄位不會出現在回應中。** 缺少 `"Assignee"` 鍵不代表該欄位不存在——只代表這筆記錄的值為空。下結論說欄位不存在前，先檢查結構（步驟 3）。
+- **PATCH vs PUT。** `PATCH` 把提供的欄位併入記錄。`PUT` 會完全取代記錄並清空你未包含的所有欄位。預設用 `PATCH`。
+- **單選選項必須已存在。** 當 `Shipping` 不在欄位的選項清單中卻寫入 `"Status": "Shipping"` 時，會回傳 `INVALID_MULTIPLE_CHOICE_OPTIONS` 錯誤，除非你傳入 `"typecast": true`（會自動建立該選項）。
+- **權杖以資料庫為範圍。** 某個資料庫回 `403` 而另一個正常，代表權杖的 Access 清單未包含該資料庫——不是範圍或驗證問題。請使用者到 https://airtable.com/create/tokens 授與權限。
+- **速率限制以資料庫計，不是以權杖計。** `baseA` 每秒 5 個請求同時 `baseB` 每秒 5 個請求沒問題；但 `baseA` 單獨每秒 6 個請求就會被限流。`429` 時請監控 `Retry-After` 標頭。
 
-## Important Notes for Hermes
+## 給 Hermes 的重要注意事項
 
-- **Always use the `terminal` tool with `curl`.** Do NOT use `web_extract` (it can't send auth headers) or `browser_navigate` (needs UI auth and is slow).
-- **`AIRTABLE_API_KEY` flows from `${HERMES_HOME:-~/.hermes}/.env` into the subprocess automatically** when this skill is loaded — no need to re-export it before each `curl` call.
-- **Escape curly braces in formulas carefully.** In a heredoc body, `{Status}` is literal. In a shell argument, `{Status}` is safe outside `{...}` brace-expansion context — but pass dynamic strings through `python urllib.parse.quote` before splicing into a URL.
-- **Pretty-print with `python -m json.tool`** (always present) rather than `jq` (optional). Only reach for `jq` when you need filtering/projection.
-- **Pagination is per-page, not global.** Airtable's 100-record cap is a hard limit; there is no way to bump it. Loop with `offset` until the field is absent.
-- **Read the `errors` array** on non-2xx responses — Airtable returns structured error codes like `AUTHENTICATION_REQUIRED`, `INVALID_PERMISSIONS`, `MODEL_ID_NOT_FOUND`, `INVALID_MULTIPLE_CHOICE_OPTIONS` that tell you exactly what's wrong.
+- **一律用 `terminal` 工具搭配 `curl`。** 不要使用 `web_extract`（無法送出驗證標頭）或 `browser_navigate`（需要 UI 驗證且速度慢）。
+- **本技能載入時，`AIRTABLE_API_KEY` 會自動從 `${HERMES_HOME:-~/.hermes}/.env` 注入子行程**——每次 `curl` 呼叫前不需要重新匯出。
+- **公式中的花括號要小心跳脫。** 在 heredoc body 中，`{Status}` 是字面值。在 shell 引數中，`{...}`  brace-expansion 之外的 `{Status}` 是安全的——但動態字串在拼進 URL 前，請先經過 `python urllib.parse.quote`。
+- **用 `python -m json.tool` 美化輸出**（一律存在）而非 `jq`（選擇性）。只有需要篩選／投影時才用 `jq`。
+- **分頁是逐頁而非全域。** Airtable 的 100 筆上限是硬限制，無法調高。用 `offset` 迴圈直到欄位不存在。
+- **讀取非 2xx 回應的 `errors` 陣列** ——Airtable 會回傳結構化錯誤碼，例如 `AUTHENTICATION_REQUIRED`、`INVALID_PERMISSIONS`、`MODEL_ID_NOT_FOUND`、`INVALID_MULTIPLE_CHOICE_OPTIONS`，可確切告訴你哪裡出了問題。

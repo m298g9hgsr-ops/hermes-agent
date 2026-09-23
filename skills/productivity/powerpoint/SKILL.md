@@ -1,6 +1,6 @@
 ---
 name: powerpoint
-description: Create, read, edit .pptx decks with python-pptx.
+description: 用 python-pptx 建立、讀取、編輯 .pptx 簡報.
 version: 1.1.0
 author: Nous Research
 license: MIT
@@ -12,41 +12,40 @@ metadata:
     related_skills: [docx, xlsx, pdf]
 ---
 
-# Powerpoint Skill
+# Powerpoint 技能
 
-Create, inspect, and edit PowerPoint (.pptx) presentations using the
-python-pptx library. Five helper scripts cover deck creation from a JSON
-spec, structured read-back, in-place edits, template-driven brand decks,
-and slide rendering — all offline, no PowerPoint installation required.
+使用 python-pptx 函式庫建立、檢視與編輯 PowerPoint（.pptx）簡報。
+五個輔助腳本涵蓋：依 JSON spec 建立簡報、結構化讀回、就地編輯、
+範本驅動的品牌簡報，以及投影片渲染——全部離線運作，不需要安裝
+PowerPoint。
 
-## When to Use
+## 使用時機
 
-- The user asks to build a slide deck, report presentation, or pitch deck.
-- You need to extract text, notes, tables, chart data, or images from a
-  .pptx someone shared.
-- You need to update an existing deck: replace text, refresh or patch
-  chart data, swap a logo, duplicate/remove/reorder slides, set
-  backgrounds, footers, hyperlinks, or speaker notes.
-- You must produce an on-brand deck from a company .pptx template.
-- Do NOT use this for .ppt (legacy binary) files — convert them first with
-  `soffice --convert-to pptx old.ppt` if LibreOffice is available.
+- 使用者要求建立投影片、報告簡報或提案簡報。
+- 需要從別人分享的 .pptx 抽出文字、備註、表格、圖表資料或圖片。
+- 需要更新既有簡報：取代文字、更新或修補圖表資料、更換 logo、
+  複製／刪除／重排投影片、設定背景、頁尾、超連結或演講者備註。
+- 必須依公司 .pptx 範本產出符合品牌規範的簡報。
+- **不適用於** .ppt（舊版二進位）檔——若 LibreOffice 可用，
+  請先用 `soffice --convert-to pptx old.ppt` 轉換。
 
-## Prerequisites
+## 前置需求
 
-- Python 3.10+ with `python-pptx` installed
-  (`pip install python-pptx`).
-- Optional: LibreOffice (`soffice`) plus poppler (`pdftoppm` or
-  `pdftocairo`) for rendering slides to PNGs and for PDF export.
-  `pptx_render.py` detects both with `shutil.which` and degrades
-  gracefully (reports `{"rendered": false, "missing": [...]}`, exit 0)
-  when absent — all create/read/edit operations work without them.
-- Check availability via `terminal`:
-  `python -c "import pptx; print(pptx.__version__)"` and `which soffice pdftoppm`.
+- Python 3.10+ 與已安裝的 `python-pptx`
+  （`pip install python-pptx`）。
+- 選擇性：LibreOffice（`soffice`）加上 poppler（`pdftoppm` 或
+  `pdftocairo`），用於將投影片渲染成 PNG 與匯出 PDF。
+  `pptx_render.py` 會用 `shutil.which` 偵測兩者，缺失時優雅降級
+  （回報 `{"rendered": false, "missing": [...]}`，結束碼 0）——
+  所有建立／讀取／編輯操作都不依賴它們。
+- 用 `terminal` 檢查可用性：
+  `python -c "import pptx; print(pptx.__version__)"` 以及
+  `which soffice pdftoppm`。
 
-## How to Run
+## 執行方式
 
-All scripts live in `scripts/`, take `--help`, print JSON to stdout, and
-exit non-zero on failure. Run them with `terminal`:
+所有腳本都在 `scripts/`、支援 `--help`、將 JSON 印到 stdout，
+並以非零結束碼表示失敗。用 `terminal` 執行：
 
 ```bash
 python scripts/pptx_create.py deck.json out.pptx
@@ -61,160 +60,152 @@ python scripts/pptx_from_template.py brand.pptx out.pptx --values vals.json
 python scripts/pptx_render.py deck.pptx --outdir ./render  # slide PNGs
 ```
 
-Author JSON specs with `write_file`; inspect script output and generated
-JSON with `read_file`.
+用 `write_file` 撰寫 JSON spec；用 `read_file` 檢視腳本輸出與產生的 JSON。
 
-## Quick Reference
+## 快速參考
 
-| Task | Command |
+| 任務 | 指令 |
 |---|---|
-| New deck from spec | `pptx_create.py spec.json out.pptx` |
-| 16:9 vs 4:3 | `"slide_size": "16:9"` or `"4:3"` in the spec |
-| Outline as JSON | `pptx_read.py deck.pptx --outline` |
-| Export images | `pptx_read.py deck.pptx --images DIR` |
-| Replace text | `pptx_edit.py deck.pptx --replace-text OLD NEW` |
-| Replace chart data | `pptx_edit.py deck.pptx --chart-data spec.json` |
-| Patch one series | same flag, spec with `"ops"` (see below) |
-| Swap picture | `pptx_edit.py deck.pptx --swap-image N NAME new.png` |
-| Duplicate slide | `pptx_edit.py deck.pptx --duplicate-slide N` |
-| Remove slide | `pptx_edit.py deck.pptx --remove-slide N` |
-| Reorder slide | `pptx_edit.py deck.pptx --move-slide FROM TO` |
-| Slide background | `pptx_edit.py deck.pptx --set-background N RRGGBB` |
-| Hyperlink runs | `pptx_edit.py deck.pptx --hyperlink N TEXT URL` |
-| Slide number on | `pptx_edit.py deck.pptx --enable-slide-number N` |
-| Footer text | `pptx_edit.py deck.pptx --set-footer N TEXT` |
-| Set notes | `pptx_edit.py deck.pptx --set-notes N TEXT` |
-| Append notes | `pptx_edit.py deck.pptx --append-notes N TEXT` |
-| Fill template | `pptx_from_template.py tpl.pptx out.pptx --values v.json` |
-| Render slide PNGs | `pptx_render.py deck.pptx --outdir DIR` |
+| 依 spec 建立新簡報 | `pptx_create.py spec.json out.pptx` |
+| 16:9 vs 4:3 | spec 中的 `"slide_size": "16:9"` 或 `"4:3"` |
+| 大綱輸出為 JSON | `pptx_read.py deck.pptx --outline` |
+| 匯出圖片 | `pptx_read.py deck.pptx --images DIR` |
+| 取代文字 | `pptx_edit.py deck.pptx --replace-text OLD NEW` |
+| 取代圖表資料 | `pptx_edit.py deck.pptx --chart-data spec.json` |
+| 修補單一數列 | 同一旗標，spec 加 `"ops"`（見下方） |
+| 更換圖片 | `pptx_edit.py deck.pptx --swap-image N NAME new.png` |
+| 複製投影片 | `pptx_edit.py deck.pptx --duplicate-slide N` |
+| 刪除投影片 | `pptx_edit.py deck.pptx --remove-slide N` |
+| 重排投影片 | `pptx_edit.py deck.pptx --move-slide FROM TO` |
+| 投影片背景 | `pptx_edit.py deck.pptx --set-background N RRGGBB` |
+| 超連結 runs | `pptx_edit.py deck.pptx --hyperlink N TEXT URL` |
+| 啟用投影片編號 | `pptx_edit.py deck.pptx --enable-slide-number N` |
+| 頁尾文字 | `pptx_edit.py deck.pptx --set-footer N TEXT` |
+| 設定備註 | `pptx_edit.py deck.pptx --set-notes N TEXT` |
+| 附加備註 | `pptx_edit.py deck.pptx --append-notes N TEXT` |
+| 套用範本 | `pptx_from_template.py tpl.pptx out.pptx --values v.json` |
+| 渲染投影片 PNG | `pptx_render.py deck.pptx --outdir DIR` |
 
-## Procedure
+## 操作步驟
 
-### 1. Create a deck
+### 1. 建立簡報
 
-Write a JSON spec (see `pptx_create.py --help` for the full format), then
-run `pptx_create.py`. Per slide you can set: `layout` (title,
-title_content, section, two_content, title_only, blank), `title`,
-`subtitle`, `bullets` (strings, or dicts with `level` 0-4, `size` pt,
-`bold`, `italic`, `font`, `color` hex, `link` URL for a hyperlink),
-`background` (solid hex), `footer` (text; enables the layout's footer
-placeholder), `slide_number` (true; enables the layout's slide-number
-placeholder), `images` (path + left/top/width/height in inches), `tables`
-(`rows` as list-of-lists), `shapes` (rectangle, rounded_rectangle, oval,
-diamond, right_arrow, chevron, with `fill` hex + optional `text`),
-`charts` (bar, bar_h, line, pie with `categories` + `series`), and
-`notes` (speaker notes).
+撰寫 JSON spec（完整格式見 `pptx_create.py --help`），再執行
+`pptx_create.py`。每張投影片可設定：`layout`（title、
+title_content、section、two_content、title_only、blank）、`title`、
+`subtitle`、`bullets`（字串，或含 `level` 0-4、`size` pt、
+`bold`、`italic`、`font`、十六進位 `color`、超連結 `link` URL 的
+字典）、`background`（純色 hex）、`footer`（文字；啟用版面配置的
+頁尾預留區）、`slide_number`（true；啟用版面配置的投影片編號
+預留區）、`images`（路徑＋以英吋計的 left/top/width/height）、
+`tables`（`rows` 為串列的串列）、`shapes`（rectangle、
+rounded_rectangle、oval、diamond、right_arrow、chevron，含 `fill`
+hex＋選填 `text`）、`charts`（bar、bar_h、line、pie，含
+`categories`＋`series`），以及 `notes`（演講者備註）。
 
-### 2. Read a deck
+### 2. 讀取簡報
 
-`pptx_read.py deck.pptx --outline` returns slide size, layout inventory,
-and per slide: layout name, all shape texts, table cells, image inventory
-(filename/ext/bytes), chart categories/series/values, and speaker notes.
-Use `--images DIR` to dump embedded pictures to files, then
-`vision_analyze` on any exported image if you need to see its content.
+`pptx_read.py deck.pptx --outline` 回傳投影片尺寸、版面配置清單，
+以及每張投影片的：版面配置名稱、所有形狀文字、表格儲存格、圖片清單
+（檔名／副檔名／位元組）、圖表 categories/series/values，以及演講者備註。
+用 `--images DIR` 把內嵌圖片傾印成檔案，需要查看內容時再對匯出的圖片
+執行 `vision_analyze`。
 
-### 3. Edit a deck
+### 3. 編輯簡報
 
-`pptx_edit.py` combines operations in one pass; use `--output` to keep the
-original. Text replacement scans slide shapes, table cells, and notes.
-Image swap retargets the picture's relationship id so position and size
-are preserved. Slide removal drops the relationship and the `<p:sldId>`
-entry; reorder moves the `<p:sldId>` element within `<p:sldIdLst>`
-(python-pptx has no public API for either — the script does the XML-level
-work). `--duplicate-slide N` appends an independent deep copy of slide N:
-shape XML plus image/media/hyperlink relationships are cloned and rIds
-remapped, so editing the copy never touches the original. Chart slides
-are refused (see Pitfalls). `--set-notes`/`--append-notes` edit speaker
-notes; `--set-background`, `--hyperlink`, `--enable-slide-number`, and
-`--set-footer` handle deck polish.
+`pptx_edit.py` 會在一次執行中組合多個操作；用 `--output` 保留原始檔。
+文字取代會掃描投影片形狀、表格儲存格與備註。
+圖片更換會重新指向圖片的 relationship id，以保留位置與大小。
+刪除投影片會移除對應 relationship 與 `<p:sldId>` 項目；重排則在
+`<p:sldIdLst>` 內移動 `<p:sldId>` 元素（python-pptx 沒有公開 API
+——腳本直接處理 XML 層）。`--duplicate-slide N` 會附加投影片 N 的
+獨立深層複本：形狀 XML 加上圖片／媒體／超連結 relationships 皆會
+複製且 rId 重新對應，因此編輯副本絕不會動到原投影片。含圖表的投影片
+會被拒絕（見常見陷阱）。`--set-notes`／`--append-notes` 編輯演講者
+備註；`--set-background`、`--hyperlink`、`--enable-slide-number`
+與 `--set-footer` 負責簡報整體修飾。
 
-Chart updates take a JSON spec via `--chart-data`. Full replace:
-`{"slide": 0, "chart": 0, "categories": [...], "series": {...}}`. For
-surgical edits, pass `"ops"` instead — a list of
-`{"op": "update_series", "name": ..., "values": [...]}`,
-`add_series`, `remove_series`, `rename_category` (`from`/`to` or
-`index`), and `set_title`. python-pptx can only swap a chart's entire
-dataset (`replace_data`), so ops are implemented as read-existing →
-modify → replace; the per-part UX is a wrapper, and any chart data not
-expressible as categories + numeric series will be normalized by the
-round-trip.
+圖表更新透過 `--chart-data` 接收 JSON spec。完整取代：
+`{"slide": 0, "chart": 0, "categories": [...], "series": {...}}`。
+需要精細編輯時改傳 `"ops"` ——一個包含
+`{"op": "update_series", "name": ..., "values": [...]}`、
+`add_series`、`remove_series`、`rename_category`（`from`／`to` 或
+`index`）與 `set_title` 的清單。python-pptx 只能整批取代圖表資料集
+（`replace_data`），因此 ops 的實作是「讀取現有 → 修改 → 取代」；
+逐部位的體驗只是包裝層，任何無法以 categories＋數值 series 表達的
+圖表資料都會在往返過程中被正規化。
 
-### 4. Build from a template
+### 4. 依範本建立
 
-`pptx_from_template.py` opens a brand .pptx, replaces every
-`{{token}}` from a values JSON across slides/tables/notes, and can append
-new slides that use the template's own layouts (by layout name or index)
-so they inherit the master's fonts and colors. Tip: to start from a
-template with zero slides, delete existing ones afterward with
-`pptx_edit.py --remove-slide`.
+`pptx_from_template.py` 會開啟品牌 .pptx、跨投影片／表格／備註
+取代每個 `{{token}}`（依 values JSON），並可附加使用範本自身版面配置
+的新投影片（依版面配置名稱或索引），使其繼承母版的字型與色彩。
+小技巧：想從零投影片的範本開始，事後用
+`pptx_edit.py --remove-slide` 刪除既有投影片。
 
-### 5. Visual verification
+### 5. 視覺驗證
 
-`pptx_render.py deck.pptx --outdir ./render` converts the deck to PDF
-with `soffice --headless` and splits it into one PNG per slide with
-`pdftoppm` (or `pdftocairo`). Output JSON lists the PNG paths — review
-each with `vision_analyze`. When either tool is missing the script exits
-0 with `{"rendered": false, "missing": [...]}` and guidance; fall back to
-the JSON outline from `pptx_read.py`, which verifies content and
-structure, just not visuals.
+`pptx_render.py deck.pptx --outdir ./render` 用 `soffice --headless`
+把簡報轉成 PDF，再用 `pdftoppm`（或 `pdftocairo`）分割成每張投影片
+一張 PNG。輸出 JSON 列出 PNG 路徑——逐一用 `vision_analyze` 檢查。
+任一工具缺失時，腳本以 0 結束並輸出
+`{"rendered": false, "missing": [...]}` 與指引；請退回
+`pptx_read.py` 的 JSON 大綱，它驗證內容與結構，只是無法驗證視覺。
 
-## Converting to PDF
+## 轉換為 PDF
 
-If LibreOffice is installed, export the finished deck to PDF directly:
+若已安裝 LibreOffice，可直接把完成的簡報匯出為 PDF：
 
 ```bash
 soffice --headless --convert-to pdf --outdir ./out deck.pptx
 ```
 
-The output lands at `./out/deck.pdf`. Fonts not installed on the host are
-substituted, so render-verify (Procedure step 5) before shipping the PDF.
-There is no offline pure-Python .pptx→PDF path; if `soffice` is absent,
-say so rather than approximating.
+輸出位於 `./out/deck.pdf`。主機上未安裝的字型會被取代，因此出貨 PDF 前
+請先做渲染驗證（操作步驟第 5 步）。沒有離線的純 Python .pptx→PDF
+路徑；若缺少 `soffice`，請據實說明，不要近似代替。
 
-## Pitfalls
+## 常見陷阱
 
-- **Run splitting**: PowerPoint fragments paragraph text into runs at
-  spell-check and edit boundaries. `--replace-text` first merges adjacent
-  runs whose formatting is identical, so matches split across such runs
-  are replaced with formatting fully preserved. Only when a match spans
-  *genuinely differently-formatted* runs is the paragraph rewritten with
-  the first run's formatting — verify those slides after replacement.
-- **Chart slides cannot be duplicated**: each chart relationship embeds a
-  separate XLSX workbook part; cloning that graph reliably is not
-  supported, so `--duplicate-slide` refuses chart slides cleanly instead
-  of corrupting the deck. Rebuild the chart on a new slide instead.
-  External-hyperlink and image/media rels are carried over; layout and
-  notes rels are recreated fresh.
-- **Chart ops are a wrapper**: python-pptx replaces the whole dataset;
-  `"ops"` round-trips existing plot data through `replace_data`, and
-  changing chart *type* is not possible.
-- **Reordering is XML-level**: python-pptx has no supported reorder API.
-  `--move-slide` manipulates `<p:sldIdLst>` directly; safe for ordinary
-  decks but re-read the deck afterward to confirm.
-- **Copying slides between decks is unsupported** — duplication works
-  only within one deck, where layouts and masters are shared.
-- Footer/slide-number enablement copies the placeholder from the slide's
-  layout; on layouts without those placeholders, `--set-footer` fails
-  with a clear message (add a textbox instead).
-- Hyperlinks apply to whole runs; `--hyperlink` links every run
-  containing the given text on that slide.
-- The default python-pptx template is 4:3; the create script sets 16:9
-  unless the spec says otherwise. Custom templates keep their own size.
-- Layout indexes vary by template. For brand templates, list layout names
-  first: `pptx_read.py template.pptx --outline` (`layouts_available`).
-- `slide.shapes.title` is None on blank layouts — the create script
-  handles this, but remember it when writing ad-hoc python-pptx code.
-- Always pass `encoding="utf-8"` when writing spec files; tokens like
-  `{{city}}` may be filled with non-ASCII values.
+- **Run 拆分**：PowerPoint 會在拼字檢查與編輯邊界把段落文字拆成多個
+  runs。`--replace-text` 會先合併格式完全相同的相鄰 runs，因此跨這類
+  runs 的比對項仍會在完全保留格式下被取代。只有當比對項跨越*格式確實
+  不同*的多個 runs 時，段落才會以第一個 run 的格式重寫——取代後請
+  檢查這些投影片。
+- **含圖表的投影片無法複製**：每個圖表 relationship 都內嵌獨立的
+  XLSX 活頁簿部件；可靠複製該圖表不受支援，因此 `--duplicate-slide`
+  會乾淨地拒絕含圖表的投影片，而不是損壞簡報。請改在新投影片上
+  重建圖表。外部超連結與圖片／媒體 rels 會被帶過去；版面配置與
+  備註 rels 則重新建立。
+- **圖表 ops 只是包裝層**：python-pptx 會取代整個資料集；
+  `"ops"` 是透過 `replace_data` 往返既有繪圖資料，且無法更改圖表
+  *型別*。
+- **重排是 XML 層操作**：python-pptx 沒有受支援的重排 API。
+  `--move-slide` 直接操作 `<p:sldIdLst>`；一般簡報安全，但事後請
+  重新讀取確認。
+- **不支援跨簡報複製投影片** ——複製只在同一份簡報內有效，該處
+  版面配置與母版是共用的。
+- 頁尾／投影片編號的啟用是從投影片的版面配置複製預留區；在沒有這些
+  預留區的版面配置上，`--set-footer` 會以清楚的訊息失敗（請改為
+  新增文字方塊）。
+- 超連結套用到整個 run；`--hyperlink` 會連結該投影片上所有包含指定
+  文字的 run。
+- python-pptx 預設範本為 4:3；建立腳本除非在 spec 中另行指定，一律
+  設為 16:9。自訂範本會保留自己的尺寸。
+- 版面配置索引因範本而異。品牌範本請先列出版面配置名稱：
+  `pptx_read.py template.pptx --outline`（`layouts_available`）。
+- 空白版面配置上 `slide.shapes.title` 為 None——建立腳本已處理，
+  但撰寫臨時 python-pptx 程式碼時請記得這點。
+- 寫入 spec 檔時一律傳入 `encoding="utf-8"`；`{{city}}` 這類 tokens
+  可能被填入非 ASCII 值。
 
-## Verification
+## 驗證
 
-1. After any create/edit, run `pptx_read.py OUT.pptx --outline` and check
-   slide count, texts, tables, notes, and chart values match intent.
-2. `--images DIR` then file-size check confirms pictures embedded.
-3. Render every slide with `pptx_render.py deck.pptx --outdir ./render`
-   and review each PNG with `vision_analyze` — this catches overlapping
-   shapes, truncated text, and color problems the outline cannot. If the
-   render tools are missing, the script says so; rely on the outline.
-4. The bundled test suite is the full contract:
-   `python -m pytest tests/ -q` (requires python-pptx + pytest).
+1. 任何建立／編輯後，執行 `pptx_read.py OUT.pptx --outline`，檢查
+   投影片數量、文字、表格、備註與圖表值符合預期。
+2. `--images DIR` 加上檔案大小檢查可確認圖片已內嵌。
+3. 用 `pptx_render.py deck.pptx --outdir ./render` 渲染每張投影片，
+   並逐一用 `vision_analyze` 檢查 PNG——這能抓到大綱無法發現的形狀
+   重疊、文字截斷與色彩問題。渲染工具缺失時腳本會說明；此時改依賴
+   大綱。
+4. 內建測試套件是完整合約：
+   `python -m pytest tests/ -q`（需要 python-pptx ＋ pytest）。

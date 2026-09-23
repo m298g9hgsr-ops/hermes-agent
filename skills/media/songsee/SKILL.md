@@ -1,6 +1,6 @@
 ---
 name: songsee
-description: "Audio spectrograms/features (mel, chroma, MFCC) via CLI."
+description: "透過 CLI 產生音訊頻譜圖與特徵（mel、chroma、MFCC）."
 version: 1.0.0
 author: community
 license: MIT
@@ -15,18 +15,18 @@ prerequisites:
 
 # songsee
 
-Generate spectrograms and multi-panel audio feature visualizations from audio files.
+從音訊檔案產生頻譜圖與多面板音訊特徵視覺化。
 
-## Prerequisites
+## 前置需求
 
-Requires [Go](https://go.dev/doc/install):
+需要 [Go](https://go.dev/doc/install)：
 ```bash
 go install github.com/steipete/songsee/cmd/songsee@latest
 ```
 
-Optional: `ffmpeg` for formats beyond WAV/MP3.
+選用：WAV/MP3 以外的格式需要 `ffmpeg`。
 
-## Quick Start
+## 快速開始
 
 ```bash
 # Basic spectrogram
@@ -45,39 +45,39 @@ songsee track.mp3 --start 12.5 --duration 8 -o slice.jpg
 cat track.mp3 | songsee - --format png -o out.png
 ```
 
-## Visualization Types
+## 視覺化類型
 
-Use `--viz` with comma-separated values:
+搭配 `--viz` 使用以逗號分隔的值：
 
-| Type | Description |
+| 類型 | 說明 |
 |------|-------------|
-| `spectrogram` | Standard frequency spectrogram |
-| `mel` | Mel-scaled spectrogram |
-| `chroma` | Pitch class distribution |
-| `hpss` | Harmonic/percussive separation |
-| `selfsim` | Self-similarity matrix |
-| `loudness` | Loudness over time |
-| `tempogram` | Tempo estimation |
-| `mfcc` | Mel-frequency cepstral coefficients |
-| `flux` | Spectral flux (onset detection) |
+| `spectrogram` | 標準頻率頻譜圖 |
+| `mel` | Mel 刻度頻譜圖 |
+| `chroma` | 音高類別分佈 |
+| `hpss` | 和聲／打擊分離 |
+| `selfsim` | 自相似度矩陣 |
+| `loudness` | 響度隨時間變化 |
+| `tempogram` | 速度估計 |
+| `mfcc` | Mel 頻率倒頻譜係數 |
+| `flux` | 頻譜通量（起音偵測） |
 
-Multiple `--viz` types render as a grid in a single image.
+多個 `--viz` 類型會以網格形式渲染在單張圖片中。
 
-## Common Flags
+## 常用旗標
 
-| Flag | Description |
+| 旗標 | 說明 |
 |------|-------------|
-| `--viz` | Visualization types (comma-separated) |
-| `--style` | Color palette: `classic`, `magma`, `inferno`, `viridis`, `gray` |
-| `--width` / `--height` | Output image dimensions |
-| `--window` / `--hop` | FFT window and hop size |
-| `--min-freq` / `--max-freq` | Frequency range filter |
-| `--start` / `--duration` | Time slice of the audio |
-| `--format` | Output format: `jpg` or `png` |
-| `-o` | Output file path |
+| `--viz` | 視覺化類型（以逗號分隔） |
+| `--style` | 色盤：`classic`、`magma`、`inferno`、`viridis`、`gray` |
+| `--width` / `--height` | 輸出圖片尺寸 |
+| `--window` / `--hop` | FFT 視窗與 hop 大小 |
+| `--min-freq` / `--max-freq` | 頻率範圍過濾 |
+| `--start` / `--duration` | 音訊的時間切片 |
+| `--format` | 輸出格式：`jpg` 或 `png` |
+| `-o` | 輸出檔案路徑 |
 
-## Notes
+## 注意事項
 
-- WAV and MP3 are decoded natively; other formats require `ffmpeg`
-- Output images can be inspected with `vision_analyze` for automated audio analysis
-- Useful for comparing audio outputs, debugging synthesis, or documenting audio processing pipelines
+- WAV 與 MP3 原生解碼；其他格式需要 `ffmpeg`
+- 輸出圖片可用 `vision_analyze` 檢視以進行自動化音訊分析
+- 適用於比較音訊輸出、除錯合成，或記錄音訊處理管線

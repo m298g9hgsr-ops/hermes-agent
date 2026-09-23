@@ -1,6 +1,6 @@
 ---
 name: hermes-agent-skill-authoring
-description: "Author in-repo SKILL.md files: frontmatter and structure."
+description: "撰寫倉庫內 SKILL.md 的 frontmatter 與結構."
 version: 2.0.0
 author: Hermes Agent
 license: MIT
@@ -11,47 +11,47 @@ metadata:
     related_skills: [requesting-code-review]
 ---
 
-# Authoring Hermes-Agent Skills (in-repo)
+# 撰寫 Hermes-Agent 技能（倉庫內）
 
-## Overview
+## 總覽
 
-There are two places a SKILL.md can live:
+SKILL.md 有兩個可能的所在地：
 
-1. **User-local:** `~/.hermes/skills/<maybe-category>/<name>/SKILL.md` — personal, not shared. Created via `skill_manage(action='create')`.
-2. **In-repo (this skill is about this case):** `skills/<category>/<name>/SKILL.md` or `optional-skills/<category>/<name>/SKILL.md` inside the hermes-agent repo — committed, shipped with the package. Use `write_file` + `git add`. `skill_manage(action='create')` does NOT target this tree.
+1. **使用者本機：** `~/.hermes/skills/<maybe-category>/<name>/SKILL.md` — 個人用，不共享。透過 `skill_manage(action='create')` 建立。
+2. **倉庫內（本技能講的就是這種）：** hermes-agent 倉庫中的 `skills/<category>/<name>/SKILL.md` 或 `optional-skills/<category>/<name>/SKILL.md` — 會提交、隨套件發布。使用 `write_file` + `git add`。`skill_manage(action='create')` **不會**指向這棵樹。
 
-In-repo skills must meet the repo's **hardline authoring standards** (see AGENTS.md, "Skill authoring standards (HARDLINE)" — that section is the source of truth; this skill is the operational walkthrough). Reviewers reject PRs that violate them, so meeting them up front is cheaper than a salvage pass later.
+倉庫內技能必須符合倉庫的**嚴格撰寫標準**（見 AGENTS.md 的「Skill authoring standards (HARDLINE)」— 那一節才是準繩；本技能是操作導覽）。審查者會打回違反標準的 PR，所以事先符合比事後搶救便宜。
 
-## When to Use
+## 使用時機
 
-- User asks you to add a skill "in this branch / repo / commit"
-- You're committing a reusable workflow that should ship with hermes-agent
-- You're editing an existing skill under `skills/` or `optional-skills/` (use `patch` for small edits, `write_file` for rewrites; `skill_manage` still works for patch on in-repo skills, but not for `create`)
-- Don't use for: personal skills in `~/.hermes/skills/` (just use `skill_manage`)
+- 使用者要你在「這個分支 / 倉庫 / commit」加上一個技能
+- 你要提交一個應隨 hermes-agent 發布的可重用工作流程
+- 你在編輯 `skills/` 或 `optional-skills/` 下的既有技能（小改用 `patch`，重寫用 `write_file`；`skill_manage` 對倉庫內技能仍可做 patch，但不能 `create`）
+- **不要**用於：`~/.hermes/skills/` 的個人技能（直接用 `skill_manage`）
 
-## Decide the Tier First: Bundled vs Optional
+## 先決定層級：內建 vs 選用
 
-- **Bundled (`skills/<category>/`)** — daily-driver behavior, broadly useful across many user types, low footprint. Hard bar: you can say "a user will load this in 5+ sessions per month" with a straight face.
-- **Optional (`optional-skills/<category>/`)** — niche, vertical-specific (blockchain, gaming, finance, one app), recurring-job/task skills, or anything heavy. Installed via `hermes skills install official/<category>/<skill>`.
+- **內建（`skills/<category>/`）** — 日常主力行為、跨多種使用者廣泛有用、footprint 低。嚴格門檻：你能面不改色地說「使用者每個月會在 5 個以上的 session 載入它」。
+- **選用（`optional-skills/<category>/`）** — 專屬利基、垂直領域（區塊鏈、遊戲、金融、單一應用）、例行工作/任務技能，或任何重型技能。透過 `hermes skills install official/<category>/<skill>` 安裝。
 
-**When in doubt, optional.** Promoting later is easy; demoting is churn. "Would be useful to anyone who ever needs this" is an optional-tier argument, not a bundled one.
+**不確定就放選用。** 之後升級很容易；降級很折騰。「任何需要它的人都會覺得有用」是選用層級的論點，不是內建的論點。
 
-Pick the category by what the tool IS, not what it feels like (an AI-agent CLI goes in `autonomous-ai-agents/` even if it "feels productivity"). Confirm existing categories with `search_files(pattern='*', target='files', path='skills')` and don't invent new top-level categories casually.
+依工具**是什麼**挑類別，而不是它感覺像什麼（AI 代理 CLI 放進 `autonomous-ai-agents/`，即使它「感覺像 productivity」）。用 `search_files(pattern='*', target='files', path='skills')` 確認既有類別，不要隨意發明新的頂層類別。
 
-**No router / index / hub skills.** A skill whose core content is a routing table pointing at sibling skills adds an indirection hop and duplicates the siblings' own `When to Use` triggers. If the skill would be empty without "load skill X instead" pointers, don't write it — the catalog and each sibling's triggers already do that job.
+**不要 router / index / hub 技能。** 核心內容是指向同儕技能的路由表的技能，只會多一層間接並重複同儕自己的 `使用時機` 觸發條件。如果少了「改載入技能 X」的指向就沒內容，那就別寫 — 目錄和各同儕的觸發條件已經在做那件事。
 
-## Required Frontmatter
+## 必要的 frontmatter
 
-Validator source of truth: `tools/skill_manager_tool.py::_validate_frontmatter`. Validator hard requirements:
+驗證器準繩：`tools/skill_manager_tool.py::_validate_frontmatter`。驗證器硬性要求：
 
-- Starts with `---` as the first bytes (no leading blank line).
-- Closes with `\n---\n` before the body.
-- Parses as a YAML mapping.
-- `name` field present.
-- `description` field present (validator ceiling 1024 chars — but see the repo hardline below, which is much stricter).
-- Non-empty body after the closing `---`.
+- 以 `---` 作為最開頭位元組（前面不能有空白行）。
+- 在內文前以 `\n---\n` 收尾。
+- 能解析成 YAML mapping。
+- 有 `name` 欄位。
+- 有 `description` 欄位（驗證器上限 1024 字元 — 但見下方倉庫嚴格標準，那嚴得多）。
+- 結尾 `---` 之後的內文非空。
 
-Repo-standard shape (all fields expected, even where the validator doesn't enforce them):
+倉庫標準形狀（所有欄位都要有，即使驗證器不強制）：
 
 ```yaml
 ---
@@ -68,49 +68,49 @@ metadata:
 ---
 ```
 
-### `description` rules (HARDLINE — the validator's 1024 is NOT the standard)
+### `description` 規則（嚴格標準 — 驗證器的 1024 不是準則）
 
-- **≤ 60 characters.** One sentence. Ends with a period.
-- State the capability, not the implementation, and don't repeat the skill name.
-- No marketing words ("powerful", "comprehensive", "seamless", "advanced").
-- The system prompt skill index truncates at 57 chars + "..." — the trigger/capability must be self-contained in that window.
-- If the description contains a `:`, wrap it in double quotes or YAML parses it as a mapping and the docs generator crashes. Quotes don't count toward the 60.
+- **≤ 60 字元。** 一句話。以句點收尾。
+- 陳述能力，不要陳述實作，也不要重複技能名稱。
+- 不要用行銷字眼（「powerful」、「comprehensive」、「seamless」、「advanced」）。
+- 系統提示的技能索引在 57 字元 + "..." 虛化 — 觸發/能力必須在這個窗口內自成一格。
+- 若 description 含 `:`，請用雙引號包起來，否則 YAML 會解析成 mapping 而讓文件產生器崩潰。引號不計入 60 字元。
 
-Good: `Track named companies for material news with cited digests.`
-Bad: `Use when a user asks to monitor named competitors or companies for product launches, pricing changes, funding, ...` (240 chars — rejected in review)
+好的：`Track named companies for material news with cited digests.`
+壞的：`Use when a user asks to monitor named competitors or companies for product launches, pricing changes, funding, ...`（240 字元 — 審查會打回）
 
-### `author` rules
+### `author` 規則
 
-- Credit the **human first**, then "Hermes Agent" as secondary collaborator: `Ben Barclay (benbarclay), Hermes Agent`.
-- Never `author: Hermes Agent` alone for contributed skills — credit the human, not the tool, even (especially) when an agent drafted the text.
-- Maintainer-authored skills: `Teknium (teknium1), Hermes Agent`.
+- **人類優先**，其次才是「Hermes Agent」這個協作者：`Ben Barclay (benbarclay), Hermes Agent`。
+- 投稿的技能絕不要只寫 `author: Hermes Agent` — 罵名給人類，不是工具，尤其（特別是）當代理起草了文字時。
+- 維護者自撰的技能：`Teknium (teknium1), Hermes Agent`。
 
-### `related_skills` rules
+### `related_skills` 規則
 
-- Every entry must resolve to an existing **in-repo** skill in the same tree state as your PR. Do not reference skills that were only planned, live in another PR, or exist only in `~/.hermes/skills/`.
-- Verify each entry: `search_files(pattern='<name>', target='files', path='skills')` (and `optional-skills/`).
+- 每一項都必須對應到與你 PR 同一棵樹狀態下既有的**倉庫內**技能。不要參照只在規劃中、活在另一個 PR、或只存在於 `~/.hermes/skills/` 的技能。
+- 驗證每一項：`search_files(pattern='<name>', target='files', path='skills')`（以及 `optional-skills/`）。
 
-## Platform Gating: audit, don't trust
+## 平台閘門：稽核，別照抄
 
-`platforms:` gates loading by host OS. Set it from what the skill's prose and scripts actually invoke:
+`platforms:` 依主機 OS 閘門載入。依技能內文與腳本實際呼叫的東西設定：
 
-| Skill uses only… | `platforms:` |
+| 技能僅使用… | `platforms:` |
 |---|---|
-| Hermes tools + stdlib Python + cross-platform CLIs | `[linux, macos, windows]` |
-| bash pipelines, `grep`/`awk`/`sed` chains, heredocs | `[linux, macos]` |
-| `osascript`, `defaults`, `pmset` | `[macos]` |
+| Hermes 工具 + 標準 Python + 跨平台 CLI | `[linux, macos, windows]` |
+| bash 管線、`grep`/`awk`/`sed` 鏈、heredoc | `[linux, macos]` |
+| `osascript`、`defaults`、`pmset` | `[macos]` |
 | `apt`/`systemctl`/`/proc` | `[linux]` |
 
 <!-- no-tmp: ok — names the anti-pattern skill authors must avoid -->
-POSIX-only signals to search for in `scripts/`: `fcntl`, `termios`, `pty`, `os.fork`, `os.killpg`, `signal.SIGKILL`, `os.kill(pid, 0)` liveness checks, hardcoded `/tmp` `/proc` `/etc`. Default posture: fix cross-platform first (`tempfile.gettempdir()`, `pathlib.Path`, `psutil.pid_exists`); gate narrower only when the dependency is genuinely platform-bound, and say why in `## Pitfalls`.
+在 `scripts/` 中要搜尋的 POSIX-only 訊號：`fcntl`、`termios`、`pty`、`os.fork`、`os.killpg`、`signal.SIGKILL`、`os.kill(pid, 0)` 存活檢查、寫死的 `/tmp` `/proc` `/etc`。預設姿態：先修跨平台（`tempfile.gettempdir()`、`pathlib.Path`、`psutil.pid_exists`）；只有在相依真正綁定平台時才收窄閘門，並在 `## Pitfalls` 說明原因。
 
-## Size Limits
+## 大小限制
 
-- Full SKILL.md: ≤ 100,000 chars enforced (`MAX_SKILL_CONTENT_CHARS`), but target **~100 lines for a simple skill, ~200 for a complex one**. Peer skills sit at 8-14k chars.
-- Bulky or branch-specific material goes in `references/*.md`, `templates/`, or `scripts/` — pointed to from SKILL.md, not inlined.
-- Don't expect the model to inline-write parsers or non-trivial logic every call — ship a helper script in `scripts/` and reference it by path.
+- 完整 SKILL.md：上限 100,000 字元（`MAX_SKILL_CONTENT_CHARS` 強制），但目標是**簡單技能約 100 行、複雜技能約 200 行**。同儕技能落在 8-14k 字元。
+- 重或分支特定的材料放 `references/*.md`、`templates/` 或 `scripts/` — 由 SKILL.md 指向，不要內聯。
+- 不要預期模型每次呼叫都內聯寫出剖析器或非平凡邏輯 — 在 `scripts/` 附一支輔助腳本並以路徑指向它。
 
-## Body Structure (modern section order)
+## 內文結構（現代化章節順序）
 
 ```
 # <Skill> Skill
@@ -125,39 +125,39 @@ POSIX-only signals to search for in `scripts/`: `fcntl`, `termios`, `pty`, `os.f
 ## Verification         — how to prove the skill worked
 ```
 
-Not every section applies to every skill (a pure-procedure task skill may have no Quick Reference), but When to Use + actionable body + Pitfalls + Verification are the minimum. Cut marketing intros, "Setup Check" no-ops, and re-explanations of env vars already in Prerequisites.
+不是每個章節都適用於每個技能（純程序的任務技能可能沒有快速參考），但使用時機 + 可操作的內文 + 常見陷阱 + 驗證是最底線。砍掉行銷開場、「Setup Check」這種空轉，以及 Prerequisites 已經講過的環境變數重複解釋。
 
-### Reference Hermes tools, not raw shell
+### 指向 Hermes 工具，不要用裸 shell
 
-When the skill needs a capability, name the proper Hermes tool in backticks: `terminal`, `read_file`, `write_file`, `patch`, `search_files`, `web_search`, `web_extract`, `browser_navigate`, `vision_analyze`, `delegate_task`, `cronjob`. Do NOT name shell utilities the agent already has wrapped (`grep` → `search_files`, `cat` → `read_file`, `sed`/`awk` → `patch`, `find`/`ls` → `search_files target='files'`). A CLI-wrapper skill should frame invocations as `terminal(command="<tool> ...", timeout=...)` — bare shell prose ("run `foo --version`") is a review-blocking non-conformance. If the skill depends on an MCP server, name it and document setup in Prerequisites.
+技能需要某項能力時，在反引號中點名正確的 Hermes 工具：`terminal`、`read_file`、`write_file`、`patch`、`search_files`、`web_search`、`web_extract`、`browser_navigate`、`vision_analyze`、`delegate_task`、`cronjob`。**不要**點名代理已包裝的 shell 工具（`grep` → `search_files`、`cat` → `read_file`、`sed`/`awk` → `patch`、`find`/`ls` → `search_files target='files'`）。CLI 包裝類技能應把呼叫框成 `terminal(command="<tool> ...", timeout=...)` — 裸 shell 敘述（「執行 `foo --version`」）是會被審查打回的不合規。若技能相依 MCP 伺服器，點名它並在 Prerequisites 記錄安裝方式。
 
-### Never use machine-local paths
+### 永遠不要使用機器本機路徑
 
-Write repo-relative paths (`skills/...`, `tools/skill_manager_tool.py`). A `/home/<you>/...` path baked into a committed skill breaks for every other user and is an instant review flag.
+寫倉庫相對路徑（`skills/...`、`tools/skill_manager_tool.py`）。寫死在已提交技能中的 `/home/<you>/...` 路徑會對所有其他使用者失效，而且是審查立即亮紅燈的項目。
 
-## Writing Quality Principles
+## 寫作品質原則
 
-A skill exists to make the agent's process more predictable — the agent reliably follows the same useful discipline.
+技能存在的目的是讓代理的流程更可預測 — 代理能可靠地遵循同一套有用的紀律。
 
-1. **Optimize for process predictability.** If a line does not change behavior, cut it.
-2. **Choose the right context load.** The description is paid for every turn; details go in the body or linked references.
-3. **End steps with completion criteria.** Checkable and, when it matters, exhaustive: "every modified file accounted for" beats "summarize changes."
-4. **Co-locate rules with the concept they govern.**
-5. **Use strong leading words** ("tight loop," "root cause," "regression test") over long repeated explanations.
-6. **Prune duplication and no-ops.** "Be careful" and "use best practices" don't change model behavior — replace with a checkable criterion or delete.
+1. **最佳化流程的可預測性。** 若某行不改變行為，就砍掉。
+2. **選擇正確的上下文載入。** description 每個回合都要付費；細節放內文或連結的參考。
+3. **步驟以完成條件收尾。** 可檢查，且在重要處要窮盡：「每個被修改的檔案都有交代」勝過「總結變更」。
+4. **規則與它管的概念放在一起。**
+5. **用強而有力的領頭詞**（「緊湊迴圈」、「根因」、「回歸測試」）取代又長又重複的解釋。
+6. **修剪重複與空話。** 「小心一點」和「使用最佳實踐」不會改變模型行為 — 換成可檢查的條件或刪掉。
 
-## Tests and Docs (required for repo skills)
+## 測試與文件（倉庫技能的必要項目）
 
-1. **Tests** live at `tests/skills/test_<skill>_skill.py` — stdlib + pytest + `unittest.mock` only, no live network. Run via `scripts/run_tests.sh tests/skills/test_<skill>_skill.py -q`. (The generic `tests/tools/test_skill_manager_tool.py` passing proves nothing about YOUR skill.)
-2. **Docs regen:** run `python website/scripts/generate-skill-docs.py`, then apply scope discipline — the generator rewrites EVERY auto-gen page. `git checkout --` everything that isn't yours; the final diff must show only your SKILL.md, your one per-skill docs page, a one-line catalog row, and a one-line `website/sidebars.ts` insertion (verify with `search_files(pattern='<your-slug>', path='website/sidebars.ts')` — exactly one hit, or the page is an orphan).
-3. **`.env.example`** (only if the skill needs new env vars): one clearly delimited commented block; touch nothing else in the file.
+1. **測試**放在 `tests/skills/test_<skill>_skill.py` — 只用標準庫 + pytest + `unittest.mock`，不碰真實網路。執行方式：`scripts/run_tests.sh tests/skills/test_<skill>_skill.py -q`。（通用的 `tests/tools/test_skill_manager_tool.py` 通過，不能證明**你的**技能的任何事。）
+2. **文件重新產生：** 執行 `python website/scripts/generate-skill-docs.py`，然後套用範圍紀律 — 產生器會改寫**每一頁**自動產生頁。用 `git checkout --` 把不是你的東西全部還原；最終 diff 只該顯示你的 SKILL.md、你的每一頁技能文件、一列目錄列，以及一列 `website/sidebars.ts` 插入（用 `search_files(pattern='<your-slug>', path='website/sidebars.ts')` 驗證 — 恰好一個命中，否則該頁是孤兒）。
+3. **`.env.example`**（只有技能需要新環境變數時）：一個清楚劃界的註解區塊；檔案其他地方一律不要動。
 
-## Workflow
+## 工作流程
 
-1. **Survey peers** in the target category with `search_files(target='files')` and read 2-3 peer SKILL.md files to match tone and structure. Prefer extending an existing skill over creating a narrow sibling.
-2. **Decide tier and category** (see above). When in doubt, optional — and ask before pushing rather than defaulting.
-3. **Draft** with `write_file` to `skills/<category>/<name>/SKILL.md` (or `optional-skills/...`).
-4. **Validate locally**:
+1. **調查同儕** — 用 `search_files(target='files')` 看目標類別，讀 2-3 個同儕 SKILL.md 以對齊語氣與結構。優先擴充既有技能，而不是建立狹隘的兄弟技能。
+2. **決定層級與類別**（見上文）。不確定就放選用 — 並且先問再推，不要預設。
+3. **起草** — 用 `write_file` 寫到 `skills/<category>/<name>/SKILL.md`（或 `optional-skills/...`）。
+4. **本機驗證**：
    ```python
    import yaml, re, pathlib
    content = pathlib.Path("skills/<category>/<name>/SKILL.md").read_text()
@@ -170,44 +170,44 @@ A skill exists to make the agent's process more predictable — the agent reliab
    assert "platforms" in fm
    assert len(content) <= 100_000
    ```
-   Also verify every `related_skills` entry exists in-repo.
-5. **Add tests + regen docs** (previous section).
-6. **Git add + commit** on the active branch; open a PR.
-7. **Note:** the CURRENT session's skill loader is cached — `skill_view` / `skills_list` will not see the new skill until a new session. This is expected, not a bug.
+   同時確認每個 `related_skills` 項目存在於倉庫內。
+5. **加上測試 + 重新產生文件**（上一節）。
+6. **git add + commit** 在作用中的分支；開 PR。
+7. **注意：** 目前 session 的技能載入器有快取 — `skill_view` / `skills_list` 在新 session 之前不會看到新技能。這是預期行為，不是 bug。
 
-## Editing Existing In-Repo Skills
+## 編輯既有的倉庫內技能
 
-- **Small fix:** `skill_manage(action='patch', ...)` works on in-repo skills, as does `patch`.
-- **Major rewrite:** `write_file` the whole SKILL.md.
-- **Supporting files:** `write_file` to `references/`, `templates/`, or `scripts/` under the skill dir.
-- **Always commit** — in-repo skills are source, not runtime state. Re-run the docs generator when frontmatter changed.
+- **小修：** `skill_manage(action='patch', ...)` 可用於倉庫內技能，`patch` 也可以。
+- **大改重寫：** 用 `write_file` 寫整個 SKILL.md。
+- **輔助檔案：** `write_file` 到技能目錄下的 `references/`、`templates/` 或 `scripts/`。
+- **一律提交** — 倉庫內技能是原始碼，不是執行期狀態。frontmatter 變更後要重跑文件產生器。
 
-## Common Pitfalls
+## 常見陷阱
 
-1. **Using `skill_manage(action='create')` for an in-repo skill.** It writes to `~/.hermes/skills/`, not the repo tree. Use `write_file`.
-2. **Trusting the validator's limits as the standard.** The validator allows 1024-char descriptions; review rejects anything over 60. The validator doesn't check `platforms:`, author format, tests, or docs — review does.
-3. **`author: Hermes Agent` on a contributed skill.** Credit the human first.
-4. **Leading whitespace before `---`.** Validation fails on any leading blank line or BOM.
-5. **Description too generic or trigger buried past char 57.**
-6. **`related_skills` pointing at skills that don't exist in-repo** (user-local, planned, or in a sibling PR).
-7. **Duplicating a peer.** Survey the category first; extend rather than sibling.
-8. **Skipping the docs generator or pushing its unrelated drift.** Both directions are wrong: no regen = orphan skill with no docs page; blind regen = a ballooned diff full of other skills' drift.
-9. **Expecting the current session to see the new skill.** The loader is initialized at session start.
-10. **Letting skills accumulate sediment.** When adding a rule, remove the old wording it replaces.
+1. **對倉庫內技能用 `skill_manage(action='create')`。** 它會寫到 `~/.hermes/skills/`，不是倉庫樹。請用 `write_file`。
+2. **把驗證器的限制當準則。** 驗證器允許 1024 字元的 description；審查打回超過 60 的。驗證器不檢查 `platforms:`、author 格式、測試或文件 — 審查會。
+3. **投稿技能寫 `author: Hermes Agent`。** 人類優先。
+4. **`---` 前有前導空白。** 任何前導空白行或 BOM 都會驗證失敗。
+5. **Description 過於籠統，或觸發點埋在第 57 字元之後。**
+6. **`related_skills` 指向不存在於倉庫內的技能**（使用者本機、規劃中、或在兄弟 PR）。
+7. **重複同儕。** 先調查類別；擴充而不是另立兄弟。
+8. **跳過文件產生器，或把它造成的無關漂移一起推上去。** 兩個方向都錯：不重新產生 = 沒有文件頁的孤兒技能；盲產生 = 湧入其他技能漂移的臃腫 diff。
+9. **預期目前 session 看到新技能。** 載入器在 session 啟動時初始化。
+10. **讓技能累積沉積物。** 加入新規則時，把被取代的舊措辭移除。
 
-## Verification Checklist
+## 驗證清單
 
-- [ ] Tier decided deliberately (bundled bar: 5+ sessions/month; else `optional-skills/`)
-- [ ] File at `skills/<category>/<name>/SKILL.md` or `optional-skills/<category>/<name>/SKILL.md`
-- [ ] Frontmatter starts at byte 0 with `---`, closes with `\n---\n`
-- [ ] `name`, `description`, `version`, `author`, `license`, `platforms`, `metadata.hermes.{tags, related_skills}` all present
-- [ ] Description ≤ 60 chars, one sentence, ends with a period, no marketing words
-- [ ] `author` credits the human contributor first
-- [ ] `platforms:` audited against actual prose/scripts, not copied from a sibling
-- [ ] Every `related_skills` entry resolves in-repo
-- [ ] Body follows the modern section order; commands framed through Hermes tools
-- [ ] No machine-local paths anywhere in the file
-- [ ] Each ordered step has a checkable completion criterion
-- [ ] Tests at `tests/skills/test_<skill>_skill.py` pass under `scripts/run_tests.sh`
-- [ ] Docs regenerated with scope discipline; sidebar has exactly one entry for the slug
-- [ ] `git add` + commit on the intended branch; PR opened
+- [ ] 層級是刻意決定的（內建門檻：每月 5+ session；否則放 `optional-skills/`）
+- [ ] 檔案在 `skills/<category>/<name>/SKILL.md` 或 `optional-skills/<category>/<name>/SKILL.md`
+- [ ] Frontmatter 從第 0 位元組以 `---` 開頭、以 `\n---\n` 收尾
+- [ ] `name`、`description`、`version`、`author`、`license`、`platforms`、`metadata.hermes.{tags, related_skills}` 全部齊備
+- [ ] Description ≤ 60 字元、一句話、以句點收尾、無行銷字眼
+- [ ] `author` 人類貢獻者優先
+- [ ] `platforms:` 依實際內文/腳本稽核，不是從同儕抄來
+- [ ] 每個 `related_skills` 項目在倉庫內解析得到
+- [ ] 內文遵循現代化章節順序；指令透過 Hermes 工具框定
+- [ ] 檔案中任何地方都沒有機器本機路徑
+- [ ] 每個有序步驟都有可檢查的完成條件
+- [ ] `tests/skills/test_<skill>_skill.py` 在 `scripts/run_tests.sh` 下通過
+- [ ] 文件已重新產生且有範圍紀律；側欄對該 slug 恰有一個條目
+- [ ] 在預定分支 `git add` + commit；PR 已開

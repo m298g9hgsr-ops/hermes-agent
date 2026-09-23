@@ -1,6 +1,6 @@
 ---
 name: product-price-monitor
-description: "Watch product, flight, or listing prices; alert on target."
+description: 追蹤商品、航班或刊登價格，達標時提醒.
 version: 0.1.0
 author: Ben Barclay (benbarclay), Hermes Agent
 license: MIT
@@ -11,33 +11,44 @@ metadata:
     related_skills: [maps]
 ---
 
-# Product Price Monitor
+# 商品價格監控
 
-Monitor a concrete purchasable item and alert on a normalized all-in price or availability condition. Handle variants, taxes, fees, currencies, stock, cancellation terms, and duplicate alerts explicitly. Setup runs once in the foreground; the recurring check runs as a `cronjob` tick (the `price-watch` automation blueprint scaffolds this).
+監控一個明確可購買的商品，並在正規化後的全含價格或供貨條件達成時
+提醒。明確處理變體、稅金、費用、幣別、庫存、取消條款與重複提醒。
+設定在前景執行一次；定期檢查以 `cronjob` tick 執行
+（`price-watch` 自動化藍圖會建立此骨架）。
 
-## When to Use
+## 使用時機
 
-- "Alert me when this laptop drops below $1,000."
-- "Watch these flights for a fare under $500."
-- "Tell me when this hotel has a refundable room."
-- "Track ticket/listing availability."
-- A cron tick fires for an existing price watch (steps 4-6).
+- 「這台筆電跌破 1,000 美元時提醒我。」
+- 「幫我盯這些航班，票價低於 500 美元就通知。」
+- 「這家旅館出現可退款房型時告訴我。」
+- 「追蹤票券／刊登的供貨狀態。」
+- 既有價格監控的 cron tick 觸發（步驟 4-6）。
 
-Don't use for: one-off "what does this cost right now" lookups (use `web_search`/`web_extract` directly).
+不適用於：一次性的「現在這個多少錢」查詢（直接用
+`web_search`／`web_extract`）。
 
-## Procedure — Setup (foreground, once)
+## 操作步驟 — 設定（前景，一次）
 
-### 1. Define the exact item
+### 1. 定義確切的商品
 
-Record source URL/provider, product/listing ID where available, variant, quantity, location, dates, travelers/guests, membership/login assumptions, condition, seller, and acceptable substitutes. Done when two variants cannot be confused.
+記錄來源 URL／供應商、可得時的商品／刊登 ID、變體、數量、地點、日期、
+旅客／人數、會員／登入假設、狀態、賣家與可接受的替代品。當兩個變體
+不可能混淆時即完成。
 
-### 2. Define the alert condition
+### 2. 定義提醒條件
 
-Specify currency, all-in vs pre-tax price, maximum price, availability/stock rule, shipping, refundability, cabin/room/ticket class, cooldown, and notification destination. Done when synthetic examples have deterministic alert decisions.
+指定幣別、全含價或稅前價、最高價、供貨／庫存規則、運費、可退款性、
+客艙／房型／票種、冷卻時間與通知目的地。當合成範例能得出確定性的
+提醒決策時即完成。
 
-### 3. Establish a live baseline, then schedule
+### 3. 建立即時基準，然後排程
 
-Fetch a bounded live result with `web_extract` or `browser_navigate` and record retrieval time, source price, fees/taxes, availability, and terms. Do not schedule until one foreground fetch works. Write the watch contract (item, condition, baseline observation) to a state file under `~/.hermes/price-watches/<watch-slug>.json`, then create the job:
+用 `web_extract` 或 `browser_navigate` 抓取有界的即時結果，記錄抓取
+時間、來源價格、費用／稅金、供貨狀態與條款。在前景抓取成功前不要排程。
+把監控合約（商品、條件、基準觀察）寫入狀態檔
+`~/.hermes/price-watches/<watch-slug>.json`，然後建立作業：
 
 ```
 cronjob(action="create",
@@ -46,34 +57,44 @@ cronjob(action="create",
         deliver=<user's destination>)
 ```
 
-Pick a cadence that respects rate limits and site terms. Done when the baseline matches the exact item contract and the job exists.
+選擇遵守速率限制與網站條款的執行頻率。當基準與確切商品合約相符且
+作業已存在時即完成。
 
-## Procedure — Tick (each scheduled run)
+## 操作步驟 — Tick（每次排程執行）
 
-### 4. Fetch and normalize
+### 4. 抓取並正規化
 
-Re-fetch the source. Convert currency only with a timestamped rate and retain the source currency. Separate base price, mandatory fees, shipping/taxes, total, and availability. Exclude volatile page metadata. A failed fetch means unknown state: report or skip, but never overwrite the last good observation with an error page. Done when the observation is comparable to the baseline or explicitly marked failed.
+重新抓取來源。只有在有時間戳的匯率下才轉換幣別，並保留來源幣別。
+分離基礎價格、必要費用、運費／稅金、總計與供貨狀態。排除易變的
+頁面中繼資料。抓取失敗代表狀態未知：回報或略過，但絕不用錯誤頁面
+覆蓋上一筆良好觀察。當觀察結果可與基準比較、或已明確標記為失敗時
+即完成。
 
-### 5. Compare and suppress duplicates
+### 5. 比較並抑制重複
 
-Alert on threshold entry, qualifying availability, material lower price, or recovery as requested. Store the last good observation and last alert fingerprint in the state file. Replaying the same offer must send no second alert; respect the cooldown. Done when the alert decision is deterministic against stored state.
+依要求在跨過門檻、符合供貨條件、實質更低價或回升時提醒。將最後一筆
+良好觀察與最後提醒指紋存入狀態檔。重播同一優惠不得發出第二次提醒；
+遵守冷卻時間。當提醒決策相對於已儲存狀態具有確定性時即完成。
 
-### 6. Deliver or stay silent
+### 6. 送出或保持沉默
 
-When a condition is met, the alert includes: exact item/variant, observed all-in price and source currency, availability/terms, threshold, retrieval timestamp, source link, and important uncertainty. Never claim inventory is reserved. When nothing qualifies, stay silent — no "still watching" noise unless a periodic all-clear was requested. Done when the state file reflects this run.
+條件成立時，提醒需包含：確切商品／變體、觀察到的全含價格與來源幣別、
+供貨／條款、門檻、抓取時間戳、來源連結與重要的不確定性。絕不聲稱
+庫存已被保留。沒有符合項目時保持沉默——除非有要求定期的「一切正常」
+回報，否則不發「持續監控中」雜訊。當狀態檔反映本次執行時即完成。
 
-## Pitfalls
+## 常見陷阱
 
-- Comparing a base fare with an all-in threshold.
-- Alerting on the wrong size, seller, cabin, dates, or room terms.
-- Overwriting a last-known-good value with an error page.
-- Polling aggressively enough to trigger blocking or violate site terms.
-- Scheduling before a single foreground fetch has succeeded.
+- 拿基礎票價與全含價門檻比較。
+- 對錯誤的尺寸、賣家、客艙、日期或房型條款提醒。
+- 用錯誤頁面覆蓋最後已知良好值。
+- 輪詢過於頻繁而觸發封鎖或違反網站條款。
+- 在單次前景抓取成功前就排程。
 
-## Verification
+## 驗證
 
-- [ ] The watch contract pins the item so two variants cannot be confused.
-- [ ] One foreground fetch succeeded before any job was created.
-- [ ] Alert decisions replay deterministically from the state file; duplicates suppressed.
-- [ ] Failed fetches never replaced last-known-good state.
-- [ ] Alerts carry all-in price, source currency, timestamp, and source link.
+- [ ] 監控合約已鎖定商品，兩個變體不可能混淆。
+- [ ] 任何作業建立前已有一次前景抓取成功。
+- [ ] 提醒決策可從狀態檔確定性重播；重複已抑制。
+- [ ] 失敗的抓取從未取代最後已知良好狀態。
+- [ ] 提醒包含全含價格、來源幣別、時間戳與來源連結。

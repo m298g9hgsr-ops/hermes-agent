@@ -1,6 +1,6 @@
 ---
 name: imessage
-description: Send and receive iMessages/SMS via the imsg CLI on macOS.
+description: "透過 macOS 的 imsg CLI 收發 iMessage 與 SMS."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -12,39 +12,39 @@ prerequisites:
   commands: [imsg]
 ---
 
-# iMessage
+# iMessage 技能
 
-Use `imsg` to read and send iMessage/SMS via macOS Messages.app.
+使用 `imsg` 透過 macOS 的 Messages.app 讀取與傳送 iMessage/SMS。
 
-## Prerequisites
+## 前置需求
 
-- **macOS** with Messages.app signed in
-- Install: `brew install steipete/tap/imsg`
-- Grant Full Disk Access for terminal (System Settings → Privacy → Full Disk Access)
-- Grant Automation permission for Messages.app when prompted
+- **macOS** 且已登入 Messages.app
+- 安裝：`brew install steipete/tap/imsg`
+- 授予終端完整磁碟存取權限（系統設定 → 隱私權與安全性 → 完整磁碟存取權限）
+- 出現提示時，授予 Messages.app 自動化（Automation）權限
 
-## When to Use
+## 使用時機
 
-- User asks to send an iMessage or text message
-- Reading iMessage conversation history
-- Checking recent Messages.app chats
-- Sending to phone numbers or Apple IDs
+- 使用者要求傳送 iMessage 或文字簡訊
+- 讀取 iMessage 對話紀錄
+- 查看 Messages.app 最近的對話
+- 傳送訊息給電話號碼或 Apple ID
 
-## When NOT to Use
+## 不適用時機
 
-- Telegram/Discord/Slack/WhatsApp messages → use the appropriate gateway channel
-- Group chat management (adding/removing members) → not supported
-- Bulk/mass messaging → always confirm with user first
+- Telegram/Discord/Slack/WhatsApp 訊息 → 請使用適當的 gateway 頻道
+- 群組聊天管理（新增/移除成員）→ 不支援
+- 大量發送訊息 → 務必先取得使用者確認
 
-## Quick Reference
+## 快速參考
 
-### List Chats
+### 列出對話
 
 ```bash
 imsg chats --limit 10 --json
 ```
 
-### View History
+### 檢視歷史紀錄
 
 ```bash
 # By chat ID
@@ -54,7 +54,7 @@ imsg history --chat-id 1 --limit 20 --json
 imsg history --chat-id 1 --limit 20 --attachments --json
 ```
 
-### Send Messages
+### 傳送訊息
 
 ```bash
 # Text only
@@ -68,28 +68,28 @@ imsg send --to "+14155551212" --text "Hi" --service imessage
 imsg send --to "+14155551212" --text "Hi" --service sms
 ```
 
-### Watch for New Messages
+### 監看新訊息
 
 ```bash
 imsg watch --chat-id 1 --attachments
 ```
 
-## Service Options
+## 服務選項
 
-- `--service imessage` — Force iMessage (requires recipient has iMessage)
-- `--service sms` — Force SMS (green bubble)
-- `--service auto` — Let Messages.app decide (default)
+- `--service imessage` — 強制使用 iMessage（需要收件人也具備 iMessage）
+- `--service sms` — 強制使用 SMS（綠色泡泡）
+- `--service auto` — 由 Messages.app 自行決定（預設）
 
-## Rules
+## 規則
 
-1. **Always confirm recipient and message content** before sending
-2. **Never send to unknown numbers** without explicit user approval
-3. **Verify file paths** exist before attaching
-4. **Don't spam** — rate-limit yourself
+1. **傳送前務必確認收件人與訊息內容**
+2. **未經使用者明確同意，絕不傳送給未知號碼**
+3. **附加檔案前先確認檔案路徑存在**
+4. **不要濫發**——自行限制發送頻率
 
-## Example Workflow
+## 範例流程
 
-User: "Text mom that I'll be late"
+使用者：「傳簡訊給媽媽說我會晚到」
 
 ```bash
 # 1. Find mom's chat

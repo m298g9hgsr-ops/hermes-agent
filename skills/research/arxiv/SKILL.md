@@ -1,6 +1,6 @@
 ---
 name: arxiv
-description: "Search arXiv papers by keyword, author, category, or ID."
+description: "以關鍵字、作者、類別或 ID 搜尋 arXiv 論文."
 version: 1.0.0
 author: Hermes Agent
 license: MIT
@@ -11,30 +11,30 @@ metadata:
     related_skills: [pdf]
 ---
 
-# arXiv Research
+# arXiv 研究
 
-Search and retrieve academic papers from arXiv via their free REST API. No API key, no dependencies — just curl.
+透過 arXiv 的免費 REST API 搜尋與取得學術論文。不需 API 金鑰、不需相依套件 — 只要 curl。
 
-## Quick Reference
+## 快速參考
 
-| Action | Command |
+| 操作 | 指令 |
 |--------|---------|
-| Search papers | `curl "https://export.arxiv.org/api/query?search_query=all:QUERY&max_results=5"` |
-| Get specific paper | `curl "https://export.arxiv.org/api/query?id_list=2402.03300"` |
-| Read abstract (web) | `web_extract(urls=["https://arxiv.org/abs/2402.03300"])` |
-| Read full paper (PDF) | `web_extract(urls=["https://arxiv.org/pdf/2402.03300"])` |
+| 搜尋論文 | `curl "https://export.arxiv.org/api/query?search_query=all:QUERY&max_results=5"` |
+| 取得特定論文 | `curl "https://export.arxiv.org/api/query?id_list=2402.03300"` |
+| 讀摘要（網頁） | `web_extract(urls=["https://arxiv.org/abs/2402.03300"])` |
+| 讀全文（PDF） | `web_extract(urls=["https://arxiv.org/pdf/2402.03300"])` |
 
-## Searching Papers
+## 搜尋論文
 
-The API returns Atom XML. Parse with `grep`/`sed` or pipe through `python` for clean output.
+API 回傳 Atom XML。用 `grep`/`sed` 解析，或管線透過 `python` 取得乾淨輸出。
 
-### Basic search
+### 基本搜尋
 
 ```bash
 curl -s "https://export.arxiv.org/api/query?search_query=all:GRPO+reinforcement+learning&max_results=5"
 ```
 
-### Clean output (parse XML to readable format)
+### 乾淨輸出（將 XML 解析為可讀格式）
 
 ```bash
 curl -s "https://export.arxiv.org/api/query?search_query=all:GRPO+reinforcement+learning&max_results=5&sortBy=submittedDate&sortOrder=descending" | python -c "
@@ -57,18 +57,18 @@ for i, entry in enumerate(root.findall('a:entry', ns)):
 "
 ```
 
-## Search Query Syntax
+## 搜尋查詢語法
 
-| Prefix | Searches | Example |
+| 前綴 | 搜尋範圍 | 範例 |
 |--------|----------|---------|
-| `all:` | All fields | `all:transformer+attention` |
-| `ti:` | Title | `ti:large+language+models` |
-| `au:` | Author | `au:vaswani` |
-| `abs:` | Abstract | `abs:reinforcement+learning` |
-| `cat:` | Category | `cat:cs.AI` |
-| `co:` | Comment | `co:accepted+NeurIPS` |
+| `all:` | 所有欄位 | `all:transformer+attention` |
+| `ti:` | 標題 | `ti:large+language+models` |
+| `au:` | 作者 | `au:vaswani` |
+| `abs:` | 摘要 | `abs:reinforcement+learning` |
+| `cat:` | 分類 | `cat:cs.AI` |
+| `co:` | 評論 | `co:accepted+NeurIPS` |
 
-### Boolean operators
+### 布林運算子
 
 ```
 # AND (default when using +)
@@ -87,21 +87,21 @@ search_query=ti:"chain+of+thought"
 search_query=au:hinton+AND+cat:cs.LG
 ```
 
-## Sort and Pagination
+## 排序與分頁
 
-| Parameter | Options |
+| 參數 | 選項 |
 |-----------|---------|
-| `sortBy` | `relevance`, `lastUpdatedDate`, `submittedDate` |
-| `sortOrder` | `ascending`, `descending` |
-| `start` | Result offset (0-based) |
-| `max_results` | Number of results (default 10, max 30000) |
+| `sortBy` | `relevance`、`lastUpdatedDate`、`submittedDate` |
+| `sortOrder` | `ascending`、`descending` |
+| `start` | 結果偏移（從 0 起算） |
+| `max_results` | 結果數量（預設 10，上限 30000） |
 
 ```bash
 # Latest 10 papers in cs.AI
 curl -s "https://export.arxiv.org/api/query?search_query=cat:cs.AI&sortBy=submittedDate&sortOrder=descending&max_results=10"
 ```
 
-## Fetching Specific Papers
+## 取得特定論文
 
 ```bash
 # By arXiv ID
@@ -111,9 +111,9 @@ curl -s "https://export.arxiv.org/api/query?id_list=2402.03300"
 curl -s "https://export.arxiv.org/api/query?id_list=2402.03300,2401.12345,2403.00001"
 ```
 
-## BibTeX Generation
+## BibTeX 產生
 
-After fetching metadata for a paper, generate a BibTeX entry:
+取得論文的中繼資料後，產生 BibTeX 條目：
 
 {% raw %}
 ```bash
@@ -143,9 +143,9 @@ print('}')
 ```
 {% endraw %}
 
-## Reading Paper Content
+## 閱讀論文內容
 
-After finding a paper, read it:
+找到論文後，閱讀它：
 
 ```
 # Abstract page (fast, metadata + abstract)
@@ -155,26 +155,26 @@ web_extract(urls=["https://arxiv.org/abs/2402.03300"])
 web_extract(urls=["https://arxiv.org/pdf/2402.03300"])
 ```
 
-For local PDF processing, see the `ocr-and-documents` skill.
+本地 PDF 處理請見 `ocr-and-documents` 技能。
 
-## Common Categories
+## 常見分類
 
-| Category | Field |
+| 分類 | 領域 |
 |----------|-------|
-| `cs.AI` | Artificial Intelligence |
-| `cs.CL` | Computation and Language (NLP) |
-| `cs.CV` | Computer Vision |
-| `cs.LG` | Machine Learning |
-| `cs.CR` | Cryptography and Security |
-| `stat.ML` | Machine Learning (Statistics) |
-| `math.OC` | Optimization and Control |
-| `physics.comp-ph` | Computational Physics |
+| `cs.AI` | 人工智慧 |
+| `cs.CL` | 計算與語言（NLP） |
+| `cs.CV` | 電腦視覺 |
+| `cs.LG` | 機器學習 |
+| `cs.CR` | 密碼學與安全 |
+| `stat.ML` | 機器學習（統計） |
+| `math.OC` | 最佳化與控制 |
+| `physics.comp-ph` | 計算物理 |
 
-Full list: https://arxiv.org/category_taxonomy
+完整清單：https://arxiv.org/category_taxonomy
 
-## Helper Script
+## 輔助腳本
 
-The `scripts/search_arxiv.py` script handles XML parsing and provides clean output:
+`scripts/search_arxiv.py` 腳本處理 XML 解析並提供乾淨輸出：
 
 ```bash
 python scripts/search_arxiv.py "GRPO reinforcement learning"
@@ -185,15 +185,15 @@ python scripts/search_arxiv.py --id 2402.03300
 python scripts/search_arxiv.py --id 2402.03300,2401.12345
 ```
 
-No dependencies — uses only Python stdlib.
+無相依套件 — 只用 Python 標準庫。
 
 ---
 
-## Semantic Scholar (Citations, Related Papers, Author Profiles)
+## Semantic Scholar（引用、相關論文、作者檔案）
 
-arXiv doesn't provide citation data or recommendations. Use the **Semantic Scholar API** for that — free, no key needed for basic use (1 req/sec), returns JSON.
+arXiv 不提供引用資料或推薦。改用 **Semantic Scholar API** — 免費，基本使用不需金鑰（每秒 1 次請求），回傳 JSON。
 
-### Get paper details + citations
+### 取得論文詳情 + 引用數
 
 ```bash
 # By arXiv ID
@@ -203,25 +203,25 @@ curl -s "https://api.semanticscholar.org/graph/v1/paper/arXiv:2402.03300?fields=
 curl -s "https://api.semanticscholar.org/graph/v1/paper/DOI:10.1234/example?fields=title,citationCount"
 ```
 
-### Get citations OF a paper (who cited it)
+### 取得某篇論文的引用（誰引用了它）
 
 ```bash
 curl -s "https://api.semanticscholar.org/graph/v1/paper/arXiv:2402.03300/citations?fields=title,authors,year,citationCount&limit=10" | python -m json.tool
 ```
 
-### Get references FROM a paper (what it cites)
+### 取得某篇論文的參考文獻（它引用了什麼）
 
 ```bash
 curl -s "https://api.semanticscholar.org/graph/v1/paper/arXiv:2402.03300/references?fields=title,authors,year,citationCount&limit=10" | python -m json.tool
 ```
 
-### Search papers (alternative to arXiv search, returns JSON)
+### 搜尋論文（arXiv 搜尋的替代，回傳 JSON）
 
 ```bash
 curl -s "https://api.semanticscholar.org/graph/v1/paper/search?query=GRPO+reinforcement+learning&limit=5&fields=title,authors,year,citationCount,externalIds" | python -m json.tool
 ```
 
-### Get paper recommendations
+### 取得論文推薦
 
 ```bash
 curl -s -X POST "https://api.semanticscholar.org/recommendations/v1/papers/" \
@@ -229,54 +229,54 @@ curl -s -X POST "https://api.semanticscholar.org/recommendations/v1/papers/" \
   -d '{"positivePaperIds": ["arXiv:2402.03300"], "negativePaperIds": []}' | python -m json.tool
 ```
 
-### Author profile
+### 作者檔案
 
 ```bash
 curl -s "https://api.semanticscholar.org/graph/v1/author/search?query=Yann+LeCun&fields=name,hIndex,citationCount,paperCount" | python -m json.tool
 ```
 
-### Useful Semantic Scholar fields
+### 有用的 Semantic Scholar 欄位
 
-`title`, `authors`, `year`, `abstract`, `citationCount`, `referenceCount`, `influentialCitationCount`, `isOpenAccess`, `openAccessPdf`, `fieldsOfStudy`, `publicationVenue`, `externalIds` (contains arXiv ID, DOI, etc.)
+`title`、`authors`、`year`、`abstract`、`citationCount`、`referenceCount`、`influentialCitationCount`、`isOpenAccess`、`openAccessPdf`、`fieldsOfStudy`、`publicationVenue`、`externalIds`（含 arXiv ID、DOI 等）
 
 ---
 
-## Complete Research Workflow
+## 完整研究流程
 
-1. **Discover**: `python scripts/search_arxiv.py "your topic" --sort date --max 10`
-2. **Assess impact**: `curl -s "https://api.semanticscholar.org/graph/v1/paper/arXiv:ID?fields=citationCount,influentialCitationCount"`
-3. **Read abstract**: `web_extract(urls=["https://arxiv.org/abs/ID"])`
-4. **Read full paper**: `web_extract(urls=["https://arxiv.org/pdf/ID"])`
-5. **Find related work**: `curl -s "https://api.semanticscholar.org/graph/v1/paper/arXiv:ID/references?fields=title,citationCount&limit=20"`
-6. **Get recommendations**: POST to Semantic Scholar recommendations endpoint
-7. **Track authors**: `curl -s "https://api.semanticscholar.org/graph/v1/author/search?query=NAME"`
+1. **探索**：`python scripts/search_arxiv.py "your topic" --sort date --max 10`
+2. **評估影響力**：`curl -s "https://api.semanticscholar.org/graph/v1/paper/arXiv:ID?fields=citationCount,influentialCitationCount"`
+3. **讀摘要**：`web_extract(urls=["https://arxiv.org/abs/ID"])`
+4. **讀全文**：`web_extract(urls=["https://arxiv.org/pdf/ID"])`
+5. **找相關研究**：`curl -s "https://api.semanticscholar.org/graph/v1/paper/arXiv:ID/references?fields=title,citationCount&limit=20"`
+6. **取得推薦**：POST 到 Semantic Scholar 推薦端點
+7. **追蹤作者**：`curl -s "https://api.semanticscholar.org/graph/v1/author/search?query=NAME"`
 
-## Rate Limits
+## 速率限制
 
-| API | Rate | Auth |
+| API | 速率 | 驗證 |
 |-----|------|------|
-| arXiv | ~1 req / 3 seconds | None needed |
-| Semantic Scholar | 1 req / second | None (100/sec with API key) |
+| arXiv | 約每 3 秒 1 次請求 | 不需要 |
+| Semantic Scholar | 每秒 1 次請求 | 不需要（有 API 金鑰為每秒 100 次） |
 
-## Notes
+## 注意事項
 
-- arXiv returns Atom XML — use the helper script or parsing snippet for clean output
-- Semantic Scholar returns JSON — pipe through `python -m json.tool` for readability
-- arXiv IDs: old format (`hep-th/0601001`) vs new (`2402.03300`)
-- PDF: `https://arxiv.org/pdf/{id}` — Abstract: `https://arxiv.org/abs/{id}`
-- HTML (when available): `https://arxiv.org/html/{id}`
-- For local PDF processing, see the `ocr-and-documents` skill
+- arXiv 回傳 Atom XML — 用輔助腳本或解析片段取得乾淨輸出
+- Semantic Scholar 回傳 JSON — 管線透過 `python -m json.tool` 以提升可讀性
+- arXiv ID：舊格式（`hep-th/0601001`）vs 新格式（`2402.03300`）
+- PDF：`https://arxiv.org/pdf/{id}` — 摘要：`https://arxiv.org/abs/{id}`
+- HTML（有提供時）：`https://arxiv.org/html/{id}`
+- 本地 PDF 處理請見 `ocr-and-documents` 技能
 
-## ID Versioning
+## ID 版本
 
-- `arxiv.org/abs/1706.03762` always resolves to the **latest** version
-- `arxiv.org/abs/1706.03762v1` points to a **specific** immutable version
-- When generating citations, preserve the version suffix you actually read to prevent citation drift (a later version may substantially change content)
-- The API `<id>` field returns the versioned URL (e.g., `http://arxiv.org/abs/1706.03762v7`)
+- `arxiv.org/abs/1706.03762` 一律解析到**最新**版本
+- `arxiv.org/abs/1706.03762v1` 指向**特定**不可變版本
+- 產生引用時，保留你實際閱讀的版本後綴以防引用漂移（後續版本可能大幅變更內容）
+- API 的 `<id>` 欄位回傳含版本的 URL（例如 `http://arxiv.org/abs/1706.03762v7`）
 
-## Withdrawn Papers
+## 已撤回的論文
 
-Papers can be withdrawn after submission. When this happens:
-- The `<summary>` field contains a withdrawal notice (look for "withdrawn" or "retracted")
-- Metadata fields may be incomplete
-- Always check the summary before treating a result as a valid paper
+論文提交後可能被撤回。發生時：
+- `<summary>` 欄位包含撤回通知（尋找 "withdrawn" 或 "retracted"）
+- 中繼資料欄位可能不完整
+- 將結果視為有效論文前務必檢查摘要

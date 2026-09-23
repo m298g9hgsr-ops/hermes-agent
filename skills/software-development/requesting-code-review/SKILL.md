@@ -1,6 +1,6 @@
 ---
 name: requesting-code-review
-description: "Pre-commit review: security scan, quality gates, auto-fix."
+description: "提交前審查：安全掃描、品質關卡、自動修復."
 version: 2.1.0
 author: Hermes Agent (adapted from obra/superpowers + MorAlekss)
 license: MIT
@@ -11,45 +11,42 @@ metadata:
     related_skills: [subagent-driven-development, test-driven-development, github]
 ---
 
-# Pre-Commit Code Verification
+# 提交前程式碼驗證
 
-Automated verification pipeline before code lands. Static scans, baseline-aware
-quality gates, an independent reviewer subagent, and an auto-fix loop.
+程式碼落地前的自動化驗證管線。靜態掃描、基準感知的品質關卡、一個獨立審查者子代理，以及自動修復迴圈。
 
-**Core principle:** No agent should verify its own work. Fresh context finds what you miss.
+**核心原則：** 沒有一個代理該自己驗證自己的工作。新鮮脈絡才能看到你漏掉的事。
 
-## When to Use
+## 使用時機
 
-- After implementing a feature or bug fix, before `git commit` or `git push`
-- When user says "commit", "push", "ship", "done", "verify", or "review before merge"
-- After completing a task with 2+ file edits in a git repo
-- After each task in subagent-driven-development (the two-stage review)
+- 實作完功能或修完 bug，在 `git commit` 或 `git push` 之前
+- 使用者說「commit」、「push」、「ship」、「done」、「verify」或「review before merge」
+- 在 git 倉庫中完成含 2 個以上檔案編輯的任務之後
+- 在 subagent-driven-development 的每個任務之後（兩階段審查）
 
-**Skip for:** documentation-only changes, pure config tweaks, or when user says "skip verification".
+**跳過：** 純文件變更、純設定調整，或使用者說「skip verification」。
 
-**This skill vs github:** This skill verifies YOUR changes before committing.
-`github` reviews OTHER people's PRs on GitHub with inline comments.
+**本技能 vs github：** 本技能在提交前驗證**你的**變更。`github` 則在 GitHub 上以內嵌評論審查**別人的** PR。
 
-## Step 1 — Get the diff
+## 步驟 1 — 取得 diff
 
 ```bash
 git diff --cached
 ```
 
-If empty, try `git diff` then `git diff HEAD~1 HEAD`.
+若為空，試 `git diff`，再試 `git diff HEAD~1 HEAD`。
 
-If `git diff --cached` is empty but `git diff` shows changes, tell the user to
-`git add <files>` first. If still empty, run `git status` — nothing to verify.
+若 `git diff --cached` 為空但 `git diff` 顯示有變更，告訴使用者先 `git add <files>`。若仍是空，執行 `git status` — 沒有東西可驗證。
 
-If the diff exceeds 15,000 characters, split by file:
+若 diff 超過 15,000 字元，依檔案拆分：
 ```bash
 git diff --name-only
 git diff HEAD -- specific_file.py
 ```
 
-## Step 2 — Static security scan
+## 步驟 2 — 靜態安全掃描
 
-Scan added lines only. Any match is a security concern fed into Step 5.
+只掃新增的行。任何命中都視為安全疑慮，餵給步驟 5。
 
 ```bash
 # Hardcoded secrets
@@ -68,13 +65,11 @@ git diff --cached | grep "^+" | grep -E "pickle\.loads?\("
 git diff --cached | grep "^+" | grep -E "execute\(f\"|\.format\(.*SELECT|\.format\(.*INSERT"
 ```
 
-## Step 3 — Baseline tests and linting
+## 步驟 3 — 基準測試與 lint
 
-Detect the project language and run the appropriate tools. Capture the failure
-count BEFORE your changes as **baseline_failures** (stash changes, run, pop).
-Only NEW failures introduced by your changes block the commit.
+偵測專案語言並執行適當工具。在你的變更**之前**記下失敗次數為 **baseline_failures**（stash 變更、執行、pop）。只有你的變更新引進的失敗會阻擋提交。
 
-**Test frameworks** (auto-detect by project files):
+**測試框架**（依專案檔案自動偵測）：
 ```bash
 # Python (pytest)
 python -m pytest --tb=no -q 2>&1 | tail -5
@@ -89,7 +84,7 @@ cargo test 2>&1 | tail -5
 go test ./... 2>&1 | tail -5
 ```
 
-**Linting and type checking** (run only if installed):
+**Lint 與型別檢查**（只在本機已安裝時執行）：
 ```bash
 # Python
 which ruff && ruff check . 2>&1 | tail -10
@@ -106,33 +101,28 @@ cargo clippy -- -D warnings 2>&1 | tail -10
 which go && go vet ./... 2>&1 | tail -10
 ```
 
-**Baseline comparison:** If baseline was clean and your changes introduce failures,
-that's a regression. If baseline already had failures, only count NEW ones.
+**基準比較：** 若基準乾淨、而你的變更引入失敗，那就是回歸。若基準已有失敗，只計算**新增的**。
 
-## Step 4 — Self-review checklist
+## 步驟 4 — 自我審查清單
 
-Quick scan before dispatching the reviewer:
+派遣審查者前的快速掃描：
 
-- [ ] No hardcoded secrets, API keys, or credentials
-- [ ] Input validation on user-provided data
-- [ ] SQL queries use parameterized statements
-- [ ] File operations validate paths (no traversal)
-- [ ] External calls have error handling (try/catch)
-- [ ] No debug print/console.log left behind
-- [ ] No commented-out code
-- [ ] New code has tests (if test suite exists)
+- [ ] 無寫死的密鑰、API key 或憑證
+- [ ] 使用者提供的資料有輸入驗證
+- [ ] SQL 查詢使用參數化陳述式
+- [ ] 檔案操作有驗證路徑（無路徑穿越）
+- [ ] 外部呼叫有錯誤處理（try/catch）
+- [ ] 沒有殘留的 debug print/console.log
+- [ ] 沒有被註解掉的程式碼
+- [ ] 新程式碼有測試（若測試套件存在）
 
-## Step 5 — Independent reviewer subagent
+## 步驟 5 — 獨立審查者子代理
 
-**Interactive sessions only.** In a one-shot run (`hermes chat -q`, `--oneshot`, a
-benchmark harness) there is no one to hand the verdict to and a fresh subagent re-pays
-the whole system prompt plus a repo re-read: skip Steps 5 and 7, apply the Step 4
-checklist to the diff yourself, run the tests, and go to Step 8.
+**僅限互動式 session。** 在單次執行（`hermes chat -q`、`--oneshot`、基準測試測台）中，沒有對象可以交付裁決，而且全新子代理會重付整個系統提示加上一次倉庫重讀：跳過步驟 5 與 7，自己對 diff 套用步驟 4 的清單、跑測試，然後直接去步驟 8。
 
-Call `delegate_task` directly — it is NOT available inside execute_code or scripts.
+直接呼叫 `delegate_task` — 它在 execute_code 或腳本內**不可用**。
 
-The reviewer gets ONLY the diff and static scan results. No shared context with
-the implementer. Fail-closed: unparseable response = fail.
+審查者只取得 diff 與靜態掃描結果。與實作者沒有共享脈絡。失敗即關閉（fail-closed）：無法解析的回應 = 失敗。
 
 ```python
 delegate_task(
@@ -178,13 +168,13 @@ Return ONLY this JSON:
 )
 ```
 
-## Step 6 — Evaluate results
+## 步驟 6 — 評估結果
 
-Combine results from Steps 2, 3, and 5.
+合併步驟 2、3、5 的結果。
 
-**All passed:** Proceed to Step 8 (commit).
+**全部通過：** 進行到步驟 8（提交）。
 
-**Any failures:** Report what failed, then proceed to Step 7 (auto-fix).
+**有任何失敗：** 回報失敗內容，然後進行到步驟 7（自動修復）。
 
 ```
 VERIFICATION FAILED
@@ -196,12 +186,11 @@ New lint errors: [details]
 Suggestions (non-blocking): [list]
 ```
 
-## Step 7 — Auto-fix loop
+## 步驟 7 — 自動修復迴圈
 
-**Maximum 2 fix-and-reverify cycles. Interactive sessions only (see Step 5).**
+**最多 2 個修復-重驗證回合。僅限互動式 session（見步驟 5）。**
 
-Spawn a THIRD agent context — not you (the implementer), not the reviewer.
-It fixes ONLY the reported issues:
+產生**第三個**代理脈絡 — 不是你（實作者），也不是審查者。它只修回報的問題：
 
 ```python
 delegate_task(
@@ -224,23 +213,22 @@ Fix each issue precisely. Describe what you changed and why.""",
 )
 ```
 
-After the fix agent completes, re-run Steps 1-6 (full verification cycle).
-- Passed: proceed to Step 8
-- Failed and attempts < 2: repeat Step 7
-- Failed after 2 attempts: escalate to user with the remaining issues and
-  suggest `git stash` or `git reset` to undo
+修復代理完成後，重跑步驟 1-6（完整驗證回合）。
+- 通過：進行到步驟 8
+- 失敗且嘗試 < 2：重複步驟 7
+- 2 次嘗試後仍失敗：把剩餘問題升級給使用者，並建議 `git stash` 或 `git reset` 來復原
 
-## Step 8 — Commit
+## 步驟 8 — 提交
 
-If verification passed:
+若驗證通過：
 
 ```bash
 git add -A && git commit -m "[verified] <description>"
 ```
 
-The `[verified]` prefix indicates an independent reviewer approved this change.
+`[verified]` 前綴表示此變更經獨立審查者核准。
 
-## Reference: Common Patterns to Flag
+## 參考：應標記的常見模式
 
 ### Python
 ```python
@@ -263,23 +251,21 @@ element.innerHTML = userInput;
 element.textContent = userInput;
 ```
 
-## Integration with Other Skills
+## 與其他技能的整合
 
-**subagent-driven-development:** Run this after EACH task as the quality gate.
-The two-stage review (spec compliance + code quality) uses this pipeline.
+**subagent-driven-development：** 在每個任務之後執行本流程作為品質關卡。兩階段審查（規格符合 + 程式碼品質）使用這條管線。
 
-**test-driven-development:** This pipeline verifies TDD discipline was followed —
-tests exist, tests pass, no regressions.
+**test-driven-development：** 這條管線驗證 TDD 紀律有被遵循 — 測試存在、測試通過、無回歸。
 
-**plan:** Validates implementation matches the plan requirements.
+**plan：** 驗證實作符合計畫需求。
 
-## Pitfalls
+## 常見陷阱
 
-- **Empty diff** — check `git status`, tell user nothing to verify
-- **Not a git repo** — skip and tell user
-- **Large diff (>15k chars)** — split by file, review each separately
-- **delegate_task returns non-JSON** — retry once with stricter prompt, then treat as FAIL
-- **False positives** — if reviewer flags something intentional, note it in fix prompt
-- **No test framework found** — skip regression check, reviewer verdict still runs
-- **Lint tools not installed** — skip that check silently, don't fail
-- **Auto-fix introduces new issues** — counts as a new failure, cycle continues
+- **空 diff** — 檢查 `git status`，告訴使用者沒有東西可驗證
+- **不是 git 倉庫** — 跳過並告訴使用者
+- **大 diff（>15k 字元）** — 依檔案拆分，逐一審查
+- **delegate_task 回傳非 JSON** — 用更嚴格的提示重試一次，然後視為失敗
+- **誤報** — 若審查者標記了某個刻意行為，在修復提示中註記
+- **找不到測試框架** — 跳過回歸檢查，審查者裁決仍照跑
+- **Lint 工具未安裝** — 靜默跳過該檢查，不要失敗
+- **自動修復引入新問題** — 算一次新的失敗，迴圈繼續

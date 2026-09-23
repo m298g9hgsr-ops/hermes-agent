@@ -1,6 +1,6 @@
 ---
 name: systematic-debugging
-description: "4-phase root cause debugging: understand bugs before fixing."
+description: "四階段根因除錯：先理解錯誤再修復."
 version: 1.1.0
 author: Hermes Agent (adapted from obra/superpowers)
 license: MIT
@@ -11,101 +11,101 @@ metadata:
     related_skills: [test-driven-development, subagent-driven-development]
 ---
 
-# Systematic Debugging
+# 系統化除錯
 
-## Overview
+## 總覽
 
-Random fixes waste time and create new bugs. Quick patches mask underlying issues.
+亂槍打鳥的修法浪費時間還會製造新 bug。快速補丁只是掩蓋底層問題。
 
-**Core principle:** ALWAYS find root cause before attempting fixes. Symptom fixes are failure.
+**核心原則：** 一定要先找出根因，再嘗試修復。修症狀就是失敗。
 
-**Violating the letter of this process is violating the spirit of debugging.**
+**違背本流程的條文，就是違背除錯的精神。**
 
-## The Iron Law
+## 鐵律
 
 ```
 NO FIXES WITHOUT ROOT CAUSE INVESTIGATION FIRST
 ```
 
-If you haven't completed Phase 1, you cannot propose fixes.
+如果你還沒完成第一階段，就不能提出修法。
 
-## The Feedback Loop Rule
+## 迴饋迴圈法則
 
-The feedback loop is the debugging work. Before reading code to build a theory, create or identify a **tight** command that can go red on the user's exact symptom and green when the bug is fixed. A tight loop is fast, deterministic, agent-runnable, and specific enough to catch this bug — not merely "doesn't crash".
+迴饋迴圈就是除錯的工作本體。在閱讀程式碼建立理論之前，先建立或找出一個**緊湊**的指令：它在使用者的確切症狀上會變紅，bug 修好後會變綠。緊湊迴圈要快、確定性、代理可執行，而且要具體到抓得住這個 bug — 而不只是「不會崩」。
 
-When a clean repro is hard, spend disproportionate effort building the loop. Guessing without a red-capable loop is the failure mode this skill exists to prevent.
+當乾淨的重現很難做時，把不成比例的心力花在建立迴圈上。沒有「能變紅」的迴圈就靠猜，正是本技能要防止的失敗模式。
 
-## When to Use
+## 使用時機
 
-Use for ANY technical issue:
-- Test failures
-- Bugs in production
-- Unexpected behavior
-- Performance problems
-- Build failures
-- Integration issues
+用於**任何**技術問題：
+- 測試失敗
+- 生產環境的 bug
+- 預期外的行為
+- 效能問題
+- 建置失敗
+- 整合問題
 
-**Use this ESPECIALLY when:**
-- Under time pressure (emergencies make guessing tempting)
-- "Just one quick fix" seems obvious
-- You've already tried multiple fixes
-- Previous fix didn't work
-- You don't fully understand the issue
+**尤其在以下情況使用：**
+- 有時間壓力時（緊急狀況最誘人去猜）
+- 「就先快速修一下」看起來很明顯時
+- 你已經試過多個修法
+- 上一個修法沒用
+- 你還不完全理解這個問題
 
-**Don't skip when:**
-- Issue seems simple (simple bugs have root causes too)
-- You're in a hurry (rushing guarantees rework)
-- Someone wants it fixed NOW (systematic is faster than thrashing)
+**以下情況不要跳過：**
+- 問題看起來很簡單（簡單的 bug 也有根因）
+- 你在趕時間（趕工保證重工）
+- 有人要你「現在就修好」（系統化比瞎忙更快）
 
-## The Four Phases
+## 四個階段
 
-You MUST complete each phase before proceeding to the next.
+你**必須**完成每個階段，才能進入下一個。
 
 ---
 
-## Phase 1: Root Cause Investigation
+## 第一階段：根因調查
 
-**BEFORE attempting ANY fix:**
+**在嘗試任何修法之前：**
 
-### 1. Read Error Messages Carefully
+### 1. 仔細閱讀錯誤訊息
 
-- Don't skip past errors or warnings
-- They often contain the exact solution
-- Read stack traces completely
-- Note line numbers, file paths, error codes
+- 不要跳過錯誤或警告
+- 它們常包含精確的解法
+- 完整閱讀堆疊追蹤
+- 註記行號、檔案路徑、錯誤碼
 
-**Action:** Use `read_file` on the relevant source files. Use `search_files` to find the error string in the codebase.
+**動作：** 對相關原始檔使用 `read_file`。用 `search_files` 在程式碼庫中尋找該錯誤字串。
 
-### 2. Build a Tight Feedback Loop
+### 2. 建立緊湊的迴饋迴圈
 
-- Can you trigger the user's exact symptom with one command?
-- Does the command fail for this bug and only pass once the bug is fixed?
-- Is it fast enough to run repeatedly?
-- Is it deterministic? For flaky bugs, can you raise the reproduction rate high enough to debug?
-- If not reproducible → gather more data, don't guess.
+- 你能用一條指令觸發使用者的確切症狀嗎？
+- 這條指令會因這個 bug 失敗、且只在 bug 修好後通過嗎？
+- 它夠快、可以重複執行嗎？
+- 它是確定性的嗎？對飄忽的 bug，你能把重現率拉高到可除錯嗎？
+- 無法重現 → 收集更多資料，不要猜。
 
-**Ways to construct a loop — try in roughly this order:**
+**建立迴圈的方法 — 大致依此順序嘗試：**
 
-1. **Failing test** at the seam that reaches the bug: unit, integration, or end-to-end.
-2. **HTTP script / curl** against a running dev server.
-3. **CLI invocation** with fixture input, diffing stdout/stderr against expected output.
-4. **Headless browser script** (Playwright/Puppeteer) asserting on DOM, console, or network.
-5. **Replay a captured trace**: HAR, request payload, event log, queue message, or webhook body.
-6. **Throwaway harness** that boots the smallest useful slice of the system and calls the failing path.
-7. **Property / fuzz loop** when the bug is intermittent wrong output over a broad input space.
-8. **Bisection harness** suitable for `git bisect run` when the bug appeared between two known states.
-9. **Differential loop** comparing old vs new version, two configs, two providers, or two datasets.
-10. **Human-in-the-loop script** only as a last resort: script the human steps and capture their result so the loop stays structured.
+1. **失敗的測試**，落在觸及 bug 的接縫：單元、整合或端對端。
+2. **HTTP 腳本 / curl** 對著執行中的開發伺服器。
+3. **CLI 呼叫**搭配測資輸入，把 stdout/stderr 與預期輸出做 diff。
+4. **無頭瀏覽器腳本**（Playwright/Puppeteer）對 DOM、console 或網路斷言。
+5. **重放擷取的追蹤**：HAR、請求 payload、事件日誌、佇列訊息或 webhook body。
+6. **一次性測台**，啟動系統中最小可用的切片並呼叫失敗路徑。
+7. **性質 / 模糊測試迴圈**，當 bug 是廣輸入空間中間歇性的錯誤輸出時。
+8. **二分測台**，適合 `git bisect run`，當 bug 出現在兩個已知狀態之間時。
+9. **差分迴圈**，比較新舊版本、兩組設定、兩個 provider 或兩份資料集。
+10. **有人在環的腳本**，只作為最後手段：把人類步驟腳本化並擷取其結果，讓迴圈保持結構化。
 
-**Tighten the loop once it exists:**
+**迴圈建立後再收緊它：**
 
-- Make it faster: cache setup, narrow scope, skip unrelated initialization.
-- Make the signal sharper: assert the exact symptom, not generic success.
-- Make it more deterministic: pin time, seed randomness, isolate filesystem, freeze network.
+- 讓它更快：快取初始化、縮窄範圍、跳過無關的啟動。
+- 讓訊號更銳利：斷言確切症狀，而不是泛泛的成功。
+- 讓它更確定：釘住時間、固定隨機種子、隔離檔案系統、凍結網路。
 
-For non-deterministic bugs, the immediate goal is a higher reproduction rate, not perfection. Run the trigger 100x, parallelize, add stress, narrow timing windows, or inject sleeps. A 50% flake is debuggable; a 1% flake usually is not.
+對非確定性 bug，近期目標是提高重現率，而不是完美。把觸發跑 100 次、平行化、加壓、縮窄時間窗，或注入延遲。50% 的 flake 可以除錯；1% 的 flake 通常不行。
 
-**Action:** Use the `terminal` tool to run the tight loop:
+**動作：** 用 `terminal` 工具執行緊湊迴圈：
 
 ```bash
 # Run a specific failing test
@@ -118,13 +118,13 @@ python scripts/repro_bug.py
 for i in {1..100}; do pytest tests/test_flake.py::test_name -q || break; done
 ```
 
-### 3. Check Recent Changes
+### 3. 檢查近期變更
 
-- What changed that could cause this?
-- Git diff, recent commits
-- New dependencies, config changes
+- 有什麼變更可能造成這個？
+- git diff、近期 commits
+- 新相依、設定變更
 
-**Action:**
+**動作：**
 
 ```bash
 # Recent commits
@@ -137,32 +137,32 @@ git diff
 git log -p --follow src/problematic_file.py | head -100
 ```
 
-### 4. Gather Evidence in Multi-Component Systems
+### 4. 在多元件系統中蒐集證據
 
-**WHEN system has multiple components (API → service → database, CI → build → deploy):**
+**當系統有多個元件時（API → 服務 → 資料庫、CI → 建置 → 部署）：**
 
-**BEFORE proposing fixes, add diagnostic instrumentation:**
+**在提出修法之前，加入診斷插樁：**
 
-For EACH component boundary:
-- Log what data enters the component
-- Log what data exits the component
-- Verify environment/config propagation
-- Check state at each layer
+對**每一個**元件邊界：
+- 記錄什麼資料進入元件
+- 記錄什麼資料離開元件
+- 驗證環境/設定的傳遞
+- 檢查每一層的狀態
 
-Run once to gather evidence showing WHERE it breaks.
-THEN analyze evidence to identify the failing component.
-THEN investigate that specific component.
+執行一次，蒐集顯示**在哪裡**壞掉的證據。
+然後分析證據，找出失敗的元件。
+接著調查那個特定元件。
 
-### 5. Trace Data Flow
+### 5. 追蹤資料流
 
-**WHEN error is deep in the call stack:**
+**當錯誤埋在呼叫堆疊深處時：**
 
-- Where does the bad value originate?
-- What called this function with the bad value?
-- Keep tracing upstream until you find the source
-- Fix at the source, not at the symptom
+- 這個壞值從哪裡發源？
+- 是誰用這個壞值呼叫這個函式？
+- 持續向上游追蹤，直到你找到源頭
+- 在源頭修，不在症狀修
 
-**Action:** Use `search_files` to trace references:
+**動作：** 用 `search_files` 追蹤參照：
 
 ```python
 # Find where the function is called
@@ -172,117 +172,117 @@ search_files("function_name(", path="src/", file_glob="*.py")
 search_files("variable_name\\s*=", path="src/", file_glob="*.py")
 ```
 
-### Phase 1 Completion Checklist
+### 第一階段完成檢查清單
 
-- [ ] Error messages fully read and understood
-- [ ] A tight loop command exists and has been run at least once
-- [ ] Loop is red-capable: it asserts the user's exact symptom, not a nearby failure
-- [ ] Loop is deterministic, or a flaky bug has a high enough reproduction rate to debug
-- [ ] Recent changes identified and reviewed
-- [ ] Evidence gathered (logs, state, data flow)
-- [ ] Problem isolated to specific component/code
-- [ ] Root cause hypotheses can be stated and tested
+- [ ] 錯誤訊息已完整閱讀並理解
+- [ ] 迴圈指令已存在，且至少執行過一次
+- [ ] 迴圈能變紅：它斷言使用者的確切症狀，而不是附近的失敗
+- [ ] 迴圈是確定性的，或飄忽的 bug 有足夠高的重現率可供除錯
+- [ ] 近期變更已找出並檢視
+- [ ] 證據已蒐集（日誌、狀態、資料流）
+- [ ] 問題已隔離到特定元件/程式碼
+- [ ] 根因假設可以被陳述並驗證
 
-**STOP:** Do not proceed to Phase 2 until you understand WHY it's happening.
+**停下來：** 在你理解**為什麼**會發生之前，不要進入第二階段。
 
 ---
 
-## Phase 2: Pattern Analysis
+## 第二階段：模式分析
 
-**Find the pattern before fixing:**
+**先找出模式，再修復：**
 
-### 0. Minimize the Reproduction
+### 0. 最小化重現
 
-Once the loop is red, shrink the repro to the smallest scenario that still goes red. Cut inputs, callers, config, data, and steps **one at a time**, re-running the loop after each cut. Keep only what is load-bearing for the failure.
+一旦迴圈會紅，就把重現縮到仍會紅的最小情境。**一次刪一項**地裁掉輸入、呼叫者、設定、資料和步驟，每刪一項就重跑迴圈。只保留對失敗承重的東西。
 
-Done when removing any remaining element makes the loop go green. A minimal repro narrows the hypothesis space and often becomes the cleanest regression test.
+當移除任何剩餘元素都會讓迴圈變綠時就完成了。最小重現能收窄假設空間，而且常常成為最乾淨的回歸測試。
 
-### 1. Find Working Examples
+### 1. 找出可用的範例
 
-- Locate similar working code in the same codebase
-- What works that's similar to what's broken?
+- 在同一個程式碼庫找出類似的可用程式碼
+- 什麼是可用的、又跟壞掉的很像？
 
-**Action:** Use `search_files` to find comparable patterns:
+**動作：** 用 `search_files` 找可比對的模式：
 
 ```python
 search_files("similar_pattern", path="src/", file_glob="*.py")
 ```
 
-### 2. Compare Against References
+### 2. 與參考實作對照
 
-- If implementing a pattern, read the reference implementation COMPLETELY
-- Don't skim — read every line
-- Understand the pattern fully before applying
+- 若在實作某個模式，把參考實作**完整**讀完
+- 不要略讀 — 逐行讀
+- 套用前先完全理解該模式
 
-### 3. Identify Differences
+### 3. 找出差異
 
-- What's different between working and broken?
-- List every difference, however small
-- Don't assume "that can't matter"
+- 可用與壞掉之間有什麼不同？
+- 列出每一項差異，無論多小
+- 不要假設「那個不可能有影響」
 
-### 4. Understand Dependencies
+### 4. 理解相依性
 
-- What other components does this need?
-- What settings, config, environment?
-- What assumptions does it make?
-
----
-
-## Phase 3: Hypothesis and Testing
-
-**Scientific method:**
-
-### 1. Form Ranked Falsifiable Hypotheses
-
-- Generate 3–5 plausible hypotheses before testing any single one.
-- Rank them by likelihood and cheapness to falsify.
-- State the prediction each hypothesis makes: "If X is the cause, then changing or observing Y should make Z happen."
-- Discard or sharpen any hypothesis that does not make a testable prediction.
-
-If the user is present, show the ranked list before testing. They may have domain knowledge that instantly re-ranks it. If the user is AFK, proceed with your ranking.
-
-### 2. Test Minimally
-
-- Test the highest-ranked hypothesis with the smallest possible probe.
-- Change one variable at a time.
-- Don't fix multiple things at once.
-- Prefer debugger/REPL inspection when available; one breakpoint beats ten logs.
-- If you add logs, tag every temporary line with a unique prefix such as `[DEBUG-a4f2]` so cleanup is a single search.
-
-### 3. Verify Before Continuing
-
-- Did it work? → Phase 4
-- Didn't work? → Form NEW hypothesis
-- DON'T add more fixes on top
-
-### 4. When You Don't Know
-
-- Say "I don't understand X"
-- Don't pretend to know
-- Ask the user for help
-- Research more
+- 這還需要哪些其他元件？
+- 需要什麼設定、組態、環境？
+- 它做了什麼假設？
 
 ---
 
-## Phase 4: Implementation
+## 第三階段：假設與測試
 
-**Fix the root cause, not the symptom:**
+**科學方法：**
 
-### 1. Create Failing Test Case
+### 1. 形成排序過的可否證假設
 
-- Simplest possible reproduction
-- Automated test if possible
-- MUST have before fixing
-- Use the `test-driven-development` skill
+- 在測試任何一項之前，先產生 3–5 個合理的假設。
+- 依可能性與否證成本排序。
+- 說明每個假設的預測：「若 X 是原因，那麼改變或觀察 Y 應該會讓 Z 發生。」
+- 捨棄或收緊任何做出不了可測預測的假設。
 
-### 2. Implement Single Fix
+若使用者在場，測試前先秀出排序清單。他們可能有領域知識能立刻重排。若使用者離開（AFK），就依你的排序繼續。
 
-- Address the root cause identified
-- ONE change at a time
-- No "while I'm here" improvements
-- No bundled refactoring
+### 2. 最小化測試
 
-### 3. Verify Fix
+- 用最小可行的探針測試排序最高的假設。
+- 一次改變一個變數。
+- 不要一次修多個東西。
+- 可用時優先用偵錯器/REPL 檢查；一個中斷點勝過十條日誌。
+- 若你加了日誌，用獨特前綴（例如 `[DEBUG-a4f2]`）標記每一行暫時日誌，讓清理只需一次搜尋。
+
+### 3. 繼續前先驗證
+
+- 成功了？→ 第四階段
+- 沒成功？→ 形成**新的**假設
+- 不要在上面繼續疊修法
+
+### 4. 當你不知道時
+
+- 說「我不理解 X」
+- 不要假裝知道
+- 向使用者求救
+- 多做研究
+
+---
+
+## 第四階段：實作
+
+**修根因，不修症狀：**
+
+### 1. 建立失敗的測試案例
+
+- 最簡單可行的重現
+- 可能的話做成自動化測試
+- 修復前**必須**有
+- 使用 `test-driven-development` 技能
+
+### 2. 實作單一修復
+
+- 處理已辨識的根因
+- 一次只改一個
+- 不要「難得來這裡順手改」
+- 不要夾帶重構
+
+### 3. 驗證修復
 
 ```bash
 # Run the specific regression test
@@ -292,87 +292,87 @@ pytest tests/test_module.py::test_regression -v
 pytest tests/ -q
 ```
 
-### 4. If Fix Doesn't Work — The Rule of Three
+### 4. 若修法無效 — 三振法則
 
-- **STOP.**
-- Count: How many fixes have you tried?
-- If < 3: Return to Phase 1, re-analyze with new information
-- **If ≥ 3: STOP and question the architecture (step 5 below)**
-- DON'T attempt Fix #4 without architectural discussion
+- **停下來。**
+- 數一數：你試了幾個修法？
+- 少於 3：回到第一階段，用新資訊重新分析
+- **≥ 3：停下來質疑架構（見下方第 5 步）**
+- 不要在沒有架構討論的情況下嘗試第 4 個修法
 
-### 5. If 3+ Fixes Failed: Question Architecture
+### 5. 若三個以上修法失敗：質疑架構
 
-**Pattern indicating an architectural problem:**
-- Each fix reveals new shared state/coupling in a different place
-- Fixes require "massive refactoring" to implement
-- Each fix creates new symptoms elsewhere
+**顯示架構問題的模式：**
+- 每個修法都在不同地方揭露新的共享狀態/耦合
+- 修法需要「大規模重構」才能實作
+- 每個修法都在別處製造新症狀
 
-**STOP and question fundamentals:**
-- Is this pattern fundamentally sound?
-- Are we "sticking with it through sheer inertia"?
-- Should we refactor the architecture vs. continue fixing symptoms?
+**停下來質疑根本：**
+- 這個模式根本上站得住腳嗎？
+- 我們是不是「純粹靠慣性硬撐」？
+- 我們應該重構架構，還是繼續修症狀？
 
-**Discuss with the user before attempting more fixes.**
+**嘗試更多修法之前，先與使用者討論。**
 
-This is NOT a failed hypothesis — this is a wrong architecture.
+這不是失敗的假設 — 這是錯誤的架構。
 
 ---
 
-## Red Flags — STOP and Follow Process
+## 警訊 — 停下來並遵循流程
 
-If you catch yourself thinking:
-- "Quick fix for now, investigate later"
-- "Just try changing X and see if it works"
-- "Add multiple changes, run tests"
-- "Skip the test, I'll manually verify"
-- "It's probably X, let me fix that"
-- "I don't fully understand but this might work"
-- "Pattern says X but I'll adapt it differently"
-- "Here are the main problems: [lists fixes without investigation]"
-- Proposing solutions before tracing data flow
-- **"One more fix attempt" (when already tried 2+)**
-- **Each fix reveals a new problem in a different place**
+當你發現自己在想：
+- 「先快速修一下，之後再調查」
+- 「就試著改 X 看看行不行」
+- 「一次加多個改動，然後跑測試」
+- 「跳過測試，我手動驗證就好」
+- 「大概就是 X，我來修」
+- 「我不完全懂，但這個可能有效」
+- 「模式說是 X，但我用不同方式調整」
+- 「主要問題是這些：[列出修法但未調查]」
+- 在追蹤資料流之前就提出解決方案
+- **「再多試一個修法」（已經試過 2 個以上時）**
+- **每個修法都在別處揭露新問題**
 
-**ALL of these mean: STOP. Return to Phase 1.**
+**以上全部都代表：停下來。回到第一階段。**
 
-**If 3+ fixes failed:** Question the architecture (Phase 4 step 5).
+**若三個以上修法失敗：** 質疑架構（第四階段第 5 步）。
 
-## Common Rationalizations
+## 常見的合理化藉口
 
-| Excuse | Reality |
+| 藉口 | 現實 |
 |--------|---------|
-| "Issue is simple, don't need process" | Simple issues have root causes too. Process is fast for simple bugs. |
-| "Emergency, no time for process" | Systematic debugging is FASTER than guess-and-check thrashing. |
-| "Just try this first, then investigate" | First fix sets the pattern. Do it right from the start. |
-| "I'll write test after confirming fix works" | Untested fixes don't stick. Test first proves it. |
-| "Multiple fixes at once saves time" | Can't isolate what worked. Causes new bugs. |
-| "Reference too long, I'll adapt the pattern" | Partial understanding guarantees bugs. Read it completely. |
-| "I see the problem, let me fix it" | Seeing symptoms ≠ understanding root cause. |
-| "One more fix attempt" (after 2+ failures) | 3+ failures = architectural problem. Question the pattern, don't fix again. |
+| 「問題很簡單，不需要流程」 | 簡單的問題也有根因。流程對簡單 bug 來說很快。 |
+| 「緊急，沒時間走流程」 | 系統化除錯比瞎猜亂試**更快**。 |
+| 「先試這個，再調查」 | 第一個修法會定下模式。一開始就做對。 |
+| 「等修好確認有效再寫測試」 | 沒測試的修法站不住腳。先測試才能證明。 |
+| 「一次修多個比較省時間」 | 無法分辨什麼有效。會製造新 bug。 |
+| 「參考太長了，我調整模式就好」 | 一知半解保證 bug。把它讀完。 |
+| 「我看出問題了，我來修」 | 看見症狀 ≠ 理解根因。 |
+| 「再多試一個修法」（失敗 2 次以上） | 3 次以上失敗 = 架構問題。質疑模式，不要再修一次。 |
 
-## Quick Reference
+## 快速參考
 
-| Phase | Key Activities | Success Criteria |
+| 階段 | 主要活動 | 成功標準 |
 |-------|---------------|------------------|
-| **1. Root Cause** | Read errors, reproduce, check changes, gather evidence, trace data flow | Understand WHAT and WHY |
-| **2. Pattern** | Find working examples, compare, identify differences | Know what's different |
-| **3. Hypothesis** | Form theory, test minimally, one variable at a time | Confirmed or new hypothesis |
-| **4. Implementation** | Create regression test, fix root cause, verify | Bug resolved, all tests pass |
+| **1. 根因** | 讀錯誤、重現、檢查變更、蒐集證據、追蹤資料流 | 理解**什麼**與**為什麼** |
+| **2. 模式** | 找可用範例、對照、找出差異 | 知道差在哪 |
+| **3. 假設** | 形成理論、最小化測試、一次一個變數 | 已確認，或形成新假設 |
+| **4. 實作** | 建立回歸測試、修根因、驗證 | bug 解決、所有測試通過 |
 
-## Hermes Agent Integration
+## Hermes Agent 整合
 
-### Investigation Tools
+### 調查工具
 
-Use these Hermes tools during Phase 1:
+第一階段可使用這些 Hermes 工具：
 
-- **`search_files`** — Find error strings, trace function calls, locate patterns
-- **`read_file`** — Read source code with line numbers for precise analysis
-- **`terminal`** — Run tests, check git history, reproduce bugs
-- **`web_search`/`web_extract`** — Research error messages, library docs
+- **`search_files`** — 尋找錯誤字串、追蹤函式呼叫、定位模式
+- **`read_file`** — 帶行號讀取原始碼以精確分析
+- **`terminal`** — 執行測試、查 git 歷史、重現 bug
+- **`web_search`/`web_extract`** — 研究錯誤訊息、函式庫文件
 
-### With delegate_task
+### 搭配 delegate_task
 
-For complex multi-component debugging, dispatch investigation subagents:
+對複雜的多元件除錯，派遣調查子代理：
 
 ```python
 delegate_task(
@@ -392,20 +392,20 @@ delegate_task(
 )
 ```
 
-### With test-driven-development
+### 搭配 test-driven-development
 
-When fixing bugs:
-1. Write a test that reproduces the bug (RED)
-2. Debug systematically to find root cause
-3. Fix the root cause (GREEN)
-4. The test proves the fix and prevents regression
+修 bug 時：
+1. 寫一個重現 bug 的測試（RED）
+2. 系統化除錯找出根因
+3. 修根因（GREEN）
+4. 測試證明修復並防止回歸
 
-## Real-World Impact
+## 實戰影響
 
-From debugging sessions:
-- Systematic approach: 15-30 minutes to fix
-- Random fixes approach: 2-3 hours of thrashing
-- First-time fix rate: 95% vs 40%
-- New bugs introduced: Near zero vs common
+來自除錯實作：
+- 系統化方法：15-30 分鐘修好
+- 亂修方法：2-3 小時瞎忙
+- 一次修好率：95% vs 40%
+- 引入的新 bug：接近零 vs 家常便飯
 
-**No shortcuts. No guessing. Systematic always wins.**
+**沒有捷徑。沒有猜測。系統化永遠贏。**
